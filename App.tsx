@@ -7,7 +7,19 @@ import { DocumentData, ViewMode, generateId } from './types';
 import { storageService } from './services/storageService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 
+const MD_BREAKPOINT = 768; // Tailwind's 'md' breakpoint
+
 const App: React.FC = () => {
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // --- Helper ---
   const createBlankDocument = (): DocumentData => ({
     id: generateId(),
@@ -22,7 +34,7 @@ const App: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [templates, setTemplates] = useState<DocumentData[]>([]);
   
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(screenWidth >= MD_BREAKPOINT);
   const [viewMode, setViewMode] = useState<ViewMode>('EDITOR');
   
   // Initialize with a blank document so the user can type immediately
@@ -36,8 +48,11 @@ const App: React.FC = () => {
 
   // --- Initial Load ---
   useEffect(() => {
-    setDocuments(storageService.getDocuments());
-    setTemplates(storageService.getTemplates());
+    const loadData = async () => {
+      setDocuments(await storageService.getDocuments());
+      setTemplates(await storageService.getTemplates());
+    };
+    loadData();
   }, []);
 
   // --- Actions ---
@@ -106,7 +121,7 @@ const App: React.FC = () => {
   };
 
   // 3. Save Logic
-  const handleSave = (data: DocumentData) => {
+  const handleSave = async (data: DocumentData) => {
     if (data.isTemplate) {
       // Saving a Template (original template edit mode)
       // Provide default title if empty
@@ -122,8 +137,7 @@ const App: React.FC = () => {
         newTemplates = [{ ...data, isTemplate: true }, ...templates];
       }
       setTemplates(newTemplates);
-      storageService.saveTemplates(newTemplates);
-      setActiveDocument(data);
+      await storageService.saveTemplates(newTemplates);
 
     } else if (viewMode === 'TEMPLATE_PREVIEW') {
       // Saving in Template Preview Mode → save as new document
@@ -144,7 +158,7 @@ const App: React.FC = () => {
 
       const newDocs = [newDoc, ...documents];
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
 
       // Switch to EDITOR mode after saving
       setActiveDocument(newDoc);
@@ -165,15 +179,15 @@ const App: React.FC = () => {
         newDocs = [data, ...documents];
       }
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
-      setActiveDocument(data);
+      await storageService.saveDocuments(newDocs);
     }
+    setActiveDocument(data); // Ensure active document is updated after save
   };
 
   // --- Backup/Restore Logic ---
 
-  const handleBackup = () => {
-    const backupData = storageService.exportData();
+  const handleBackup = async () => {
+    const backupData = await storageService.exportData();
     const dataStr = JSON.stringify(backupData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -190,18 +204,18 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleRestore = (file: File) => {
+  const handleRestore = async (file: File) => {
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
         const data = JSON.parse(content);
-        const result = storageService.importData(data);
+        const result = await storageService.importData(data); // Await the importData
 
         if (result.success) {
           // Update state
-          setDocuments(storageService.getDocuments());
-          setTemplates(storageService.getTemplates());
+          setDocuments(await storageService.getDocuments());
+          setTemplates(await storageService.getTemplates());
           alert(result.message);
         } else {
           alert(result.message);
@@ -223,14 +237,14 @@ const App: React.FC = () => {
     setDeleteTarget({ type: 'TPL', id });
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === 'DOC') {
       const id = deleteTarget.id;
       const newDocs = documents.filter(d => d.id !== id);
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
+      await storageService.saveDocuments(newDocs); // Await save
       if (activeDocument?.id === id) {
         // If we deleted the current doc, reset to blank
         setActiveDocument(createBlankDocument());
@@ -239,7 +253,7 @@ const App: React.FC = () => {
       const id = deleteTarget.id;
       const newTemplates = templates.filter(t => t.id !== id);
       setTemplates(newTemplates);
-      storageService.saveTemplates(newTemplates);
+      await storageService.saveTemplates(newTemplates); // Await save
       if (activeDocument?.id === id) {
         setActiveDocument(null);
       }
@@ -248,21 +262,26 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-background font-sans text-gray-900">
+    <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
-      {/* Sidebar Menu Overlay */}
+      {/* Responsive Sidebar */}
       <SidebarMenu
-        isOpen={isSidebarOpen}
+        isMobileOpen={isSidebarOpen}
+        isAlwaysOpen={screenWidth >= MD_BREAKPOINT}
         onClose={() => setIsSidebarOpen(false)}
         documents={documents}
         templates={templates}
         onSelectDocument={(doc) => {
           setActiveDocument(doc);
           setViewMode('EDITOR');
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false); // Close sidebar on mobile after selection
         }}
         onPreviewTemplate={handleTemplatePreview}
         onCreateTemplate={handleCreateTemplate}
-        onCreateNew={createNewDocument}
+        onCreateNew={() => {
+          createNewDocument();
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false); // Close sidebar on mobile after creation
+        }}
         onDeleteDocument={requestDeleteDocument}
         onDeleteTemplate={requestDeleteTemplate}
         onEditTemplate={handleEditTemplateOriginal}
@@ -271,7 +290,10 @@ const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="w-full h-full">
+      <main 
+        className={`flex-1 h-full transition-all duration-300 ease-in-out`}
+        style={{ marginLeft: screenWidth >= MD_BREAKPOINT && isSidebarOpen ? '250px' : '0px' }}
+      >
         {viewMode === 'TEMPLATE_PREVIEW' ? (
           // Template Preview Mode (view and edit template, save as new document)
           <SplitEditor
@@ -285,6 +307,8 @@ const App: React.FC = () => {
               setActiveDocument(createBlankDocument());
               setSourceTemplateId(null);
             }}
+            screenWidth={screenWidth}
+            mdBreakpoint={MD_BREAKPOINT}
           />
         ) : (
           // Standard Editor View (for both documents and templates)
@@ -298,6 +322,8 @@ const App: React.FC = () => {
               setActiveDocument(createBlankDocument());
               setViewMode('EDITOR');
             }}
+            screenWidth={screenWidth}
+            mdBreakpoint={MD_BREAKPOINT}
           />
         )}
       </main>

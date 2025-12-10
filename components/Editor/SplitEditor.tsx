@@ -11,6 +11,8 @@ interface SplitEditorProps {
   sourceTemplateName?: string; // Name of the source template for display
   onCancel?: () => void; // For template manager back button
   onOpenSidebar?: () => void; // Function to open the sidebar menu
+  screenWidth: number;
+  mdBreakpoint: number;
 }
 
 export const SplitEditor: React.FC<SplitEditorProps> = ({
@@ -20,7 +22,9 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   isTemplatePreview = false,
   sourceTemplateName,
   onCancel,
-  onOpenSidebar
+  onOpenSidebar,
+  screenWidth,
+  mdBreakpoint
 }) => {
   const [title, setTitle] = useState(data.title);
   const [content, setContent] = useState(data.content);
@@ -61,7 +65,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
               <Icons.Back size={18} />
             </button>
           ) : (
-            onOpenSidebar && (
+            screenWidth < mdBreakpoint && onOpenSidebar && ( // Only show on small screens
               <button 
                 onClick={onOpenSidebar}
                 className="mr-1 p-1 hover:bg-gray-100 rounded text-gray-700 flex-shrink-0"
