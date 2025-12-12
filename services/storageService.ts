@@ -1,66 +1,98 @@
 import { DocumentData } from '../types';
+import { firestoreService } from './firestoreService';
+import { storageService as localStorageService } from './localStorageService';
 
-const STORAGE_KEY_DOCS = 'tm_documents';
-const STORAGE_KEY_TEMPLATES = 'tm_templates';
+// Firestore 사용 여부 (true = Firestore 사용, false = localStorage 사용)
+const USE_FIRESTORE = true;
 
 export const storageService = {
-  getDocuments: (): DocumentData[] => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY_DOCS);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error("Failed to load documents", e);
-      return [];
+  getDocuments: async (): Promise<DocumentData[]> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getDocuments();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage', error);
+        return localStorageService.getDocuments();
+      }
+    }
+    return localStorageService.getDocuments();
+  },
+
+  saveDocuments: async (docs: DocumentData[]): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        for (const doc of docs) {
+          await firestoreService.saveDocument(doc);
+        }
+        localStorageService.saveDocuments(docs);
+      } catch (error) {
+        console.error('Failed to save to Firestore', error);
+        localStorageService.saveDocuments(docs);
+      }
+    } else {
+      localStorageService.saveDocuments(docs);
     }
   },
 
-  saveDocuments: (docs: DocumentData[]) => {
-    localStorage.setItem(STORAGE_KEY_DOCS, JSON.stringify(docs));
+  getTemplates: async (): Promise<DocumentData[]> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getTemplates();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage', error);
+        return localStorageService.getTemplates();
+      }
+    }
+    return localStorageService.getTemplates();
   },
 
-  getTemplates: (): DocumentData[] => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY_TEMPLATES);
-      // If no templates exist, return a default one
-      if (!data) {
-        return [];
+  saveTemplates: async (templates: DocumentData[]): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        for (const template of templates) {
+          await firestoreService.saveTemplate(template);
+        }
+        localStorageService.saveTemplates(templates);
+      } catch (error) {
+        console.error('Failed to save to Firestore', error);
+        localStorageService.saveTemplates(templates);
       }
-      return JSON.parse(data);
-    } catch (e) {
-      console.error("Failed to load templates", e);
-      return [];
+    } else {
+      localStorageService.saveTemplates(templates);
     }
   },
 
-  saveTemplates: (templates: DocumentData[]) => {
-    localStorage.setItem(STORAGE_KEY_TEMPLATES, JSON.stringify(templates));
+  exportData: async () => {
+    if (USE_FIRESTORE) {
+      return await firestoreService.exportData();
+    }
+    return localStorageService.exportData();
   },
 
-  exportData: () => {
-    const documents = storageService.getDocuments();
-    const templates = storageService.getTemplates();
-    return {
-      version: '1.0',
-      exportDate: new Date().toISOString(),
-      documents,
-      templates
-    };
+  importData: async (data: any) => {
+    if (USE_FIRESTORE) {
+      return await firestoreService.importData(data);
+    }
+    return localStorageService.importData(data);
   },
 
-  importData: (data: any) => {
-    try {
-      // Validate structure
-      if (!data.version || !Array.isArray(data.documents) || !Array.isArray(data.templates)) {
-        throw new Error('Invalid backup file format');
+  deleteDocument: async (id: string): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.deleteDocument(id);
+      } catch (error) {
+        console.error('Failed to delete document from Firestore', error);
       }
+    }
+  },
 
-      // Save to localStorage
-      storageService.saveDocuments(data.documents);
-      storageService.saveTemplates(data.templates);
-      return { success: true, message: '데이터가 복원되었습니다.' };
-    } catch (e) {
-      console.error("Failed to import data", e);
-      return { success: false, message: `복원 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}` };
+  deleteTemplate: async (id: string): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.deleteTemplate(id);
+      } catch (error) {
+        console.error('Failed to delete template from Firestore', error);
+      }
     }
   }
 };

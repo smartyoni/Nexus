@@ -5,6 +5,7 @@ import { SidebarMenu } from './components/Sidebar/SidebarMenu';
 import { SplitEditor } from './components/Editor/SplitEditor';
 import { DocumentData, ViewMode, generateId } from './types';
 import { storageService } from './services/storageService';
+import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 
 const App: React.FC = () => {
@@ -36,8 +37,17 @@ const App: React.FC = () => {
 
   // --- Initial Load ---
   useEffect(() => {
-    setDocuments(storageService.getDocuments());
-    setTemplates(storageService.getTemplates());
+    const loadData = async () => {
+      // 기존 localStorage 데이터를 Firestore로 이전 (최초 1회만)
+      await migrationService.migrateToFirestore();
+
+      // 데이터 로드
+      const docs = await storageService.getDocuments();
+      const tpls = await storageService.getTemplates();
+      setDocuments(docs);
+      setTemplates(tpls);
+    };
+    loadData();
   }, []);
 
   // --- Actions ---
@@ -106,7 +116,7 @@ const App: React.FC = () => {
   };
 
   // 3. Save Logic
-  const handleSave = (data: DocumentData) => {
+  const handleSave = async (data: DocumentData) => {
     if (data.isTemplate) {
       // Saving a Template (original template edit mode)
       // Provide default title if empty
@@ -122,7 +132,7 @@ const App: React.FC = () => {
         newTemplates = [{ ...data, isTemplate: true }, ...templates];
       }
       setTemplates(newTemplates);
-      storageService.saveTemplates(newTemplates);
+      await storageService.saveTemplates(newTemplates);
       setActiveDocument(data);
 
     } else if (viewMode === 'TEMPLATE_PREVIEW') {
@@ -144,7 +154,7 @@ const App: React.FC = () => {
 
       const newDocs = [newDoc, ...documents];
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
 
       // Switch to EDITOR mode after saving
       setActiveDocument(newDoc);
@@ -165,15 +175,15 @@ const App: React.FC = () => {
         newDocs = [data, ...documents];
       }
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
       setActiveDocument(data);
     }
   };
 
   // --- Backup/Restore Logic ---
 
-  const handleBackup = () => {
-    const backupData = storageService.exportData();
+  const handleBackup = async () => {
+    const backupData = await storageService.exportData();
     const dataStr = JSON.stringify(backupData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -192,16 +202,18 @@ const App: React.FC = () => {
 
   const handleRestore = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
         const data = JSON.parse(content);
-        const result = storageService.importData(data);
+        const result = await storageService.importData(data);
 
         if (result.success) {
           // Update state
-          setDocuments(storageService.getDocuments());
-          setTemplates(storageService.getTemplates());
+          const docs = await storageService.getDocuments();
+          const tpls = await storageService.getTemplates();
+          setDocuments(docs);
+          setTemplates(tpls);
           alert(result.message);
         } else {
           alert(result.message);
@@ -223,14 +235,15 @@ const App: React.FC = () => {
     setDeleteTarget({ type: 'TPL', id });
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === 'DOC') {
       const id = deleteTarget.id;
       const newDocs = documents.filter(d => d.id !== id);
       setDocuments(newDocs);
-      storageService.saveDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
+      await storageService.deleteDocument(id);
       if (activeDocument?.id === id) {
         // If we deleted the current doc, reset to blank
         setActiveDocument(createBlankDocument());
@@ -239,7 +252,8 @@ const App: React.FC = () => {
       const id = deleteTarget.id;
       const newTemplates = templates.filter(t => t.id !== id);
       setTemplates(newTemplates);
-      storageService.saveTemplates(newTemplates);
+      await storageService.saveTemplates(newTemplates);
+      await storageService.deleteTemplate(id);
       if (activeDocument?.id === id) {
         setActiveDocument(null);
       }

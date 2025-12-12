@@ -5,7 +5,12 @@
       "Bash(npm install)",
       "Bash(dir:*)",
       "Bash(npm install:*)",
-      "Bash(node generate-icons.js:*)"
+      "Bash(node generate-icons.js:*)",
+      "Bash(cat:*)",
+      "Bash(copy storageService.ts localStorageService.ts)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFirebase Firestore 연동 완료\n\n- Firebase SDK 설치 및 설정\n- Firestore 데이터 저장/삭제 기능 구현\n- 기존 localStorage와 Firebase 통합\n- 자동 마이그레이션 기능 추가\n- Chrome 확장 프로그램 호환성 확인\n- 문서/템플릿 삭제 기능 Firestore 동기화\n\n주요 변경사항:\n- services/firebaseConfig.ts: Firebase 초기화\n- services/firestoreService.ts: Firestore CRUD 함수\n- services/localStorageService.ts: 기존 localStorage 로직\n- services/storageService.ts: Firebase/localStorage 통합\n- services/migrationService.ts: 데이터 마이그레이션\n- App.tsx: 비동기 처리 및 삭제 함수 추가\n\n🧠 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ]
   }
 }

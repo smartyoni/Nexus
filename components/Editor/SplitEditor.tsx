@@ -102,7 +102,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* TOP HALF: Text Content */}
-        <div className="flex-1 flex flex-col border-b border-gray-200 relative group min-h-0 basis-1/2">
+        <div className="flex-1 flex flex-col border-b border-gray-200 relative group min-h-0 basis-1/3">
           <textarea
             value={content}
             onChange={(e) => { setContent(e.target.value); markDirty(); }}
@@ -112,7 +112,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         </div>
 
         {/* BOTTOM HALF: Checklist */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0 basis-1/2">
+        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0 basis-2/3">
           <ChecklistManager 
             items={checklist} 
             onChange={(items) => { setChecklist(items); markDirty(); }} 

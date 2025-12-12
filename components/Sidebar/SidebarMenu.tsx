@@ -53,54 +53,58 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       {/* Sidebar Content */}
       <div className="relative flex flex-col w-[85%] max-w-sm h-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+        {/* Header with Menu, Backup, Restore, and Close */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
           <h2 className="text-lg font-bold text-gray-800">메뉴</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full">
-            <Icons.Close size={20} />
-          </button>
+
+          {/* Backup & Restore buttons + Close */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onBackup}
+              className="flex items-center justify-center px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+            >
+              <span>백업</span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
+            >
+              <span>복원</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onRestore(file);
+                  // Reset file input
+                  e.target.value = '';
+                }
+              }}
+              className="hidden"
+            />
+            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0 ml-0.5">
+              <Icons.Close size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 grid grid-cols-4 gap-2 border-b">
+        <div className="p-4 grid grid-cols-2 gap-2 border-b">
           <button
             onClick={() => { onCreateNew(); onClose(); }}
             className="flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <span className="text-xs font-medium">새 문서</span>
+            <span className="text-xs font-medium">새문서추가</span>
           </button>
           <button
              onClick={() => { onCreateTemplate(); onClose(); }}
              className="flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
-            <span className="text-xs font-medium">템플릿</span>
+            <span className="text-xs font-medium">템플릿추가</span>
           </button>
-          <button
-            onClick={onBackup}
-            className="flex items-center justify-center p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <span className="text-xs font-medium">백업</span>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center p-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-          >
-            <span className="text-xs font-medium">복원</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                onRestore(file);
-                // Reset file input
-                e.target.value = '';
-              }
-            }}
-            className="hidden"
-          />
         </div>
 
         {/* Tabs */}
@@ -129,12 +133,11 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {documents.map(doc => (
                 <div key={doc.id} className="group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all">
                   <div className="flex justify-between items-start">
-                    <div 
+                    <div
                       className="flex-1 cursor-pointer"
                       onClick={() => { onSelectDocument(doc); onClose(); }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(doc.updatedAt)}</p>
                     </div>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
