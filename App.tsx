@@ -8,7 +8,19 @@ import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 
+const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
+
 const App: React.FC = () => {
+  // 화면 크기 추적
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // --- Helper ---
   const createBlankDocument = (): DocumentData => ({
     id: generateId(),
@@ -22,8 +34,8 @@ const App: React.FC = () => {
   // --- State ---
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [templates, setTemplates] = useState<DocumentData[]>([]);
-  
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(screenWidth >= MD_BREAKPOINT);
   const [viewMode, setViewMode] = useState<ViewMode>('EDITOR');
   
   // Initialize with a blank document so the user can type immediately
@@ -56,6 +68,7 @@ const App: React.FC = () => {
   const createNewDocument = () => {
     setActiveDocument(createBlankDocument());
     setViewMode('EDITOR');
+    if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
   };
 
   // 2. Create Document From Template
@@ -262,21 +275,26 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-background font-sans text-gray-900">
+    <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
       {/* Sidebar Menu Overlay */}
       <SidebarMenu
-        isOpen={isSidebarOpen}
+        isMobileOpen={isSidebarOpen}
+        isAlwaysOpen={screenWidth >= MD_BREAKPOINT}
         onClose={() => setIsSidebarOpen(false)}
         documents={documents}
         templates={templates}
         onSelectDocument={(doc) => {
           setActiveDocument(doc);
           setViewMode('EDITOR');
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
         onPreviewTemplate={handleTemplatePreview}
         onCreateTemplate={handleCreateTemplate}
-        onCreateNew={createNewDocument}
+        onCreateNew={() => {
+          createNewDocument();
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+        }}
         onDeleteDocument={requestDeleteDocument}
         onDeleteTemplate={requestDeleteTemplate}
         onEditTemplate={handleEditTemplateOriginal}
@@ -285,7 +303,10 @@ const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="w-full h-full">
+      <main
+        className="flex-1 h-full transition-all duration-300 ease-in-out"
+        style={{ marginLeft: screenWidth >= MD_BREAKPOINT && isSidebarOpen ? '250px' : '0px' }}
+      >
         {viewMode === 'TEMPLATE_PREVIEW' ? (
           // Template Preview Mode (view and edit template, save as new document)
           <SplitEditor
@@ -294,6 +315,8 @@ const App: React.FC = () => {
             isTemplateMode={false}
             isTemplatePreview={true}
             sourceTemplateName={templates.find(t => t.id === sourceTemplateId)?.title || '템플릿'}
+            screenWidth={screenWidth}
+            mdBreakpoint={MD_BREAKPOINT}
             onCancel={() => {
               setViewMode('EDITOR');
               setActiveDocument(createBlankDocument());
@@ -307,6 +330,8 @@ const App: React.FC = () => {
             onSave={handleSave}
             isTemplateMode={activeDocument?.isTemplate || false}
             isTemplatePreview={false}
+            screenWidth={screenWidth}
+            mdBreakpoint={MD_BREAKPOINT}
             onOpenSidebar={() => setIsSidebarOpen(true)}
             onCancel={() => {
               setActiveDocument(createBlankDocument());

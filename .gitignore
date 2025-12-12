@@ -10,7 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-pwa
+dist-extension
 *.local
+
+# Firebase
+.firebase/
 
 # Editor directories and files
 .vscode/*
