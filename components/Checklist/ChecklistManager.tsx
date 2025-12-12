@@ -1,8 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChecklistItem, generateId } from '../../types';
 import { Icons } from '../ui/Icon';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
+// --- Checklist Item Sub-Component ---
+interface ChecklistItemComponentProps {
+  item: ChecklistItem;
+  onToggle: (id: string) => void;
+  onEdit: (id: string, newText: string) => void;
+  onDelete: (id: string) => void;
+}
+
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    // Adjust height on initial render and when text changes from props
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [item.text]);
+
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    // Adjust height while typing
+    const target = e.target as HTMLTextAreaElement;
+    target.style.height = 'auto';
+    target.style.height = `${target.scrollHeight}px`;
+  };
+
+  return (
+    <div 
+      className={`group flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 ${
+        item.isChecked 
+          ? 'bg-gray-50 border-gray-200' 
+          : 'bg-white border-gray-300 hover:border-blue-400 hover:shadow-md'
+      }`}
+    >
+      <button 
+        onClick={() => onToggle(item.id)}
+        className={`mt-0.5 flex-none transition-colors ${item.isChecked ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
+      >
+        {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-md" />}
+      </button>
+      
+      <textarea 
+        ref={textareaRef}
+        className={`flex-1 bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
+        value={item.text}
+        onChange={(e) => onEdit(item.id, e.target.value)}
+        onInput={handleInput}
+        rows={1} // Keep rows={1} to ensure it starts small and grows
+      />
+
+      <button 
+        onClick={() => onDelete(item.id)}
+        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+      >
+        <Icons.Trash size={16} />
+      </button>
+    </div>
+  );
+};
+
+
+// --- Main Checklist Manager Component ---
 interface ChecklistManagerProps {
   items: ChecklistItem[];
   onChange: (items: ChecklistItem[]) => void;
@@ -31,6 +93,10 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
       item.id === id ? { ...item, isChecked: !item.isChecked } : item
     );
     onChange(updated);
+  };
+
+  const requestDelete = (id: string) => {
+    setDeleteId(id);
   };
 
   const confirmDelete = () => {
@@ -79,41 +145,13 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
           </div>
         )}
         {items.map((item) => (
-          <div 
-            key={item.id} 
-            className={`group flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 ${
-              item.isChecked 
-                ? 'bg-gray-50 border-gray-200' 
-                : 'bg-white border-gray-300 hover:border-blue-400 hover:shadow-md'
-            }`}
-          >
-            <button 
-              onClick={() => handleToggle(item.id)}
-              className={`mt-0.5 flex-none transition-colors ${item.isChecked ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
-            >
-              {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-md" />}
-            </button>
-            
-            <textarea 
-              className={`flex-1 bg-transparent text-sm resize-none outline-none overflow-hidden h-auto min-h-[1.5rem] leading-relaxed py-0.5 ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
-              value={item.text}
-              onChange={(e) => handleEdit(item.id, e.target.value)}
-              rows={1}
-              style={{height: 'auto', minHeight: '24px'}}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-            />
-
-            <button 
-              onClick={() => setDeleteId(item.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-            >
-              <Icons.Trash size={16} />
-            </button>
-          </div>
+          <ChecklistItemComponent 
+            key={item.id}
+            item={item}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={requestDelete}
+          />
         ))}
       </div>
 

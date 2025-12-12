@@ -3,7 +3,8 @@ import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
 
 interface SidebarMenuProps {
-  isOpen: boolean;
+  isMobileOpen: boolean;
+  isAlwaysOpen: boolean;
   onClose: () => void;
   documents: DocumentData[];
   templates: DocumentData[];
@@ -19,7 +20,8 @@ interface SidebarMenuProps {
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = ({
-  isOpen,
+  isMobileOpen,
+  isAlwaysOpen,
   onClose,
   documents,
   templates,
@@ -37,21 +39,30 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
+  if (!isMobileOpen && !isAlwaysOpen) return null;
 
   // Format date helper
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className={`
+      ${isAlwaysOpen ? 'relative flex-shrink-0 w-[250px] h-full' : 'fixed inset-0 z-50 flex'}
+      ${!isAlwaysOpen && !isMobileOpen ? 'transform -translate-x-full' : 'transform translate-x-0'}
+      transition-transform duration-300 ease-in-out
+    `}>
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 transition-opacity"
-        onClick={onClose}
-      />
+      { !isAlwaysOpen && isMobileOpen && (
+        <div 
+          className="absolute inset-0 bg-black/50 transition-opacity"
+          onClick={onClose}
+        />
+      )}
       
       {/* Sidebar Content */}
-      <div className="relative flex flex-col w-[85%] max-w-sm h-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+      <div className={`
+        relative flex flex-col h-full bg-white shadow-xl
+        ${!isAlwaysOpen ? 'w-[85%] max-w-sm' : 'w-full'}
+      `}>
         
         {/* Header with Menu, Backup, Restore, and Close */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
