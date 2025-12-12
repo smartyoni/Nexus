@@ -1,7 +1,7 @@
 import React from 'react';
-import { 
-  Menu, X, Plus, Trash2, CheckSquare, FileText, 
-  Save, Edit3, ArrowLeft, Copy, MoreVertical 
+import {
+  Menu, X, Plus, Trash2, CheckSquare, FileText,
+  Save, Edit3, ArrowLeft, Copy, MoreVertical, RotateCw
 } from 'lucide-react';
 
 export const Icons = {
@@ -15,5 +15,6 @@ export const Icons = {
   Edit: Edit3,
   Back: ArrowLeft,
   Copy,
-  More: MoreVertical
+  More: MoreVertical,
+  Refresh: RotateCw
 };

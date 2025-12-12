@@ -91,6 +91,13 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         >
           <Icons.Save size={18} />
         </button>
+        <button
+          onClick={() => window.location.reload()}
+          className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
+          title="새로고침"
+        >
+          <Icons.Refresh size={18} />
+        </button>
         {onCancel && (
           <button
             onClick={onCancel}
