@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "preview:pwa": "cross-env BUILD_TARGET=pwa vite preview --outDir dist-pwa",
     "generate-icons": "node scripts/generate-icons.js",
-    "deploy": "npm run build:pwa && firebase deploy"
+    "deploy": "npm run build:pwa && firebase deploy",
+    "deploy:all": "npm run build && git push && npm run deploy"
   },
   "dependencies": {
     "firebase": "^12.6.0",
