@@ -2,6 +2,7 @@ export interface ChecklistItem {
   id: string;
   text: string;
   isChecked: boolean;
+  memo?: string;
 }
 
 // A generic structure used for both Templates and Saved Documents

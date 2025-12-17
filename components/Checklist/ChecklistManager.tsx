@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChecklistItem, generateId } from '../../types';
 import { Icons } from '../ui/Icon';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { MemoModal } from '../ui/MemoModal';
 
 // --- Checklist Item Sub-Component ---
 interface ChecklistItemComponentProps {
@@ -9,9 +10,10 @@ interface ChecklistItemComponentProps {
   onToggle: (id: string) => void;
   onEdit: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onMemoOpen: (id: string) => void;
 }
 
-const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete }) => {
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -53,12 +55,22 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         rows={1} // Keep rows={1} to ensure it starts small and grows
       />
 
-      <button 
-        onClick={() => onDelete(item.id)}
-        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-      >
-        <Icons.Trash size={16} />
-      </button>
+      <div className="flex gap-1">
+        <button
+          onClick={() => onMemoOpen(item.id)}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all"
+          title="메모"
+        >
+          <Icons.Edit size={16} />
+        </button>
+        <button
+          onClick={() => onDelete(item.id)}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-white hover:bg-red-600 rounded transition-all font-semibold"
+          title="삭제"
+        >
+          <Icons.Trash size={16} />
+        </button>
+      </div>
     </div>
   );
 };
@@ -73,6 +85,8 @@ interface ChecklistManagerProps {
 export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onChange }) => {
   const [newItemText, setNewItemText] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [memoModalOpen, setMemoModalOpen] = useState(false);
+  const [selectedMemoId, setSelectedMemoId] = useState<string | null>(null);
 
   const handleAddItem = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -107,11 +121,38 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
   };
 
   const handleEdit = (id: string, newText: string) => {
-    const updated = items.map(item => 
+    const updated = items.map(item =>
       item.id === id ? { ...item, text: newText } : item
     );
     onChange(updated);
   };
+
+  const handleMemoOpen = (id: string) => {
+    setSelectedMemoId(id);
+    setMemoModalOpen(true);
+  };
+
+  const handleMemoSave = (memo: string) => {
+    if (selectedMemoId) {
+      const updated = items.map(item =>
+        item.id === selectedMemoId ? { ...item, memo: memo || undefined } : item
+      );
+      onChange(updated);
+    }
+    setMemoModalOpen(false);
+  };
+
+  const handleMemoDelete = () => {
+    if (selectedMemoId) {
+      const updated = items.map(item =>
+        item.id === selectedMemoId ? { ...item, memo: undefined } : item
+      );
+      onChange(updated);
+    }
+    setMemoModalOpen(false);
+  };
+
+  const selectedItem = selectedMemoId ? items.find(item => item.id === selectedMemoId) : null;
 
   return (
     <div className="flex flex-col h-full bg-slate-50 border-t border-gray-200">
@@ -145,23 +186,33 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
           </div>
         )}
         {items.map((item) => (
-          <ChecklistItemComponent 
+          <ChecklistItemComponent
             key={item.id}
             item={item}
             onToggle={handleToggle}
             onEdit={handleEdit}
             onDelete={requestDelete}
+            onMemoOpen={handleMemoOpen}
           />
         ))}
       </div>
 
       {/* Delete Confirmation Modal for Checklist Item */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={!!deleteId}
         title="항목 삭제"
         message="이 체크리스트 항목을 삭제하시겠습니까?"
         onConfirm={confirmDelete}
         onClose={() => setDeleteId(null)}
+      />
+
+      {/* Memo Modal */}
+      <MemoModal
+        isOpen={memoModalOpen}
+        memo={selectedItem?.memo}
+        onSave={handleMemoSave}
+        onDelete={handleMemoDelete}
+        onClose={() => setMemoModalOpen(false)}
       />
     </div>
   );
