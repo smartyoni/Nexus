@@ -55,20 +55,20 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         rows={1} // Keep rows={1} to ensure it starts small and grows
       />
 
-      <div className="flex gap-1">
+      <div className="flex gap-1 flex-shrink-0">
         <button
           onClick={() => onMemoOpen(item.id)}
-          className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all"
+          className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0"
           title="메모"
         >
-          <Icons.Edit size={16} />
+          <Icons.Edit size={18} />
         </button>
         <button
           onClick={() => onDelete(item.id)}
-          className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-white hover:bg-red-600 rounded transition-all font-semibold"
+          className="p-2 text-gray-400 hover:text-white hover:bg-red-600 rounded transition-all font-semibold flex-shrink-0"
           title="삭제"
         >
-          <Icons.Trash size={16} />
+          <Icons.Trash size={18} />
         </button>
       </div>
     </div>

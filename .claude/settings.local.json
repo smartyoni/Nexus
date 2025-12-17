@@ -22,7 +22,8 @@
       "Bash(firebase projects:list:*)",
       "Bash(firebase login:*)",
       "Bash(npm run deploy:*)",
-      "Bash(firebase use:*)"
+      "Bash(firebase use:*)",
+      "Bash(npm run deploy:all:*)"
     ]
   }
 }

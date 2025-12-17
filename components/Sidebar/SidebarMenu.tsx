@@ -8,6 +8,7 @@ interface SidebarMenuProps {
   onClose: () => void;
   documents: DocumentData[];
   templates: DocumentData[];
+  favoriteDocId: string | null;
   onSelectDocument: (doc: DocumentData) => void;
   onPreviewTemplate: (tpl: DocumentData) => void;
   onCreateTemplate: () => void;
@@ -17,6 +18,8 @@ interface SidebarMenuProps {
   onEditTemplate: (tpl: DocumentData) => void;
   onBackup: () => void;
   onRestore: (file: File) => void;
+  onSetFavoriteDocument: (id: string) => void;
+  onClearFavoriteDocument: () => void;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -25,6 +28,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onClose,
   documents,
   templates,
+  favoriteDocId,
   onSelectDocument,
   onPreviewTemplate,
   onCreateTemplate,
@@ -33,10 +37,14 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onDeleteTemplate,
   onEditTemplate,
   onBackup,
-  onRestore
+  onRestore,
+  onSetFavoriteDocument,
+  onClearFavoriteDocument
 }) => {
   const [activeTab, setActiveTab] = useState<'docs' | 'templates'>('docs');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isMobileOpen && !isAlwaysOpen) return null;
@@ -135,28 +143,78 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
         </div>
 
         {/* List Content */}
-        <div className="flex-1 overflow-y-auto p-2 bg-gray-50/50">
+        <div className="flex-1 overflow-y-auto p-2 bg-gray-50/50 relative">
           {activeTab === 'docs' ? (
             <div className="space-y-2">
               {documents.length === 0 && (
                 <div className="text-center py-10 text-gray-400 text-sm">저장된 문서가 없습니다.</div>
               )}
               {documents.map(doc => (
-                <div key={doc.id} className="group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all">
+                <div
+                  key={doc.id}
+                  className={`group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
+                    favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
+                  }`}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenuId(doc.id);
+                    setContextMenuPos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onTouchStart={(e) => {
+                    if (e.touches.length > 0) {
+                      const touch = e.touches[0];
+                      const longPressTimer = setTimeout(() => {
+                        setContextMenuId(doc.id);
+                        setContextMenuPos({ x: touch.clientX, y: touch.clientY });
+                      }, 500);
+                      (e.target as any).longPressTimer = longPressTimer;
+                    }
+                  }}
+                  onTouchEnd={(e) => {
+                    const timer = (e.target as any).longPressTimer;
+                    if (timer) clearTimeout(timer);
+                  }}
+                >
                   <div className="flex justify-between items-start">
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => { onSelectDocument(doc); onClose(); }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(doc.updatedAt)}</p>
                     </div>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
                       className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Icons.Trash size={16} />
                     </button>
                   </div>
+
+                  {/* Context Menu */}
+                  {contextMenuId === doc.id && contextMenuPos && (
+                    <div
+                      className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[160px]"
+                      style={{ left: `${contextMenuPos.x}px`, top: `${contextMenuPos.y}px` }}
+                      onClick={() => setContextMenuId(null)}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (favoriteDocId === doc.id) {
+                            onClearFavoriteDocument();
+                          } else {
+                            onSetFavoriteDocument(doc.id);
+                          }
+                          setContextMenuId(null);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors flex items-center gap-2"
+                      >
+                        <span className="text-lg">⭐</span>
+                        <span>{favoriteDocId === doc.id ? '즐겨찾기 해제' : '즐겨찾기 지정'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

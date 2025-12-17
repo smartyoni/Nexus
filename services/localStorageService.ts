@@ -2,6 +2,7 @@ import { DocumentData } from '../types';
 
 const STORAGE_KEY_DOCS = 'tm_documents';
 const STORAGE_KEY_TEMPLATES = 'tm_templates';
+const STORAGE_KEY_FAVORITE_DOC = 'tm_favorite_doc_id';
 
 export const storageService = {
   getDocuments: (): DocumentData[] => {
@@ -62,5 +63,22 @@ export const storageService = {
       console.error("Failed to import data", e);
       return { success: false, message: `복원 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}` };
     }
+  },
+
+  getFavoriteDocId: (): string | null => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_FAVORITE_DOC);
+    } catch (e) {
+      console.error("Failed to load favorite doc id", e);
+      return null;
+    }
+  },
+
+  setFavoriteDocId: (id: string): void => {
+    localStorage.setItem(STORAGE_KEY_FAVORITE_DOC, id);
+  },
+
+  clearFavoriteDocId: (): void => {
+    localStorage.removeItem(STORAGE_KEY_FAVORITE_DOC);
   }
 };

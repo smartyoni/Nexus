@@ -37,7 +37,7 @@ const App: React.FC = () => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(screenWidth >= MD_BREAKPOINT);
   const [viewMode, setViewMode] = useState<ViewMode>('EDITOR');
-  
+
   // Initialize with a blank document so the user can type immediately
   const [activeDocument, setActiveDocument] = useState<DocumentData | null>(() => createBlankDocument());
 
@@ -46,6 +46,9 @@ const App: React.FC = () => {
 
   // Track source template ID when in TEMPLATE_PREVIEW mode
   const [sourceTemplateId, setSourceTemplateId] = useState<string | null>(null);
+
+  // Favorite Document State
+  const [favoriteDocId, setFavoriteDocId] = useState<string | null>(null);
 
   // --- Initial Load ---
   useEffect(() => {
@@ -56,8 +59,19 @@ const App: React.FC = () => {
       // 데이터 로드
       const docs = await storageService.getDocuments();
       const tpls = await storageService.getTemplates();
+      const favId = await storageService.getFavoriteDocId();
+
       setDocuments(docs);
       setTemplates(tpls);
+      setFavoriteDocId(favId);
+
+      // 즐겨찾기 문서가 있으면 로드
+      if (favId && docs.length > 0) {
+        const favDoc = docs.find(d => d.id === favId);
+        if (favDoc) {
+          setActiveDocument(favDoc);
+        }
+      }
     };
     loadData();
   }, []);
@@ -257,6 +271,13 @@ const App: React.FC = () => {
       setDocuments(newDocs);
       await storageService.saveDocuments(newDocs);
       await storageService.deleteDocument(id);
+
+      // 즐겨찾기 문서가 삭제되면 즐겨찾기 초기화
+      if (favoriteDocId === id) {
+        await storageService.clearFavoriteDocId();
+        setFavoriteDocId(null);
+      }
+
       if (activeDocument?.id === id) {
         // If we deleted the current doc, reset to blank
         setActiveDocument(createBlankDocument());
@@ -274,6 +295,17 @@ const App: React.FC = () => {
     setDeleteTarget(null);
   };
 
+  // --- Favorite Document ---
+  const handleSetFavoriteDocument = async (id: string) => {
+    await storageService.setFavoriteDocId(id);
+    setFavoriteDocId(id);
+  };
+
+  const handleClearFavoriteDocument = async () => {
+    await storageService.clearFavoriteDocId();
+    setFavoriteDocId(null);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
@@ -284,6 +316,7 @@ const App: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
         documents={documents}
         templates={templates}
+        favoriteDocId={favoriteDocId}
         onSelectDocument={(doc) => {
           setActiveDocument(doc);
           setViewMode('EDITOR');
@@ -300,6 +333,8 @@ const App: React.FC = () => {
         onEditTemplate={handleEditTemplateOriginal}
         onBackup={handleBackup}
         onRestore={handleRestore}
+        onSetFavoriteDocument={handleSetFavoriteDocument}
+        onClearFavoriteDocument={handleClearFavoriteDocument}
       />
 
       {/* Main Content Area */}

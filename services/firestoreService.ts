@@ -13,6 +13,7 @@ import { DocumentData } from '../types';
 // Firestore 컬렉션 이름
 const COLLECTION_DOCS = 'documents';
 const COLLECTION_TEMPLATES = 'templates';
+const COLLECTION_SETTINGS = 'settings';
 
 // 사용자 ID (현재는 단일 사용자 가정)
 const USER_ID = 'default_user';
@@ -136,6 +137,41 @@ export const firestoreService = {
         success: false,
         message: `복원 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}`
       };
+    }
+  },
+
+  // 즐겨찾기 문서 ID 가져오기
+  getFavoriteDocId: async (): Promise<string | null> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'favorite');
+      const snapshot = await getDocs(collection(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`));
+      const favDoc = snapshot.docs.find(d => d.id === 'favorite');
+      return favDoc ? (favDoc.data().favoriteDocId || null) : null;
+    } catch (e) {
+      console.error("Failed to get favorite doc id from Firestore", e);
+      return null;
+    }
+  },
+
+  // 즐겨찾기 문서 ID 설정하기
+  setFavoriteDocId: async (id: string): Promise<void> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'favorite');
+      await setDoc(settingsRef, { favoriteDocId: id });
+    } catch (e) {
+      console.error("Failed to set favorite doc id in Firestore", e);
+      throw e;
+    }
+  },
+
+  // 즐겨찾기 문서 ID 삭제하기
+  clearFavoriteDocId: async (): Promise<void> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'favorite');
+      await setDoc(settingsRef, { favoriteDocId: null });
+    } catch (e) {
+      console.error("Failed to clear favorite doc id in Firestore", e);
+      throw e;
     }
   }
 };

@@ -94,5 +94,45 @@ export const storageService = {
         console.error('Failed to delete template from Firestore', error);
       }
     }
+  },
+
+  getFavoriteDocId: async (): Promise<string | null> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getFavoriteDocId();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage', error);
+        return localStorageService.getFavoriteDocId();
+      }
+    }
+    return localStorageService.getFavoriteDocId();
+  },
+
+  setFavoriteDocId: async (id: string): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.setFavoriteDocId(id);
+        localStorageService.setFavoriteDocId(id);
+      } catch (error) {
+        console.error('Failed to save favorite doc to Firestore', error);
+        localStorageService.setFavoriteDocId(id);
+      }
+    } else {
+      localStorageService.setFavoriteDocId(id);
+    }
+  },
+
+  clearFavoriteDocId: async (): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.clearFavoriteDocId();
+        localStorageService.clearFavoriteDocId();
+      } catch (error) {
+        console.error('Failed to clear favorite doc from Firestore', error);
+        localStorageService.clearFavoriteDocId();
+      }
+    } else {
+      localStorageService.clearFavoriteDocId();
+    }
   }
 };

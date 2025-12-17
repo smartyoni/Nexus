@@ -1,5 +1,24 @@
 # Template Master Sidebar - 개발 가이드
 
+## 📌 최신 기능
+
+### 즐겨찾기 기능 (v1.1)
+- 문서 목록에서 **우클릭 (데스크톱)** 또는 **길게 누르기 (모바일)** 시 컨텍스트 메뉴 호출
+- "즐겨찾기 지정" 옵션으로 한 개의 문서만 지정 가능
+- 즐겨찾기 문서는 **노란색 테두리**로 표시
+- 앱 재시작 시 자동으로 즐겨찾기 문서 로드
+- 다른 문서 선택 후 앱 종료해도, 즐겨찾기 해제하지 않으면 재시작 시 즐겨찾기 문서로 돌아옴
+- 즐겨찾기 문서 삭제 시 자동으로 즐겨찾기 초기화
+
+**관련 파일:**
+- `services/storageService.ts` - 즐겨찾기 저장/로드
+- `services/localStorageService.ts` - localStorage 관리
+- `services/firestoreService.ts` - Firestore 동기화
+- `App.tsx` - 즐겨찾기 상태 관리
+- `components/Sidebar/SidebarMenu.tsx` - 컨텍스트 메뉴 UI
+
+---
+
 ## 🚀 배포 프로세스
 
 ### 최종 배포 (모든 환경)
