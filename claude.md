@@ -29,7 +29,8 @@ npm run deploy:all
 1. Chrome 확장프로그램 빌드 (dist-extension/)
 2. PWA 웹앱 빌드 (dist-pwa/)
 3. GitHub에 코드 푸시
-4. Firebase Hosting에 배포 (모바일 앱 자동 업데이트)
+4. Firebase Hosting에 배포 (https://smartrealapp.web.app)
+5. GitHub Pages에 배포 (https://smartyoni.github.io/Nexus)
 
 ---
 
@@ -50,7 +51,7 @@ npm run build:extension
 | 폴더 | 용도 | 배포 위치 |
 |------|------|---------|
 | `dist-extension/` | Chrome 확장프로그램 | Chrome 브라우저 (수동 로드) |
-| `dist-pwa/` | 웹/모바일 앱 | Firebase Hosting (https://smartrealapp.web.app) |
+| `dist-pwa/` | 웹/모바일 앱 | Firebase Hosting + GitHub Pages |
 
 ---
 
@@ -63,6 +64,7 @@ npm run build:extension
 | `npm run build:extension` | 확장프로그램만 빌드 |
 | `npm run build:pwa` | PWA만 빌드 |
 | `npm run deploy` | PWA 빌드 + Firebase 배포 |
+| `npm run deploy:github-pages` | GitHub Pages 배포 |
 | `npm run deploy:all` | 모든 환경 한 번에 배포 ⭐ |
 
 ---
@@ -99,6 +101,7 @@ npm run build:extension
 
 ## 🔗 관련 링크
 
-- Firebase Hosting: https://smartrealapp.web.app
-- GitHub: https://github.com/smartyoni/Nexus
+- **Firebase Hosting**: https://smartrealapp.web.app
+- **GitHub Pages**: https://smartyoni.github.io/Nexus
+- GitHub Repository: https://github.com/smartyoni/Nexus
 - Firebase Console: https://console.firebase.google.com/project/smartrealapp/overview

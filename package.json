@@ -14,7 +14,8 @@
     "preview:pwa": "cross-env BUILD_TARGET=pwa vite preview --outDir dist-pwa",
     "generate-icons": "node scripts/generate-icons.js",
     "deploy": "npm run build:pwa && firebase deploy",
-    "deploy:all": "npm run build && git push && npm run deploy"
+    "deploy:github-pages": "gh-pages -d dist-pwa",
+    "deploy:all": "npm run build && git push && npm run deploy && npm run deploy:github-pages"
   },
   "dependencies": {
     "firebase": "^12.6.0",
@@ -28,6 +29,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
     "cross-env": "^10.1.0",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.6",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
