@@ -388,11 +388,11 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                     )}
 
                     {/* 현재 월 */}
-                    {(organized.today.length > 0 || organized.yesterday.length > 0) && (organized.currentMonth.length > 0 || organized.pastYears.size > 0) && (
+                    {(organized.today.length > 0 || organized.yesterday.length > 0) && (
                       <div className="border-t pt-2 mt-2" />
                     )}
 
-                    {organized.currentMonth.length > 0 && (
+                    {(organized.today.length > 0 || organized.yesterday.length > 0 || organized.currentMonth.length > 0) && (
                       <div>
                         <button
                           onClick={() => {
