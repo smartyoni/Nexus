@@ -7,6 +7,7 @@ import { DocumentData, ViewMode, generateId } from './types';
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
+import { FloatingMenuButton } from './components/ui/FloatingMenuButton';
 
 const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
 
@@ -395,12 +396,19 @@ const App: React.FC = () => {
       </main>
 
       {/* Global Delete Confirmation Modal */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={!!deleteTarget}
         title={deleteTarget?.type === 'DOC' ? '문서 삭제' : '템플릿 삭제'}
         message={deleteTarget?.type === 'DOC' ? '이 문서를 영구적으로 삭제하시겠습니까?' : '이 템플릿을 삭제하시겠습니까?'}
         onConfirm={executeDelete}
         onClose={() => setDeleteTarget(null)}
+      />
+
+      {/* Floating Menu Button (Mobile Only) */}
+      <FloatingMenuButton
+        onClick={() => setIsSidebarOpen(true)}
+        screenWidth={screenWidth}
+        mdBreakpoint={MD_BREAKPOINT}
       />
 
     </div>
