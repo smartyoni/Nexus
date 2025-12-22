@@ -47,12 +47,144 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set());
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isMobileOpen && !isAlwaysOpen) return null;
 
   // Format date helper
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // 오늘인지 확인
+  const isToday = (timestamp: number): boolean => {
+    const today = new Date();
+    const date = new Date(timestamp);
+    return today.toDateString() === date.toDateString();
+  };
+
+  // 어제인지 확인
+  const isYesterday = (timestamp: number): boolean => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const date = new Date(timestamp);
+    return yesterday.toDateString() === date.toDateString();
+  };
+
+  // 현재 월인지 확인
+  const isCurrentMonth = (timestamp: number): boolean => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    return now.getFullYear() === date.getFullYear() &&
+           now.getMonth() === date.getMonth();
+  };
+
+  // 일지를 분류하여 정리
+  const organizeDiaries = (diaries: DocumentData[]) => {
+    const sorted = diaries.sort((a, b) => b.updatedAt - a.updatedAt);
+
+    const today: DocumentData[] = [];
+    const yesterday: DocumentData[] = [];
+    const currentMonth: DocumentData[] = [];
+    const pastYears = new Map<string, Map<string, DocumentData[]>>();
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    sorted.forEach(diary => {
+      if (isToday(diary.updatedAt)) {
+        today.push(diary);
+      } else if (isYesterday(diary.updatedAt)) {
+        yesterday.push(diary);
+      } else if (isCurrentMonth(diary.updatedAt)) {
+        currentMonth.push(diary);
+      } else {
+        // 과거 연도/월 분류
+        const date = new Date(diary.updatedAt);
+        const year = date.getFullYear().toString();
+        const month = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!pastYears.has(year)) {
+          pastYears.set(year, new Map());
+        }
+        if (!pastYears.get(year)!.has(month)) {
+          pastYears.get(year)!.set(month, []);
+        }
+        pastYears.get(year)!.get(month)!.push(diary);
+      }
+    });
+
+    return { today, yesterday, currentMonth, pastYears };
+  };
+
+  // 일지 카드 렌더링 헬퍼 함수
+  const renderDiaryCard = (doc: DocumentData) => (
+    <div
+      key={doc.id}
+      className={`group bg-white p-2 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
+        favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
+      }`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextMenuId(doc.id);
+        setContextMenuPos({ x: e.clientX, y: e.clientY });
+      }}
+      onTouchStart={(e) => {
+        if (e.touches.length > 0) {
+          const touch = e.touches[0];
+          const longPressTimer = setTimeout(() => {
+            setContextMenuId(doc.id);
+            setContextMenuPos({ x: touch.clientX, y: touch.clientY });
+          }, 500);
+          (e.target as any).longPressTimer = longPressTimer;
+        }
+      }}
+      onTouchEnd={(e) => {
+        const timer = (e.target as any).longPressTimer;
+        if (timer) clearTimeout(timer);
+      }}
+    >
+      <div className="flex justify-between items-start">
+        <div
+          className="flex-1 cursor-pointer"
+          onClick={() => { onSelectDocument(doc); onClose(); }}
+        >
+          <h3 className="text-sm font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
+          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Icons.Trash size={16} />
+        </button>
+      </div>
+
+      {/* Context Menu */}
+      {contextMenuId === doc.id && contextMenuPos && (
+        <div
+          className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[160px]"
+          style={{ left: `${contextMenuPos.x}px`, top: `${contextMenuPos.y}px` }}
+          onClick={() => setContextMenuId(null)}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (favoriteDocId === doc.id) {
+                onClearFavoriteDocument();
+              } else {
+                onSetFavoriteDocument(doc.id);
+              }
+              setContextMenuId(null);
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors flex items-center gap-2"
+          >
+            <span className="text-lg">⭐</span>
+            <span>{favoriteDocId === doc.id ? '즐겨찾기 해제' : '즐겨찾기 지정'}</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className={`
@@ -166,7 +298,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {documents.filter(d => !d.isDiary).map(doc => (
                 <div
                   key={doc.id}
-                  className={`group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
+                  className={`group bg-white p-2 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
                     favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
                   }`}
                   onContextMenu={(e) => {
@@ -194,8 +326,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                       className="flex-1 cursor-pointer"
                       onClick={() => { onSelectDocument(doc); onClose(); }}
                     >
-                      <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(doc.updatedAt)}</p>
+                      <h3 className="text-sm font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
@@ -237,74 +368,161 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {documents.filter(d => d.isDiary).length === 0 && (
                 <div className="text-center py-10 text-gray-400 text-sm">저장된 일지가 없습니다.</div>
               )}
-              {documents.filter(d => d.isDiary).map(doc => (
-                <div
-                  key={doc.id}
-                  className={`group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
-                    favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
-                  }`}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setContextMenuId(doc.id);
-                    setContextMenuPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onTouchStart={(e) => {
-                    if (e.touches.length > 0) {
-                      const touch = e.touches[0];
-                      const longPressTimer = setTimeout(() => {
-                        setContextMenuId(doc.id);
-                        setContextMenuPos({ x: touch.clientX, y: touch.clientY });
-                      }, 500);
-                      (e.target as any).longPressTimer = longPressTimer;
-                    }
-                  }}
-                  onTouchEnd={(e) => {
-                    const timer = (e.target as any).longPressTimer;
-                    if (timer) clearTimeout(timer);
-                  }}
-                >
-                  <div className="flex justify-between items-start">
-                    <div
-                      className="flex-1 cursor-pointer"
-                      onClick={() => { onSelectDocument(doc); onClose(); }}
-                    >
-                      <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(doc.updatedAt)}</p>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Icons.Trash size={16} />
-                    </button>
-                  </div>
+              {documents.filter(d => d.isDiary).length > 0 && (() => {
+                const organized = organizeDiaries(documents.filter(d => d.isDiary));
 
-                  {/* Context Menu */}
-                  {contextMenuId === doc.id && contextMenuPos && (
-                    <div
-                      className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[160px]"
-                      style={{ left: `${contextMenuPos.x}px`, top: `${contextMenuPos.y}px` }}
-                      onClick={() => setContextMenuId(null)}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (favoriteDocId === doc.id) {
-                            onClearFavoriteDocument();
-                          } else {
-                            onSetFavoriteDocument(doc.id);
-                          }
-                          setContextMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors flex items-center gap-2"
-                      >
-                        <span className="text-lg">⭐</span>
-                        <span>{favoriteDocId === doc.id ? '즐겨찾기 해제' : '즐겨찾기 지정'}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                return (
+                  <>
+                    {/* 오늘 일지 */}
+                    {organized.today.length > 0 && (
+                      <div className="space-y-1">
+                        {organized.today.map(renderDiaryCard)}
+                      </div>
+                    )}
+
+                    {/* 어제 일지 */}
+                    {organized.yesterday.length > 0 && (
+                      <div className="space-y-1">
+                        {organized.yesterday.map(renderDiaryCard)}
+                      </div>
+                    )}
+
+                    {/* 현재 월 */}
+                    {(organized.today.length > 0 || organized.yesterday.length > 0) && (organized.currentMonth.length > 0 || organized.pastYears.size > 0) && (
+                      <div className="border-t pt-2 mt-2" />
+                    )}
+
+                    {organized.currentMonth.length > 0 && (
+                      <div>
+                        <button
+                          onClick={() => {
+                            const now = new Date();
+                            const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                            setCollapsedMonths(prev => {
+                              const next = new Set(prev);
+                              if (next.has(monthKey)) {
+                                next.delete(monthKey);
+                              } else {
+                                next.add(monthKey);
+                              }
+                              return next;
+                            });
+                          }}
+                          className="w-full sticky top-0 z-10 bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 mb-1"
+                        >
+                          {(() => {
+                            const now = new Date();
+                            const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                            return collapsedMonths.has(monthKey) ? (
+                              <Icons.ChevronRight size={14} className="text-gray-600" />
+                            ) : (
+                              <Icons.ChevronDown size={14} className="text-gray-600" />
+                            );
+                          })()}
+                          <span className="font-semibold text-gray-700 text-xs">
+                            {(() => {
+                              const now = new Date();
+                              return `${now.getFullYear()}년 ${now.getMonth() + 1}월 (${organized.currentMonth.length})`;
+                            })()}
+                          </span>
+                        </button>
+                        {(() => {
+                          const now = new Date();
+                          const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                          return !collapsedMonths.has(monthKey) && (
+                            <div className="space-y-1 pl-1">
+                              {organized.currentMonth.map(renderDiaryCard)}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* 과거 연도 */}
+                    {organized.pastYears.size > 0 && (
+                      <div>
+                        {Array.from(organized.pastYears.entries())
+                          .sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
+                          .map(([year, monthsMap]) => {
+                            const totalCount = Array.from(monthsMap.values()).reduce((sum, diaries) => sum + diaries.length, 0);
+
+                            return (
+                              <div key={year}>
+                                {/* 연도 헤더 */}
+                                <button
+                                  onClick={() => {
+                                    setCollapsedYears(prev => {
+                                      const next = new Set(prev);
+                                      if (next.has(year)) {
+                                        next.delete(year);
+                                      } else {
+                                        next.add(year);
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-full bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 mb-1"
+                                >
+                                  {collapsedYears.has(year) ? (
+                                    <Icons.ChevronRight size={14} className="text-gray-600" />
+                                  ) : (
+                                    <Icons.ChevronDown size={14} className="text-gray-600" />
+                                  )}
+                                  <span className="font-semibold text-gray-700 text-xs">{year}년 ({totalCount})</span>
+                                </button>
+
+                                {/* 월별 리스트 */}
+                                {!collapsedYears.has(year) && (
+                                  <div className="space-y-1 pl-1">
+                                    {Array.from(monthsMap.entries())
+                                      .sort(([monthA], [monthB]) => monthB.localeCompare(monthA))
+                                      .map(([month, diaries]) => {
+                                        const [displayYear, displayMonth] = month.split('-');
+
+                                        return (
+                                          <div key={month}>
+                                            {/* 월 헤더 */}
+                                            <button
+                                              onClick={() => {
+                                                setCollapsedMonths(prev => {
+                                                  const next = new Set(prev);
+                                                  if (next.has(month)) {
+                                                    next.delete(month);
+                                                  } else {
+                                                    next.add(month);
+                                                  }
+                                                  return next;
+                                                });
+                                              }}
+                                              className="w-full bg-gray-50 px-2 py-0.5 rounded hover:bg-gray-100 transition-colors flex items-center gap-1 mb-0.5 ml-2"
+                                            >
+                                              {collapsedMonths.has(month) ? (
+                                                <Icons.ChevronRight size={12} className="text-gray-500" />
+                                              ) : (
+                                                <Icons.ChevronDown size={12} className="text-gray-500" />
+                                              )}
+                                              <span className="font-semibold text-gray-600 text-xs">{displayYear}년 {parseInt(displayMonth)}월 ({diaries.length})</span>
+                                            </button>
+
+                                            {/* 일지 카드들 */}
+                                            {!collapsedMonths.has(month) && (
+                                              <div className="space-y-1 pl-2">
+                                                {diaries.map(renderDiaryCard)}
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <div className="space-y-2">
