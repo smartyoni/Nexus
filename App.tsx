@@ -142,6 +142,23 @@ const App: React.FC = () => {
     setSourceTemplateId(null);
   };
 
+  // 2-4. Create New Diary (with today's date as title)
+  const handleCreateDiary = () => {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '-').slice(0, -1);
+    setActiveDocument({
+      id: generateId(),
+      title: dateStr,
+      content: '',
+      checklist: [],
+      updatedAt: Date.now(),
+      isTemplate: false,
+      isDiary: true
+    });
+    setViewMode('EDITOR');
+    if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+  };
+
   // 3. Save Logic
   const handleSave = async (data: DocumentData) => {
     if (data.isTemplate) {
@@ -328,6 +345,7 @@ const App: React.FC = () => {
           createNewDocument();
           if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
+        onCreateDiary={handleCreateDiary}
         onDeleteDocument={requestDeleteDocument}
         onDeleteTemplate={requestDeleteTemplate}
         onEditTemplate={handleEditTemplateOriginal}
