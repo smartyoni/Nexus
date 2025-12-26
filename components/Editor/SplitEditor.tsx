@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ChecklistItem, DocumentData } from '../../types';
 import { ChecklistManager } from '../Checklist/ChecklistManager';
 import { Icons } from '../ui/Icon';
+import { PreviewModal } from '../ui/PreviewModal';
 
 interface SplitEditorProps {
   data: DocumentData;
@@ -29,29 +30,32 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   const [title, setTitle] = useState(data.title);
   const [content, setContent] = useState(data.content);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
-  const [isDirty, setIsDirty] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
 
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setTitle(data.title);
     setContent(data.content);
     setChecklist(data.checklist);
-    setIsDirty(false);
   }, [data.id]);
 
-  const handleSave = () => {
-    onSave({
-      ...data,
-      title,
-      content,
-      checklist,
-      updatedAt: Date.now()
-    });
-    setIsDirty(false);
-  };
+  // Auto-save with debounce when title, content, or checklist changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Only save if there are actual changes
+      if (title !== data.title || content !== data.content || JSON.stringify(checklist) !== JSON.stringify(data.checklist)) {
+        onSave({
+          ...data,
+          title,
+          content,
+          checklist,
+          updatedAt: Date.now()
+        });
+      }
+    }, 1000);
 
-  // Helper to detect changes
-  const markDirty = () => setIsDirty(true);
+    return () => clearTimeout(timer);
+  }, [title, content, checklist, data, onSave]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -78,18 +82,17 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
           <input
             type="text"
             value={title}
-            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder={isTemplateMode ? "템플릿 제목" : "제목 (선택사항)"}
             className="text-base font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent w-full truncate leading-tight"
           />
         </div>
         <button
-          onClick={handleSave}
-          disabled={!isDirty}
-          className={`p-1.5 rounded-md transition-colors flex-shrink-0 ${isDirty ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-          title="저장"
+          onClick={() => setIsPreview(true)}
+          className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 bg-gray-100 text-gray-600 hover:bg-gray-200"
+          title="미리보기"
         >
-          <Icons.Save size={18} />
+          <Icons.Eye size={18} />
         </button>
         <button
           onClick={() => window.location.reload()}
@@ -111,12 +114,12 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
       {/* Split Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        
+
         {/* TOP HALF: Text Content */}
         <div className="flex-1 flex flex-col border-b border-gray-200 relative group min-h-0 basis-1/3">
           <textarea
             value={content}
-            onChange={(e) => { setContent(e.target.value); markDirty(); }}
+            onChange={(e) => setContent(e.target.value)}
             placeholder={isTemplateMode ? "템플릿 텍스트 입력..." : "여기에 내용을 입력하세요..."}
             className="flex-1 w-full p-3 resize-none outline-none text-gray-700 leading-relaxed text-sm"
           />
@@ -124,13 +127,25 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
         {/* BOTTOM HALF: Checklist */}
         <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0 basis-2/3">
-          <ChecklistManager 
-            items={checklist} 
-            onChange={(items) => { setChecklist(items); markDirty(); }} 
+          <ChecklistManager
+            items={checklist}
+            onChange={(items) => setChecklist(items)}
           />
         </div>
 
       </div>
+
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={isPreview}
+        title={title}
+        content={content}
+        onClose={() => setIsPreview(false)}
+        onSave={(newTitle, newContent) => {
+          setTitle(newTitle);
+          setContent(newContent);
+        }}
+      />
     </div>
   );
 };

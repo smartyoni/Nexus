@@ -23,7 +23,9 @@
       "Bash(firebase login:*)",
       "Bash(npm run deploy:*)",
       "Bash(firebase use:*)",
-      "Bash(npm run deploy:all:*)"
+      "Bash(npm run deploy:all:*)",
+      "Bash(npm run deploy:github-pages:*)",
+      "Bash(node --max-old-space-size=4096 node_modules/vite/bin/vite.js:*)"
     ]
   }
 }

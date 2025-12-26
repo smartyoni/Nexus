@@ -7,7 +7,6 @@ import { DocumentData, ViewMode, generateId } from './types';
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
-import { FloatingMenuButton } from './components/ui/FloatingMenuButton';
 
 const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
 
@@ -143,18 +142,16 @@ const App: React.FC = () => {
     setSourceTemplateId(null);
   };
 
-  // 2-4. Create New Diary (with today's date as title)
-  const handleCreateDiary = () => {
-    const today = new Date();
-    const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '-').slice(0, -1);
+  // 2-4. Create New Daily Note
+  const handleCreateDailyNote = () => {
     setActiveDocument({
       id: generateId(),
-      title: dateStr,
+      title: '',
       content: '',
       checklist: [],
       updatedAt: Date.now(),
       isTemplate: false,
-      isDiary: true
+      isDailyNote: true
     });
     setViewMode('EDITOR');
     if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
@@ -324,6 +321,17 @@ const App: React.FC = () => {
     setFavoriteDocId(null);
   };
 
+  // --- Reorder Documents ---
+  const handleReorderDocuments = async (reorderedDocs: DocumentData[]) => {
+    setDocuments(reorderedDocs);
+    await storageService.saveDocuments(reorderedDocs);
+  };
+
+  const handleReorderTemplates = async (reorderedTpls: DocumentData[]) => {
+    setTemplates(reorderedTpls);
+    await storageService.saveTemplates(reorderedTpls);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
@@ -346,7 +354,10 @@ const App: React.FC = () => {
           createNewDocument();
           if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
-        onCreateDiary={handleCreateDiary}
+        onCreateDailyNote={() => {
+          handleCreateDailyNote();
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+        }}
         onDeleteDocument={requestDeleteDocument}
         onDeleteTemplate={requestDeleteTemplate}
         onEditTemplate={handleEditTemplateOriginal}
@@ -354,6 +365,8 @@ const App: React.FC = () => {
         onRestore={handleRestore}
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}
+        onReorderDocuments={handleReorderDocuments}
+        onReorderTemplates={handleReorderTemplates}
       />
 
       {/* Main Content Area */}
@@ -402,13 +415,6 @@ const App: React.FC = () => {
         message={deleteTarget?.type === 'DOC' ? '이 문서를 영구적으로 삭제하시겠습니까?' : '이 템플릿을 삭제하시겠습니까?'}
         onConfirm={executeDelete}
         onClose={() => setDeleteTarget(null)}
-      />
-
-      {/* Floating Menu Button (Mobile Only) */}
-      <FloatingMenuButton
-        onClick={() => setIsSidebarOpen(true)}
-        screenWidth={screenWidth}
-        mdBreakpoint={MD_BREAKPOINT}
       />
 
     </div>

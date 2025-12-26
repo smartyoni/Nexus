@@ -11,18 +11,49 @@ interface ChecklistItemComponentProps {
   onEdit: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   onMemoOpen: (id: string) => void;
+  isDragging: boolean;
+  onDragStart: (id: string, e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (id: string, e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  isEditing: boolean;
+  onStartEdit: (id: string) => void;
+  onEndEdit: (id: string) => void;
 }
 
-const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen }) => {
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({
+  item,
+  onToggle,
+  onEdit,
+  onDelete,
+  onMemoOpen,
+  isDragging,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isEditing,
+  onStartEdit,
+  onEndEdit
+}) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [editText, setEditText] = useState(item.text);
 
   useEffect(() => {
-    // Adjust height on initial render and when text changes from props
-    if (textareaRef.current) {
+    // When editing mode is activated, focus the textarea and adjust height
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [item.text]);
+  }, [isEditing]);
+
+  useEffect(() => {
+    // Reset edit text when item changes and not editing
+    if (!isEditing) {
+      setEditText(item.text);
+    }
+  }, [item.text, isEditing]);
 
   const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     // Adjust height while typing
@@ -31,39 +62,105 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
     target.style.height = `${target.scrollHeight}px`;
   };
 
+  const handleEditBlur = () => {
+    // Save changes on blur
+    if (editText.trim() !== item.text) {
+      onEdit(item.id, editText);
+    }
+    onEndEdit(item.id);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      // Cancel editing without saving
+      setEditText(item.text);
+      onEndEdit(item.id);
+    }
+  };
+
   return (
-    <div 
-      className={`group flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 ${
-        item.isChecked 
-          ? 'bg-gray-50 border-gray-200' 
+    <div
+      draggable={true}
+      onDragStart={(e) => {
+        e.stopPropagation();
+        onDragStart(item.id, e);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDragOver(e);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDrop(item.id, e);
+      }}
+      onDragEnd={(e) => {
+        e.stopPropagation();
+        onDragEnd();
+      }}
+      className={`group flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 cursor-move select-none ${
+        isDragging ? 'opacity-50 bg-blue-50 border-blue-400' : ''
+      } ${
+        item.isChecked
+          ? 'bg-gray-50 border-gray-200'
           : 'bg-white border-gray-300 hover:border-blue-400 hover:shadow-md'
       }`}
     >
-      <button 
+      <button
+        draggable={false}
         onClick={() => onToggle(item.id)}
         className={`mt-0.5 flex-none transition-colors ${item.isChecked ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
       >
         {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-md" />}
       </button>
-      
-      <textarea 
-        ref={textareaRef}
-        className={`flex-1 bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
-        value={item.text}
-        onChange={(e) => onEdit(item.id, e.target.value)}
-        onInput={handleInput}
-        rows={1} // Keep rows={1} to ensure it starts small and grows
-      />
 
-      <div className="flex gap-1 flex-shrink-0">
+      {isEditing ? (
+        <textarea
+          draggable={false}
+          ref={textareaRef}
+          className="flex-1 bg-white text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 px-2 border border-blue-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-medium"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onInput={handleInput}
+          onBlur={handleEditBlur}
+          onKeyDown={handleEditKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          rows={1}
+          placeholder="텍스트를 입력하세요..."
+        />
+      ) : (
+        <div
+          draggable={false}
+          onClick={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onStartEdit(item.id);
+          }}
+          onMouseDown={(e) => {
+            if (e.detail > 1) {
+              e.preventDefault();
+            }
+          }}
+          className={`flex-1 text-sm leading-relaxed py-0.5 px-2 rounded-md cursor-text transition-colors hover:bg-gray-100 ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
+        >
+          {item.text}
+        </div>
+      )}
+
+      <div draggable={false} className="flex gap-1 flex-shrink-0">
         <button
+          draggable={false}
           onClick={() => onMemoOpen(item.id)}
-          className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0"
+          className={`p-2 ${item.memo ? 'text-green-500' : 'text-gray-400'} hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0`}
           title="메모"
         >
-          <Icons.Edit size={18} />
+          <Icons.Memo size={18} />
         </button>
         <button
+          draggable={false}
           onClick={() => onDelete(item.id)}
           className="p-2 text-gray-400 hover:text-white hover:bg-red-600 rounded transition-all font-semibold flex-shrink-0"
           title="삭제"
@@ -87,6 +184,8 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [memoModalOpen, setMemoModalOpen] = useState(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const handleAddItem = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -154,6 +253,47 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
 
   const selectedItem = selectedMemoId ? items.find(item => item.id === selectedMemoId) : null;
 
+  // 드래그 앤 드롭 핸들러
+  const handleDragStart = (id: string, e: React.DragEvent) => {
+    setDraggedId(id);
+    e.dataTransfer!.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer!.dropEffect = 'move';
+  };
+
+  const handleDropOnItem = (targetId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      return;
+    }
+
+    const draggedIndex = items.findIndex(item => item.id === draggedId);
+    const targetIndex = items.findIndex(item => item.id === targetId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newItems = [...items];
+    const [removed] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, removed);
+
+    onChange(newItems);
+    setDraggedId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50 border-t border-gray-200">
       {/* Header / Input Area */}
@@ -178,7 +318,14 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
       </div>
 
       {/* List Area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
+      <div
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5"
+        onDragOver={handleDragOver}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center h-20 text-gray-400">
             <Icons.Check size={28} className="mb-2 opacity-30" />
@@ -193,6 +340,14 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
             onEdit={handleEdit}
             onDelete={requestDelete}
             onMemoOpen={handleMemoOpen}
+            isDragging={draggedId === item.id}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDrop={handleDropOnItem}
+            onDragEnd={handleDragEnd}
+            isEditing={editingItemId === item.id}
+            onStartEdit={setEditingItemId}
+            onEndEdit={() => setEditingItemId(null)}
           />
         ))}
       </div>

@@ -13,7 +13,7 @@ export interface DocumentData {
   checklist: ChecklistItem[];
   updatedAt: number;
   isTemplate: boolean; // simple flag to distinguish templates from instances
-  isDiary?: boolean; // flag to distinguish diary entries from regular documents
+  isDailyNote?: boolean; // flag to distinguish daily notes from regular tasks
 }
 
 export type ViewMode = 'EDITOR' | 'TEMPLATE_PREVIEW';
