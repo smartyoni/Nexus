@@ -423,8 +423,14 @@ const App: React.FC = () => {
       }
 
       if (activeDocument?.id === id) {
-        // If we deleted the current doc, reset to blank
-        setActiveDocument(createBlankDocument());
+        // 삭제된 문서가 현재 활성 문서인 경우
+        if (newDocs.length > 0) {
+          // 다른 문서가 있으면 첫 번째 문서 선택
+          setActiveDocument(newDocs[0]);
+        } else {
+          // 문서가 하나도 없으면 빈 에디터 표시
+          setActiveDocument(null);
+        }
       }
     } else {
       const id = deleteTarget.id;
