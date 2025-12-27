@@ -10,6 +10,17 @@ import { ConfirmModal } from './components/ui/ConfirmModal';
 
 const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
 
+// Helper function to get category label
+const getCategoryLabel = (category: 'task' | 'contract' | 'jangeeum' | 'dailyNote'): string => {
+  const labels = {
+    task: '업무',
+    contract: '계약',
+    jangeeum: '잔금',
+    dailyNote: '일상'
+  };
+  return labels[category];
+};
+
 const App: React.FC = () => {
   // 화면 크기 추적
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -56,6 +67,9 @@ const App: React.FC = () => {
       // 기존 localStorage 데이터를 Firestore로 이전 (최초 1회만)
       await migrationService.migrateToFirestore();
 
+      // 템플릿 카테고리 마이그레이션 (최초 1회만)
+      await migrationService.migrateTemplateCategories();
+
       // 데이터 로드
       const docs = await storageService.getDocuments();
       const tpls = await storageService.getTemplates();
@@ -78,10 +92,20 @@ const App: React.FC = () => {
 
   // --- Actions ---
 
-  // 1. Create New Blank Document
+  // 1. Create New Blank Document (Task)
   const createNewDocument = () => {
-    setActiveDocument(createBlankDocument());
-    setViewMode('EDITOR');
+    // Try to find task template
+    const taskTemplate = templates.find(t => t.templateCategory === 'task');
+
+    if (taskTemplate) {
+      createFromTemplate(taskTemplate);
+    } else {
+      const newDoc = createBlankDocument();
+      setActiveDocument(newDoc);
+      setDocuments(prev => [newDoc, ...prev]);
+      setViewMode('EDITOR');
+    }
+
     if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
   };
 
@@ -94,10 +118,15 @@ const App: React.FC = () => {
       // Deep copy checklist to avoid reference issues
       checklist: template.checklist.map(item => ({...item, id: generateId(), isChecked: false})),
       updatedAt: Date.now(),
-      isTemplate: false
+      isTemplate: false,
+      isDailyNote: template.templateCategory === 'dailyNote',
+      isContract: template.templateCategory === 'contract',
+      isJangeuum: template.templateCategory === 'jangeuum'
     };
     setActiveDocument(newDoc);
     setViewMode('EDITOR');
+    // 새로 생성된 문서를 documents 배열에 추가
+    setDocuments(prev => [newDoc, ...prev]);
   };
 
   // 2-1. Template Preview Mode (view and edit template, save as new document)
@@ -112,7 +141,10 @@ const App: React.FC = () => {
         isChecked: false
       })),
       updatedAt: Date.now(),
-      isTemplate: false
+      isTemplate: false,
+      isDailyNote: template.templateCategory === 'dailyNote',
+      isContract: template.templateCategory === 'contract',
+      isJangeuum: template.templateCategory === 'jangeuum'
     };
 
     setActiveDocument(previewDoc);
@@ -135,7 +167,8 @@ const App: React.FC = () => {
       content: '',
       checklist: [],
       updatedAt: Date.now(),
-      isTemplate: true
+      isTemplate: true,
+      templateCategory: 'task'
     };
     setActiveDocument(newTemplate);
     setViewMode('EDITOR');
@@ -144,16 +177,76 @@ const App: React.FC = () => {
 
   // 2-4. Create New Daily Note
   const handleCreateDailyNote = () => {
-    setActiveDocument({
-      id: generateId(),
-      title: '',
-      content: '',
-      checklist: [],
-      updatedAt: Date.now(),
-      isTemplate: false,
-      isDailyNote: true
-    });
-    setViewMode('EDITOR');
+    // Try to find daily note template
+    const dailyNoteTemplate = templates.find(t => t.templateCategory === 'dailyNote');
+
+    if (dailyNoteTemplate) {
+      createFromTemplate(dailyNoteTemplate);
+    } else {
+      const newDoc = {
+        id: generateId(),
+        title: '',
+        content: '',
+        checklist: [],
+        updatedAt: Date.now(),
+        isTemplate: false,
+        isDailyNote: true
+      };
+      setActiveDocument(newDoc);
+      setDocuments(prev => [newDoc, ...prev]);
+      setViewMode('EDITOR');
+    }
+
+    if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+  };
+
+  // 2-5. Create New Contract
+  const handleCreateContract = () => {
+    // Try to find contract template
+    const contractTemplate = templates.find(t => t.templateCategory === 'contract');
+
+    if (contractTemplate) {
+      createFromTemplate(contractTemplate);
+    } else {
+      const newDoc = {
+        id: generateId(),
+        title: '',
+        content: '',
+        checklist: [],
+        updatedAt: Date.now(),
+        isTemplate: false,
+        isContract: true
+      };
+      setActiveDocument(newDoc);
+      setDocuments(prev => [newDoc, ...prev]);
+      setViewMode('EDITOR');
+    }
+
+    if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+  };
+
+  // 2-6. Create New Jangeuum (Deposit)
+  const handleCreateJangeuum = () => {
+    // Try to find jangeuum template
+    const jangeumTemplate = templates.find(t => t.templateCategory === 'jangeeum');
+
+    if (jangeumTemplate) {
+      createFromTemplate(jangeumTemplate);
+    } else {
+      const newDoc = {
+        id: generateId(),
+        title: '',
+        content: '',
+        checklist: [],
+        updatedAt: Date.now(),
+        isTemplate: false,
+        isJangeuum: true
+      };
+      setActiveDocument(newDoc);
+      setDocuments(prev => [newDoc, ...prev]);
+      setViewMode('EDITOR');
+    }
+
     if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
   };
 
@@ -166,13 +259,49 @@ const App: React.FC = () => {
         data.title = '무제 템플릿';
       }
 
-      const exists = templates.find(t => t.id === data.id);
-      let newTemplates;
-      if (exists) {
-        newTemplates = templates.map(t => t.id === data.id ? { ...data, isTemplate: true } : t);
+      // Set default template category
+      const category = data.templateCategory || 'task';
+      data.templateCategory = category;
+
+      // Check if template with same category exists
+      const existingByCategoryId = templates.find(
+        t => t.templateCategory === category && t.id !== data.id
+      );
+
+      let newTemplates: DocumentData[];
+
+      if (existingByCategoryId) {
+        // Confirm replacement with user
+        const confirmReplace = window.confirm(
+          `이미 "${getCategoryLabel(category)}" 카테고리의 템플릿이 존재합니다.\n기존 템플릿을 교체하시겠습니까?`
+        );
+
+        if (!confirmReplace) {
+          return; // Cancel operation
+        }
+
+        // Delete existing template from storage
+        await storageService.deleteTemplate(existingByCategoryId.id);
+
+        // Remove old template and add new one
+        newTemplates = templates.filter(t => t.id !== existingByCategoryId.id);
+
+        const exists = newTemplates.find(t => t.id === data.id);
+        if (exists) {
+          newTemplates = newTemplates.map(t => t.id === data.id ? { ...data, isTemplate: true } : t);
+        } else {
+          newTemplates = [{ ...data, isTemplate: true }, ...newTemplates];
+        }
       } else {
-        newTemplates = [{ ...data, isTemplate: true }, ...templates];
+        // No conflicting template, proceed with save
+        const exists = templates.find(t => t.id === data.id);
+        if (exists) {
+          newTemplates = templates.map(t => t.id === data.id ? { ...data, isTemplate: true } : t);
+        } else {
+          newTemplates = [{ ...data, isTemplate: true }, ...templates];
+        }
       }
+
       setTemplates(newTemplates);
       await storageService.saveTemplates(newTemplates);
       setActiveDocument(data);
@@ -356,6 +485,14 @@ const App: React.FC = () => {
         }}
         onCreateDailyNote={() => {
           handleCreateDailyNote();
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+        }}
+        onCreateContract={() => {
+          handleCreateContract();
+          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+        }}
+        onCreateJangeuum={() => {
+          handleCreateJangeuum();
           if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
         onDeleteDocument={requestDeleteDocument}

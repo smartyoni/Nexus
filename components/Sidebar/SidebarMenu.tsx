@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DocumentData } from '../../types';
+import { DocumentData, generateId } from '../../types';
 import { Icons } from '../ui/Icon';
 
 interface SidebarMenuProps {
@@ -14,6 +14,8 @@ interface SidebarMenuProps {
   onCreateTemplate: () => void;
   onCreateNew: () => void;
   onCreateDailyNote: () => void;
+  onCreateContract: () => void;
+  onCreateJangeuum: () => void;
   onDeleteDocument: (id: string) => void;
   onDeleteTemplate: (id: string) => void;
   onEditTemplate: (tpl: DocumentData) => void;
@@ -37,6 +39,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onCreateTemplate,
   onCreateNew,
   onCreateDailyNote,
+  onCreateContract,
+  onCreateJangeuum,
   onDeleteDocument,
   onDeleteTemplate,
   onEditTemplate,
@@ -47,15 +51,18 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onReorderDocuments,
   onReorderTemplates
 }) => {
-  const [activeTab, setActiveTab] = useState<'tasks' | 'dailyNotes' | 'templates'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'contracts' | 'jangeuums' | 'dailyNotes'>('tasks');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [showTemplateList, setShowTemplateList] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Separate tasks and daily notes
-  const tasks = documents.filter(d => !d.isTemplate && !d.isDailyNote);
+  // Separate tasks, contracts, jangeuums, and daily notes
+  const tasks = documents.filter(d => !d.isTemplate && !d.isDailyNote && !d.isContract && !d.isJangeuum);
+  const contracts = documents.filter(d => !d.isTemplate && d.isContract);
+  const jangeuums = documents.filter(d => !d.isTemplate && d.isJangeuum);
   const dailyNotes = documents.filter(d => !d.isTemplate && d.isDailyNote);
 
   if (!isMobileOpen && !isAlwaysOpen) return null;
@@ -81,7 +88,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       return;
     }
 
-    const currentList = activeTab === 'tasks' ? tasks : activeTab === 'dailyNotes' ? dailyNotes : templates;
+    const currentList = activeTab === 'tasks' ? tasks : activeTab === 'contracts' ? contracts : activeTab === 'jangeuums' ? jangeuums : activeTab === 'dailyNotes' ? dailyNotes : templates;
     const draggedIndex = currentList.findIndex(d => d.id === draggedId);
     const targetIndex = currentList.findIndex(d => d.id === targetDoc.id);
 
@@ -94,22 +101,38 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
     const [removed] = newList.splice(draggedIndex, 1);
     newList.splice(targetIndex, 0, removed);
 
-    if (activeTab === 'tasks' || activeTab === 'dailyNotes') {
+    if (activeTab === 'tasks' || activeTab === 'contracts' || activeTab === 'jangeuums' || activeTab === 'dailyNotes') {
       const updatedDocs = documents.map(d => {
         const updatedItem = newList.find(item => item.id === d.id);
         return updatedItem || d;
       });
 
-      const taskIndices = new Map(newList.filter(d => !d.isDailyNote).map((t, i) => [t.id, i]));
+      // Create index maps for each category
+      const taskIndices = new Map(newList.filter(d => !d.isDailyNote && !d.isContract && !d.isJangeuum).map((t, i) => [t.id, i]));
+      const contractIndices = new Map(newList.filter(d => d.isContract).map((c, i) => [c.id, i]));
+      const jangeumIndices = new Map(newList.filter(d => d.isJangeuum).map((j, i) => [j.id, i]));
       const dailyIndices = new Map(newList.filter(d => d.isDailyNote).map((d, i) => [d.id, i]));
 
       const sortedDocs = updatedDocs.sort((a, b) => {
-        const aIsTask = !a.isDailyNote;
-        const bIsTask = !b.isDailyNote;
-        if (aIsTask !== bIsTask) return aIsTask ? -1 : 1;
+        // Determine category priority: tasks -> contracts -> jangeuums -> dailyNotes
+        const getCategory = (d: DocumentData) => {
+          if (d.isDailyNote) return 3;
+          if (d.isJangeuum) return 2;
+          if (d.isContract) return 1;
+          return 0; // tasks
+        };
 
-        if (aIsTask) {
+        const aCat = getCategory(a);
+        const bCat = getCategory(b);
+        if (aCat !== bCat) return aCat - bCat;
+
+        // Within same category, maintain order
+        if (aCat === 0) {
           return (taskIndices.get(a.id) ?? 0) - (taskIndices.get(b.id) ?? 0);
+        } else if (aCat === 1) {
+          return (contractIndices.get(a.id) ?? 0) - (contractIndices.get(b.id) ?? 0);
+        } else if (aCat === 2) {
+          return (jangeumIndices.get(a.id) ?? 0) - (jangeumIndices.get(b.id) ?? 0);
         } else {
           return (dailyIndices.get(a.id) ?? 0) - (dailyIndices.get(b.id) ?? 0);
         }
@@ -197,6 +220,81 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
     </div>
   );
 
+  // 템플릿 카드 렌더링 헬퍼 함수
+  const renderTemplateCard = (category: 'task' | 'contract' | 'jangeeum' | 'dailyNote') => {
+    const template = templates.find(t => t.templateCategory === category);
+
+    if (!template) {
+      return (
+        <div className="p-3 text-center">
+          <p className="text-sm text-gray-400 mb-2">템플릿이 설정되지 않았습니다</p>
+          <button
+            onClick={() => {
+              const newTemplate: DocumentData = {
+                id: generateId(),
+                title: '',
+                content: '',
+                checklist: [],
+                updatedAt: Date.now(),
+                isTemplate: true,
+                templateCategory: category
+              };
+              onEditTemplate(newTemplate);
+              onClose();
+            }}
+            className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+          >
+            + 템플릿 생성
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-3">
+        <div className="flex items-center justify-between">
+          <div
+            onClick={() => { onPreviewTemplate(template); onClose(); }}
+            className="flex-1 cursor-pointer flex items-center gap-2 min-w-0"
+          >
+            <Icons.Copy size={16} className="text-blue-500 flex-shrink-0" />
+            <span className="font-medium text-gray-800 truncate">{template.title || '(제목 없음)'}</span>
+          </div>
+
+          <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditTemplate(template);
+                onClose();
+              }}
+              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              title="원본 수정"
+            >
+              <Icons.Edit size={14} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteTemplate(template.id);
+              }}
+              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+              title="삭제"
+            >
+              <Icons.Trash size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Template Info Preview */}
+        <div className="mt-2 text-xs text-gray-500">
+          <p className="truncate">{template.content ? template.content.substring(0, 50) + '...' : '내용 없음'}</p>
+          <p className="mt-1">체크리스트: {template.checklist.length}개</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`
       ${isAlwaysOpen ? 'relative flex-shrink-0 w-[250px] h-full' : 'fixed inset-0 z-50 flex'}
@@ -214,24 +312,33 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       {/* Sidebar Content */}
       <div className={`
         relative flex flex-col h-full bg-white shadow-xl
-        ${!isAlwaysOpen ? 'w-[85%] max-w-sm' : 'w-full'}
+        ${!isAlwaysOpen ? 'w-[95%]' : 'w-full'}
       `}>
         
-        {/* Header with Menu, Backup, Restore, and Close */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
-          <h2 className="text-lg font-bold text-gray-800">메뉴</h2>
+        {/* Header with Menu and Controls */}
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50 gap-2">
+          <h2 className="text-lg font-bold text-gray-800 flex-shrink-0">메뉴</h2>
 
-          {/* Backup & Restore buttons + Close */}
-          <div className="flex items-center gap-1.5">
+          {/* Template, Backup & Restore buttons + Close (Right) */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => setShowTemplateList(!showTemplateList)}
+              className="flex items-center justify-center px-2.5 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+              title="템플릿"
+            >
+              <span>템플릿({templates.length})</span>
+            </button>
             <button
               onClick={onBackup}
               className="flex items-center justify-center px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+              title="백업"
             >
               <span>백업</span>
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center justify-center px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
+              title="복원"
             >
               <span>복원</span>
             </button>
@@ -249,53 +356,131 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               }}
               className="hidden"
             />
-            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0 ml-0.5">
+            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0">
               <Icons.Close size={16} />
             </button>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="p-4 grid grid-cols-3 gap-2 border-b">
+        {/* Template List Panel - Collapsed by default */}
+        {showTemplateList && (
+          <div className="bg-white border-b p-2 space-y-2">
+            {templates.length === 0 ? (
+              <div className="text-center py-3 space-y-2">
+                <p className="text-sm text-gray-400">등록된 템플릿이 없습니다</p>
+                <button
+                  onClick={() => { onCreateTemplate(); onClose(); }}
+                  className="w-full px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+                >
+                  + 새 템플릿 추가
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {templates.map(template => (
+                  <div key={template.id} className="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <div
+                        className="flex-1 cursor-pointer flex items-center gap-2 min-w-0"
+                        onClick={() => { onPreviewTemplate(template); onClose(); }}
+                      >
+                        <Icons.Copy size={14} className="text-green-600 flex-shrink-0" />
+                        <span className="text-xs font-medium text-gray-800 truncate">{template.title || '(제목 없음)'}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditTemplate(template);
+                            onClose();
+                          }}
+                          className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                          title="편집"
+                        >
+                          <Icons.Edit size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteTemplate(template.id);
+                          }}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                          title="삭제"
+                        >
+                          <Icons.Trash size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => { onCreateTemplate(); onClose(); }}
+                  className="w-full px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+                >
+                  + 새 템플릿 추가
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons Grid */}
+        <div className="grid grid-cols-4 gap-2 px-2 py-2 bg-gray-50 border-b">
           <button
             onClick={() => { onCreateNew(); onClose(); }}
-            className="flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
+            title="새업무"
           >
-            <span className="text-xs font-medium">새업무</span>
+            <span>새업무</span>
+          </button>
+          <button
+            onClick={() => { onCreateContract(); onClose(); }}
+            className="flex items-center justify-center px-2 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
+            title="새계약"
+          >
+            <span>새계약</span>
+          </button>
+          <button
+            onClick={() => { onCreateJangeuum(); onClose(); }}
+            className="flex items-center justify-center px-2 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium"
+            title="새잔금"
+          >
+            <span>새잔금</span>
           </button>
           <button
             onClick={() => { onCreateDailyNote(); onClose(); }}
-            className="flex items-center justify-center p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="flex items-center justify-center px-2 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+            title="새일상"
           >
-            <span className="text-xs font-medium">새일상</span>
-          </button>
-          <button
-             onClick={() => { onCreateTemplate(); onClose(); }}
-             className="flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <span className="text-xs font-medium">템플릿</span>
+            <span>새일상</span>
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b overflow-x-auto">
           <button
-            className={`flex-1 p-3 text-sm font-medium ${activeTab === 'tasks' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+            className={`flex-1 min-w-max px-2 py-3 text-xs font-medium ${activeTab === 'tasks' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('tasks')}
           >
-            업무 ({tasks.length})
+            업무({tasks.length})
           </button>
           <button
-            className={`flex-1 p-3 text-sm font-medium ${activeTab === 'dailyNotes' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+            className={`flex-1 min-w-max px-2 py-3 text-xs font-medium ${activeTab === 'contracts' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('contracts')}
+          >
+            계약({contracts.length})
+          </button>
+          <button
+            className={`flex-1 min-w-max px-2 py-3 text-xs font-medium ${activeTab === 'jangeuums' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('jangeuums')}
+          >
+            잔금({jangeuums.length})
+          </button>
+          <button
+            className={`flex-1 min-w-max px-2 py-3 text-xs font-medium ${activeTab === 'dailyNotes' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('dailyNotes')}
           >
-            일상 ({dailyNotes.length})
-          </button>
-          <button
-            className={`flex-1 p-3 text-sm font-medium ${activeTab === 'templates' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('templates')}
-          >
-            템플릿 ({templates.length})
+            일상({dailyNotes.length})
           </button>
         </div>
 
@@ -308,6 +493,20 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               )}
               {tasks.map(doc => renderDocCard(doc))}
             </div>
+          ) : activeTab === 'contracts' ? (
+            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              {contracts.length === 0 && (
+                <div className="text-center py-10 text-gray-400 text-sm">저장된 계약이 없습니다.</div>
+              )}
+              {contracts.map(doc => renderDocCard(doc))}
+            </div>
+          ) : activeTab === 'jangeuums' ? (
+            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              {jangeuums.length === 0 && (
+                <div className="text-center py-10 text-gray-400 text-sm">저장된 잔금이 없습니다.</div>
+              )}
+              {jangeuums.map(doc => renderDocCard(doc))}
+            </div>
           ) : activeTab === 'dailyNotes' ? (
             <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
               {dailyNotes.length === 0 && (
@@ -315,75 +514,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               )}
               {dailyNotes.map(doc => renderDocCard(doc))}
             </div>
-          ) : (
-            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
-               {templates.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">
-                  등록된 템플릿이 없습니다.<br/>'템플릿 생성' 버튼을 눌러 생성하세요.
-                </div>
-              )}
-              {templates.map(tpl => (
-                <div
-                  key={tpl.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, tpl.id)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDropOnDocument(e, tpl)}
-                  onDragEnd={() => setDraggedId(null)}
-                  className={`bg-white p-3 rounded-lg border border-dashed border-gray-300 hover:border-blue-400 transition-all relative cursor-move ${draggedId === tpl.id ? 'opacity-50' : ''}`}
-                >
-                  {/* Main clickable area - template preview */}
-                  <div
-                    onClick={() => { onPreviewTemplate(tpl); onClose(); }}
-                    className="cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icons.Copy size={16} className="text-blue-500" />
-                      <span className="font-semibold text-gray-800">{tpl.title || '(제목 없음)'}</span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuId(openMenuId === tpl.id ? null : tpl.id);
-                      }}
-                      className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                    >
-                      <Icons.More size={16} />
-                    </button>
-                  </div>
-
-                  {/* Context Menu */}
-                  {openMenuId === tpl.id && (
-                    <div className="absolute right-2 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[150px]">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditTemplate(tpl);
-                          setOpenMenuId(null);
-                          onClose();
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-2 border-b border-gray-100"
-                      >
-                        <Icons.Edit size={14} />
-                        <span>원본 수정</span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteTemplate(tpl.id);
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                      >
-                        <Icons.Trash size={14} />
-                        <span>삭제</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

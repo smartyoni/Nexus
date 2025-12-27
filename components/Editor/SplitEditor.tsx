@@ -31,34 +31,56 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   const [content, setContent] = useState(data.content);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
   const [isPreview, setIsPreview] = useState(false);
+  const [templateCategory, setTemplateCategory] = useState<'task' | 'contract' | 'jangeuum' | 'dailyNote'>(
+    data.templateCategory || 'task'
+  );
 
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setTitle(data.title);
     setContent(data.content);
     setChecklist(data.checklist);
+    setTemplateCategory(data.templateCategory || 'task');
   }, [data.id]);
 
   // Auto-save with debounce when title, content, or checklist changes
   useEffect(() => {
     const timer = setTimeout(() => {
       // Only save if there are actual changes
-      if (title !== data.title || content !== data.content || JSON.stringify(checklist) !== JSON.stringify(data.checklist)) {
+      if (title !== data.title || content !== data.content || JSON.stringify(checklist) !== JSON.stringify(data.checklist) || templateCategory !== data.templateCategory) {
         onSave({
           ...data,
           title,
           content,
           checklist,
+          templateCategory: isTemplateMode ? templateCategory : data.templateCategory,
           updatedAt: Date.now()
         });
       }
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [title, content, checklist, data, onSave]);
+  }, [title, content, checklist, templateCategory, data, onSave, isTemplateMode]);
 
   return (
     <div className="flex flex-col h-full bg-white">
+      {/* Template Category Selector - Only in Template Mode */}
+      {isTemplateMode && (
+        <div className="px-3 py-2 bg-blue-50 border-b border-blue-200 flex-none">
+          <label className="block text-xs font-medium text-gray-700 mb-1">생성될 문서 카테고리</label>
+          <select
+            value={templateCategory}
+            onChange={(e) => setTemplateCategory(e.target.value as any)}
+            className="w-full px-2 py-1.5 text-sm border border-blue-300 rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="task">업무</option>
+            <option value="contract">계약</option>
+            <option value="jangeuum">잔금</option>
+            <option value="dailyNote">일상</option>
+          </select>
+        </div>
+      )}
+
       {/* Top Bar for Editor - Compact for Sidebar */}
       <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
         <div className="flex items-center gap-2 flex-1 mr-2 min-w-0">
