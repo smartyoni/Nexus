@@ -424,37 +424,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
           </div>
         )}
 
-        {/* Action Buttons Grid */}
-        <div className="grid grid-cols-4 gap-2 px-2 py-2 bg-gray-50 border-b">
-          <button
-            onClick={() => { onCreateNew(); onClose(); }}
-            className="flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
-            title="새업무"
-          >
-            <span>새업무</span>
-          </button>
-          <button
-            onClick={() => { onCreateContract(); onClose(); }}
-            className="flex items-center justify-center px-2 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
-            title="새계약"
-          >
-            <span>새계약</span>
-          </button>
-          <button
-            onClick={() => { onCreateJangeuum(); onClose(); }}
-            className="flex items-center justify-center px-2 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium"
-            title="새잔금"
-          >
-            <span>새잔금</span>
-          </button>
-          <button
-            onClick={() => { onCreateDailyNote(); onClose(); }}
-            className="flex items-center justify-center px-2 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
-            title="새일상"
-          >
-            <span>새일상</span>
-          </button>
-        </div>
 
         {/* Tabs */}
         <div className="flex border-b overflow-x-auto">
@@ -487,32 +456,68 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
         {/* List Content */}
         <div className="flex-1 overflow-y-auto p-2 bg-gray-50/50 relative">
           {activeTab === 'tasks' ? (
-            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
-              {tasks.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">저장된 업무가 없습니다.</div>
-              )}
-              {tasks.map(doc => renderDocCard(doc))}
+            <div className="space-y-2 flex flex-col h-full" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              <div className="flex-1">
+                {tasks.length === 0 && (
+                  <div className="text-center py-10 text-gray-400 text-sm">저장된 업무가 없습니다.</div>
+                )}
+                {tasks.map(doc => renderDocCard(doc))}
+              </div>
+              <button
+                onClick={() => { onCreateNew(); onClose(); }}
+                className="mt-2 w-full flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
+                title="새업무"
+              >
+                <span>+ 새업무</span>
+              </button>
             </div>
           ) : activeTab === 'contracts' ? (
-            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
-              {contracts.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">저장된 계약이 없습니다.</div>
-              )}
-              {contracts.map(doc => renderDocCard(doc))}
+            <div className="space-y-2 flex flex-col h-full" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              <div className="flex-1">
+                {contracts.length === 0 && (
+                  <div className="text-center py-10 text-gray-400 text-sm">저장된 계약이 없습니다.</div>
+                )}
+                {contracts.map(doc => renderDocCard(doc))}
+              </div>
+              <button
+                onClick={() => { onCreateContract(); onClose(); }}
+                className="mt-2 w-full flex items-center justify-center px-2 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
+                title="새계약"
+              >
+                <span>+ 새계약</span>
+              </button>
             </div>
           ) : activeTab === 'jangeuums' ? (
-            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
-              {jangeuums.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">저장된 잔금이 없습니다.</div>
-              )}
-              {jangeuums.map(doc => renderDocCard(doc))}
+            <div className="space-y-2 flex flex-col h-full" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              <div className="flex-1">
+                {jangeuums.length === 0 && (
+                  <div className="text-center py-10 text-gray-400 text-sm">저장된 잔금이 없습니다.</div>
+                )}
+                {jangeuums.map(doc => renderDocCard(doc))}
+              </div>
+              <button
+                onClick={() => { onCreateJangeuum(); onClose(); }}
+                className="mt-2 w-full flex items-center justify-center px-2 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium"
+                title="새잔금"
+              >
+                <span>+ 새잔금</span>
+              </button>
             </div>
           ) : activeTab === 'dailyNotes' ? (
-            <div className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
-              {dailyNotes.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">저장된 일상이 없습니다.</div>
-              )}
-              {dailyNotes.map(doc => renderDocCard(doc))}
+            <div className="space-y-2 flex flex-col h-full" onDragOver={handleDragOver} onDrop={(e) => {e.preventDefault(); e.stopPropagation();}}>
+              <div className="flex-1">
+                {dailyNotes.length === 0 && (
+                  <div className="text-center py-10 text-gray-400 text-sm">저장된 일상이 없습니다.</div>
+                )}
+                {dailyNotes.map(doc => renderDocCard(doc))}
+              </div>
+              <button
+                onClick={() => { onCreateDailyNote(); onClose(); }}
+                className="mt-2 w-full flex items-center justify-center px-2 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+                title="새일상"
+              >
+                <span>+ 새일상</span>
+              </button>
             </div>
           ) : null}
         </div>
