@@ -103,7 +103,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
             className={`flex-1 p-3 text-sm font-medium ${activeTab === 'templates' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('templates')}
           >
-            템플릿
+            템플릿 ({templates.length})
           </button>
         </div>
 
