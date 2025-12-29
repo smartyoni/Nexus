@@ -146,7 +146,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                       onClick={() => { onSelectDocument(doc); onClose(); }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(doc.updatedAt)}</p>
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
