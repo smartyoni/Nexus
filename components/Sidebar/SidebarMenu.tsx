@@ -20,6 +20,7 @@ interface SidebarMenuProps {
   onRestore: (file: File) => void;
   onSetFavoriteDocument: (id: string) => void;
   onClearFavoriteDocument: () => void;
+  onReorderDocuments: (reorderedDocs: DocumentData[]) => void;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -39,7 +40,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onBackup,
   onRestore,
   onSetFavoriteDocument,
-  onClearFavoriteDocument
+  onClearFavoriteDocument,
+  onReorderDocuments
 }) => {
   const [activeTab, setActiveTab] = useState<'docs' | 'templates'>('docs');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -147,12 +149,47 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                     >
                       <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Icons.Trash size={16} />
-                    </button>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const currentIndex = documents.indexOf(doc);
+                          if (currentIndex > 0) {
+                            const newDocs = [...documents];
+                            [newDocs[currentIndex], newDocs[currentIndex - 1]] = [newDocs[currentIndex - 1], newDocs[currentIndex]];
+                            onReorderDocuments(newDocs);
+                          }
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={documents.indexOf(doc) === 0}
+                        title="위로 이동"
+                      >
+                        <Icons.ChevronUp size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const currentIndex = documents.indexOf(doc);
+                          if (currentIndex < documents.length - 1) {
+                            const newDocs = [...documents];
+                            [newDocs[currentIndex], newDocs[currentIndex + 1]] = [newDocs[currentIndex + 1], newDocs[currentIndex]];
+                            onReorderDocuments(newDocs);
+                          }
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={documents.indexOf(doc) === documents.length - 1}
+                        title="아래로 이동"
+                      >
+                        <Icons.ChevronDown size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="삭제"
+                      >
+                        <Icons.Trash size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Context Menu */}

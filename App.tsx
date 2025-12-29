@@ -306,6 +306,12 @@ const App: React.FC = () => {
     setFavoriteDocId(null);
   };
 
+  // --- Reorder Documents ---
+  const handleReorderDocuments = async (reorderedDocs: DocumentData[]) => {
+    setDocuments(reorderedDocs);
+    await storageService.saveDocuments(reorderedDocs);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
@@ -335,6 +341,7 @@ const App: React.FC = () => {
         onRestore={handleRestore}
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}
+        onReorderDocuments={handleReorderDocuments}
       />
 
       {/* Main Content Area */}
