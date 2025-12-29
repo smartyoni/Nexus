@@ -11,9 +11,13 @@ interface ChecklistItemComponentProps {
   onEdit: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   onMemoOpen: (id: string) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
-const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen }) => {
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen, onMoveUp, onMoveDown, isFirst, isLast }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -56,6 +60,22 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
       />
 
       <div className="flex gap-1 flex-shrink-0">
+        <button
+          onClick={() => onMoveUp?.()}
+          disabled={isFirst}
+          className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+          title="위로 이동"
+        >
+          <Icons.ChevronUp size={18} />
+        </button>
+        <button
+          onClick={() => onMoveDown?.()}
+          disabled={isLast}
+          className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+          title="아래로 이동"
+        >
+          <Icons.ChevronDown size={18} />
+        </button>
         <button
           onClick={() => onMemoOpen(item.id)}
           className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0"
@@ -152,6 +172,24 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
     setMemoModalOpen(false);
   };
 
+  const handleMoveUp = (id: string) => {
+    const index = items.findIndex(item => item.id === id);
+    if (index > 0) {
+      const newItems = [...items];
+      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+      onChange(newItems);
+    }
+  };
+
+  const handleMoveDown = (id: string) => {
+    const index = items.findIndex(item => item.id === id);
+    if (index < items.length - 1) {
+      const newItems = [...items];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      onChange(newItems);
+    }
+  };
+
   const selectedItem = selectedMemoId ? items.find(item => item.id === selectedMemoId) : null;
 
   return (
@@ -185,7 +223,7 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
             <span className="text-sm">항목 없음</span>
           </div>
         )}
-        {items.map((item) => (
+        {items.map((item, index) => (
           <ChecklistItemComponent
             key={item.id}
             item={item}
@@ -193,6 +231,10 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
             onEdit={handleEdit}
             onDelete={requestDelete}
             onMemoOpen={handleMemoOpen}
+            onMoveUp={() => handleMoveUp(item.id)}
+            onMoveDown={() => handleMoveDown(item.id)}
+            isFirst={index === 0}
+            isLast={index === items.length - 1}
           />
         ))}
       </div>
