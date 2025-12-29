@@ -69,61 +69,26 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       {/* Sidebar Content */}
       <div className={`
         relative flex flex-col h-full bg-white shadow-xl
-        ${!isAlwaysOpen ? 'w-[85%] max-w-sm' : 'w-full'}
+        ${!isAlwaysOpen ? 'w-[90%] max-w-none' : 'w-full'}
       `}>
         
         {/* Header with Menu, Backup, Restore, and Close */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
           <h2 className="text-lg font-bold text-gray-800">메뉴</h2>
 
-          {/* Backup & Restore buttons + Close */}
+          {/* Refresh button + Close */}
           <div className="flex items-center gap-1.5">
             <button
-              onClick={onBackup}
-              className="flex items-center justify-center px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+              onClick={() => window.location.reload()}
+              className="flex items-center justify-center px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs font-medium"
+              title="새로고침"
             >
-              <span>백업</span>
+              <Icons.Refresh size={14} />
             </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-xs font-medium"
-            >
-              <span>복원</span>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  onRestore(file);
-                  // Reset file input
-                  e.target.value = '';
-                }
-              }}
-              className="hidden"
-            />
-            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0 ml-0.5">
+            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0">
               <Icons.Close size={16} />
             </button>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="p-4 grid grid-cols-2 gap-2 border-b">
-          <button
-            onClick={() => { onCreateNew(); onClose(); }}
-            className="flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <span className="text-xs font-medium">새문서추가</span>
-          </button>
-          <button
-             onClick={() => { onCreateTemplate(); onClose(); }}
-             className="flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <span className="text-xs font-medium">템플릿추가</span>
-          </button>
         </div>
 
         {/* Tabs */}
@@ -132,13 +97,13 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
             className={`flex-1 p-3 text-sm font-medium ${activeTab === 'docs' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('docs')}
           >
-            문서목록 ({documents.length})
+            문서 ({documents.length})
           </button>
           <button
             className={`flex-1 p-3 text-sm font-medium ${activeTab === 'templates' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('templates')}
           >
-            템플릿목록
+            템플릿
           </button>
         </div>
 
@@ -217,6 +182,15 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                   )}
                 </div>
               ))}
+
+              {/* 새문서추가 버튼 */}
+              <button
+                onClick={() => { onCreateNew(); onClose(); }}
+                className="w-full flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mt-2"
+              >
+                <Icons.Plus size={16} className="mr-1" />
+                <span className="text-xs font-medium">새문서추가</span>
+              </button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -280,6 +254,15 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                   )}
                 </div>
               ))}
+
+              {/* 템플릿추가 버튼 */}
+              <button
+                onClick={() => { onCreateTemplate(); onClose(); }}
+                className="w-full flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mt-2"
+              >
+                <Icons.Plus size={16} className="mr-1" />
+                <span className="text-xs font-medium">템플릿추가</span>
+              </button>
             </div>
           )}
         </div>
