@@ -78,10 +78,14 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         </button>
         <button
           onClick={() => onMemoOpen(item.id)}
-          className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex-shrink-0"
+          className={`p-2 rounded transition-all flex-shrink-0 ${
+            item.memo
+              ? 'text-green-500 hover:text-green-600 hover:bg-green-50'
+              : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'
+          }`}
           title="메모"
         >
-          <Icons.Edit size={18} />
+          <Icons.Note size={18} />
         </button>
         <button
           onClick={() => onDelete(item.id)}

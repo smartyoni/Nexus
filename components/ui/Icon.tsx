@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Menu, X, Plus, Trash2, CheckSquare, FileText,
   Save, Edit3, ArrowLeft, Copy, MoreVertical, RotateCw,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, StickyNote
 } from 'lucide-react';
 
 export const Icons = {
@@ -19,5 +19,6 @@ export const Icons = {
   More: MoreVertical,
   Refresh: RotateCw,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Note: StickyNote
 };
