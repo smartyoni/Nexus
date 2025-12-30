@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from './Icon';
+import { ConfirmModal } from './ConfirmModal';
 
 interface MemoModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const MemoModal: React.FC<MemoModalProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(!memo);
   const [memoText, setMemoText] = useState(memo);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     setMemoText(memo);
@@ -34,10 +36,13 @@ export const MemoModal: React.FC<MemoModalProps> = ({
   };
 
   const handleDelete = () => {
-    if (confirm('메모를 삭제하시겠습니까?')) {
-      onDelete();
-      setIsEditing(false);
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete();
+    setIsEditing(false);
+    setShowDeleteConfirm(false);
   };
 
   const handleDoubleClick = () => {
@@ -123,6 +128,15 @@ export const MemoModal: React.FC<MemoModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="메모 삭제"
+        message="메모를 영구적으로 삭제하시겠습니까?"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 };
