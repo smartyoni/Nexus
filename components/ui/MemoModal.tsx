@@ -50,7 +50,7 @@ export const MemoModal: React.FC<MemoModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-[80%] h-[80vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-lg w-[90%] h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-800">메모</h2>
