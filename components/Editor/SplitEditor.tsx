@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ChecklistItem, DocumentData } from '../../types';
 import { ChecklistManager } from '../Checklist/ChecklistManager';
 import { Icons } from '../ui/Icon';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface SplitEditorProps {
   data: DocumentData;
@@ -31,6 +32,9 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
   const [isDirty, setIsDirty] = useState(false);
 
+  // Save confirmation modal state
+  const [saveConfirmAction, setSaveConfirmAction] = useState<'refresh' | 'cancel' | null>(null);
+
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setTitle(data.title);
@@ -52,6 +56,46 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
   // Helper to detect changes
   const markDirty = () => setIsDirty(true);
+
+  // Handle refresh button - check if there are unsaved changes
+  const handleRefreshClick = () => {
+    if (isDirty) {
+      setSaveConfirmAction('refresh');
+    } else {
+      window.location.reload();
+    }
+  };
+
+  // Handle cancel/back button - check if there are unsaved changes
+  const handleCancelClick = () => {
+    if (isDirty && onCancel) {
+      setSaveConfirmAction('cancel');
+    } else if (onCancel) {
+      onCancel();
+    }
+  };
+
+  // Confirm save and then execute the action
+  const handleConfirmSave = () => {
+    handleSave();
+    if (saveConfirmAction === 'refresh') {
+      setTimeout(() => window.location.reload(), 100);
+    } else if (saveConfirmAction === 'cancel' && onCancel) {
+      setTimeout(() => onCancel(), 100);
+    }
+    setSaveConfirmAction(null);
+  };
+
+  // Skip save and execute the action without saving
+  const handleSkipSave = () => {
+    setIsDirty(false);
+    if (saveConfirmAction === 'refresh') {
+      window.location.reload();
+    } else if (saveConfirmAction === 'cancel' && onCancel) {
+      onCancel();
+    }
+    setSaveConfirmAction(null);
+  };
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -92,7 +136,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
           <Icons.Save size={18} />
         </button>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleRefreshClick}
           className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
           title="새로고침"
         >
@@ -100,7 +144,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         </button>
         {onCancel && (
           <button
-            onClick={onCancel}
+            onClick={handleCancelClick}
             className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
             title="뒤로가기"
           >
@@ -111,7 +155,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
       {/* Split Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        
+
         {/* TOP HALF: Text Content */}
         <div className="flex-1 flex flex-col border-b border-gray-200 relative group min-h-0 basis-1/3">
           <textarea
@@ -124,13 +168,25 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
         {/* BOTTOM HALF: Checklist */}
         <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0 basis-2/3">
-          <ChecklistManager 
-            items={checklist} 
-            onChange={(items) => { setChecklist(items); markDirty(); }} 
+          <ChecklistManager
+            items={checklist}
+            onChange={(items) => { setChecklist(items); markDirty(); }}
           />
         </div>
 
       </div>
+
+      {/* Save Confirmation Modal */}
+      <ConfirmModal
+        isOpen={saveConfirmAction !== null}
+        title="저장하시겠습니까?"
+        message="변경사항을 저장하지 않으면 손실됩니다."
+        onConfirm={handleConfirmSave}
+        onClose={handleSkipSave}
+        confirmText="저장하기"
+        cancelText="저장하지 않음"
+        isDanger={false}
+      />
     </div>
   );
 };
