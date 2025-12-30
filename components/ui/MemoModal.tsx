@@ -40,13 +40,19 @@ export const MemoModal: React.FC<MemoModalProps> = ({
     }
   };
 
+  const handleDoubleClick = () => {
+    if (memoText && !isEditing) {
+      setIsEditing(true);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg w-[80%] max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-800">메모</h2>
           <button
             onClick={onClose}
@@ -57,24 +63,28 @@ export const MemoModal: React.FC<MemoModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="flex-1 p-4 overflow-hidden flex flex-col min-h-0">
           {isEditing ? (
             <textarea
               value={memoText}
               onChange={(e) => setMemoText(e.target.value)}
               placeholder="메모를 입력하세요..."
-              className="w-full h-40 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="flex-1 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               autoFocus
             />
           ) : (
-            <div className="p-3 bg-gray-50 rounded-md min-h-40 max-h-96 overflow-y-auto whitespace-pre-wrap text-gray-700">
+            <div
+              onDoubleClick={handleDoubleClick}
+              className="flex-1 p-3 bg-gray-50 rounded-md overflow-y-auto whitespace-pre-wrap text-gray-700 cursor-text hover:bg-gray-100 transition-colors"
+              title="더블클릭하여 편집"
+            >
               {memoText || '메모가 없습니다.'}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 p-4 border-t border-gray-200">
+        <div className="flex gap-2 p-4 border-t border-gray-200 flex-shrink-0">
           {isEditing ? (
             <>
               <button
