@@ -49,10 +49,10 @@ export const MemoModal: React.FC<MemoModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-      <div className="bg-white rounded-lg shadow-lg w-[90%] h-[90vh] flex flex-col pointer-events-auto">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-lg w-[90%] h-[90vh] flex flex-col pointer-events-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0 bg-blue-100">
           <h2 className="text-lg font-semibold text-gray-800">메모</h2>
           <button
             onClick={onClose}
@@ -113,12 +113,6 @@ export const MemoModal: React.FC<MemoModalProps> = ({
                   삭제
                 </button>
               )}
-              <button
-                onClick={handleEdit}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                수정
-              </button>
               <button
                 onClick={onClose}
                 className="flex-1 px-3 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
