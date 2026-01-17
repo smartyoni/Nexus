@@ -24,7 +24,9 @@
       "Bash(npm run deploy:*)",
       "Bash(firebase use:*)",
       "Bash(npm run deploy:all:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(gh repo view:*)",
+      "Bash(npm run deploy:github-pages:*)"
     ]
   }
 }

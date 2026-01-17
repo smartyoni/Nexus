@@ -24,10 +24,16 @@ interface ChecklistItemComponentProps {
   isDragging: boolean;
   isDraggedOver: boolean;
   hasMoveTargets: boolean;
+  itemIndex: number;
+  totalItems: number;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
 }
 
-const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen, onMoveClick, onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, isDragging, isDraggedOver, hasMoveTargets }) => {
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen, onMoveClick, onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, isDragging, isDraggedOver, hasMoveTargets, itemIndex, totalItems, onMoveUp, onMoveDown }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Adjust height on initial render and when text changes from props
@@ -36,6 +42,19 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [item.text]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [menuOpen]);
 
   const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     // Adjust height while typing
@@ -89,7 +108,7 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         rows={1} // Keep rows={1} to ensure it starts small and grows
       />
 
-      <div className="flex gap-1 flex-shrink-0">
+      <div className="flex gap-1 flex-shrink-0 relative" ref={menuRef}>
         <button
           onClick={() => onMemoOpen(item.id)}
           className={`p-2 rounded transition-all flex-shrink-0 ${
@@ -102,24 +121,65 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
           <Icons.Note size={18} />
         </button>
         <button
-          onClick={() => onMoveClick(item.id)}
-          disabled={!hasMoveTargets}
-          className={`p-2 rounded transition-all flex-shrink-0 ${
-            hasMoveTargets
-              ? 'text-gray-400 hover:text-purple-500 hover:bg-purple-50'
-              : 'text-gray-300 cursor-not-allowed'
-          }`}
-          title={hasMoveTargets ? "다른 문서로 이동" : "이동 가능한 문서 없음"}
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-all flex-shrink-0"
+          title="더 보기"
         >
           <Icons.More size={18} />
         </button>
-        <button
-          onClick={() => onDelete(item.id)}
-          className="p-2 text-gray-400 hover:text-white hover:bg-red-600 rounded transition-all font-semibold flex-shrink-0"
-          title="삭제"
-        >
-          <Icons.Trash size={18} />
-        </button>
+
+        {/* Dropdown Menu */}
+        {menuOpen && (
+          <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[160px]">
+            {itemIndex > 0 && onMoveUp && (
+              <button
+                onClick={() => {
+                  onMoveUp(item.id);
+                  setMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              >
+                <Icons.ChevronUp size={16} />
+                위로 이동
+              </button>
+            )}
+            {itemIndex < totalItems - 1 && onMoveDown && (
+              <button
+                onClick={() => {
+                  onMoveDown(item.id);
+                  setMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              >
+                <Icons.ChevronDown size={16} />
+                아래로 이동
+              </button>
+            )}
+            {hasMoveTargets && (
+              <button
+                onClick={() => {
+                  onMoveClick(item.id);
+                  setMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 transition-colors flex items-center gap-2"
+              >
+                <Icons.Send size={16} />
+                다른 문서로 이동
+              </button>
+            )}
+            <div className="h-px bg-gray-200 my-1"></div>
+            <button
+              onClick={() => {
+                onDelete(item.id);
+                setMenuOpen(false);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+            >
+              <Icons.Trash size={16} />
+              삭제
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -226,6 +286,24 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
     }
     setMoveModalOpen(false);
     setSelectedMoveItemId(null);
+  };
+
+  const handleMoveUp = (itemId: string) => {
+    const index = items.findIndex(item => item.id === itemId);
+    if (index > 0) {
+      const newItems = [...items];
+      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+      onChange(newItems);
+    }
+  };
+
+  const handleMoveDown = (itemId: string) => {
+    const index = items.findIndex(item => item.id === itemId);
+    if (index < items.length - 1) {
+      const newItems = [...items];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      onChange(newItems);
+    }
   };
 
   // Calculate available move targets
@@ -375,7 +453,7 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
             <span className="text-sm">항목 없음</span>
           </div>
         )}
-        {items.map((item) => (
+        {items.map((item, index) => (
           <ChecklistItemComponent
             key={item.id}
             item={item}
@@ -395,6 +473,10 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
             isDragging={draggedItemId === item.id}
             isDraggedOver={dragOverItemId === item.id}
             hasMoveTargets={hasMoveTargets}
+            itemIndex={index}
+            totalItems={items.length}
+            onMoveUp={handleMoveUp}
+            onMoveDown={handleMoveDown}
           />
         ))}
       </div>

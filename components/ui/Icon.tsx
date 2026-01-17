@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Menu, X, Plus, Trash2, CheckSquare, FileText,
   Save, Edit3, ArrowLeft, Copy, MoreVertical, RotateCw,
-  ChevronUp, ChevronDown, StickyNote, GripVertical
+  ChevronUp, ChevronDown, StickyNote, GripVertical, Send
 } from 'lucide-react';
 
 export const Icons = {
@@ -21,5 +21,6 @@ export const Icons = {
   ChevronUp,
   ChevronDown,
   Note: StickyNote,
-  DragHandle: GripVertical
+  DragHandle: GripVertical,
+  Send
 };
