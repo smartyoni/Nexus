@@ -25,7 +25,6 @@ const App: React.FC = () => {
   const createBlankDocument = (): DocumentData => ({
     id: generateId(),
     title: '',
-    content: '',
     checklist: [],
     updatedAt: Date.now(),
     isTemplate: false
@@ -90,7 +89,6 @@ const App: React.FC = () => {
     const newDoc: DocumentData = {
       id: generateId(),
       title: `${template.title}`,
-      content: template.content,
       // Deep copy checklist to avoid reference issues
       checklist: template.checklist.map(item => ({...item, id: generateId(), isChecked: false})),
       updatedAt: Date.now(),
@@ -105,7 +103,6 @@ const App: React.FC = () => {
     const previewDoc: DocumentData = {
       id: generateId(),
       title: template.title,
-      content: template.content,
       checklist: template.checklist.map(item => ({
         ...item,
         id: generateId(),
@@ -132,7 +129,6 @@ const App: React.FC = () => {
     const newTemplate: DocumentData = {
       id: generateId(),
       title: '',
-      content: '',
       checklist: [],
       updatedAt: Date.now(),
       isTemplate: true
@@ -312,6 +308,67 @@ const App: React.FC = () => {
     await storageService.saveDocuments(reorderedDocs);
   };
 
+  // --- Move Item to Another Document ---
+  const handleMoveItem = async (itemId: string, targetDocId: string) => {
+    // Templates cannot move items
+    if (!activeDocument || activeDocument.isTemplate) return;
+
+    const sourceDocId = activeDocument.id;
+
+    // Prevent moving to same document
+    if (sourceDocId === targetDocId) return;
+
+    // Find the item to move
+    const itemToMove = activeDocument.checklist.find(item => item.id === itemId);
+    if (!itemToMove) return;
+
+    // Find the target document
+    const targetDoc = documents.find(d => d.id === targetDocId);
+    if (!targetDoc || targetDoc.isTemplate) return;
+
+    // Remove item from source checklist
+    const updatedSourceChecklist = activeDocument.checklist.filter(
+      item => item.id !== itemId
+    );
+
+    // Create moved item with new ID (preserving memo and check state)
+    const movedItem: ChecklistItem = {
+      ...itemToMove,
+      id: generateId()
+    };
+
+    // Add item to target document's checklist
+    const updatedTargetChecklist = [...targetDoc.checklist, movedItem];
+
+    // Update source document
+    const updatedSourceDoc: DocumentData = {
+      ...activeDocument,
+      checklist: updatedSourceChecklist,
+      updatedAt: Date.now()
+    };
+
+    // Update target document
+    const updatedTargetDoc: DocumentData = {
+      ...targetDoc,
+      checklist: updatedTargetChecklist,
+      updatedAt: Date.now()
+    };
+
+    // Update documents array
+    const newDocs = documents.map(d => {
+      if (d.id === sourceDocId) return updatedSourceDoc;
+      if (d.id === targetDocId) return updatedTargetDoc;
+      return d;
+    });
+
+    // Save and update state
+    setDocuments(newDocs);
+    await storageService.saveDocuments(newDocs);
+
+    // Update active document to reflect the change
+    setActiveDocument(updatedSourceDoc);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
@@ -364,6 +421,8 @@ const App: React.FC = () => {
               setActiveDocument(createBlankDocument());
               setSourceTemplateId(null);
             }}
+            onMoveItem={handleMoveItem}
+            availableDocuments={documents}
           />
         ) : (
           // Standard Editor View (for both documents and templates)
@@ -379,6 +438,8 @@ const App: React.FC = () => {
               setActiveDocument(createBlankDocument());
               setViewMode('EDITOR');
             }}
+            onMoveItem={activeDocument?.isTemplate ? undefined : handleMoveItem}
+            availableDocuments={documents}
           />
         )}
       </main>

@@ -47,3 +47,30 @@ html, body, #root {
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100);
 }
+
+/* Drag and Drop Enhancements */
+.dragging-touch {
+  opacity: 0.5;
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 드래그 중 텍스트 선택 방지 */
+[draggable="true"] {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 부드러운 드래그 트랜지션 */
+[data-checklist-item-id] {
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+/* 모바일 터치 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  [data-checklist-item-id] {
+    touch-action: pan-y;
+  }
+}

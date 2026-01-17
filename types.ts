@@ -9,7 +9,7 @@ export interface ChecklistItem {
 export interface DocumentData {
   id: string;
   title: string;
-  content: string; // The text area content
+  content?: string; // DEPRECATED: 더 이상 UI에서 사용하지 않음, backward compatibility를 위해 유지
   checklist: ChecklistItem[];
   updatedAt: number;
   isTemplate: boolean; // simple flag to distinguish templates from instances

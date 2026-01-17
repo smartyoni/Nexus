@@ -14,6 +14,8 @@ interface SplitEditorProps {
   onOpenSidebar?: () => void; // Function to open the sidebar menu
   screenWidth: number;
   mdBreakpoint: number;
+  onMoveItem?: (itemId: string, targetDocId: string) => void;
+  availableDocuments?: DocumentData[];
 }
 
 export const SplitEditor: React.FC<SplitEditorProps> = ({
@@ -25,10 +27,11 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   onCancel,
   onOpenSidebar,
   screenWidth,
-  mdBreakpoint
+  mdBreakpoint,
+  onMoveItem,
+  availableDocuments
 }) => {
   const [title, setTitle] = useState(data.title);
-  const [content, setContent] = useState(data.content);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -38,7 +41,6 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setTitle(data.title);
-    setContent(data.content);
     setChecklist(data.checklist);
     setIsDirty(false);
   }, [data.id]);
@@ -47,7 +49,6 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     onSave({
       ...data,
       title,
-      content,
       checklist,
       updatedAt: Date.now()
     });
@@ -153,27 +154,15 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         )}
       </div>
 
-      {/* Split Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* TOP HALF: Text Content */}
-        <div className="flex-1 flex flex-col border-b border-gray-200 relative group min-h-0 basis-1/3">
-          <textarea
-            value={content}
-            onChange={(e) => { setContent(e.target.value); markDirty(); }}
-            placeholder={isTemplateMode ? "템플릿 텍스트 입력..." : "여기에 내용을 입력하세요..."}
-            className="flex-1 w-full p-3 resize-none outline-none text-gray-700 leading-relaxed text-sm"
-          />
-        </div>
-
-        {/* BOTTOM HALF: Checklist */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0 basis-2/3">
-          <ChecklistManager
-            items={checklist}
-            onChange={(items) => { setChecklist(items); markDirty(); }}
-          />
-        </div>
-
+      {/* Checklist Area - Full Height */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0">
+        <ChecklistManager
+          items={checklist}
+          onChange={(items) => { setChecklist(items); markDirty(); }}
+          onMoveItem={onMoveItem}
+          availableDocuments={availableDocuments}
+          currentDocId={data.id}
+        />
       </div>
 
       {/* Save Confirmation Modal */}

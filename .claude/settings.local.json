@@ -23,7 +23,8 @@
       "Bash(firebase login:*)",
       "Bash(npm run deploy:*)",
       "Bash(firebase use:*)",
-      "Bash(npm run deploy:all:*)"
+      "Bash(npm run deploy:all:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
