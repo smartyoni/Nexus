@@ -16,18 +16,12 @@ export const migrationService = {
       console.log('Starting migration from localStorage to Firestore...');
 
       const documents = localStorageService.getDocuments();
-      const templates = localStorageService.getTemplates();
 
-      console.log(`Found ${documents.length} documents and ${templates.length} templates`);
+      console.log(`Found ${documents.length} documents`);
 
       for (const doc of documents) {
         await firestoreService.saveDocument(doc);
         console.log(`Migrated document: ${doc.title}`);
-      }
-
-      for (const template of templates) {
-        await firestoreService.saveTemplate(template);
-        console.log(`Migrated template: ${template.title}`);
       }
 
       localStorage.setItem(MIGRATION_KEY, 'true');

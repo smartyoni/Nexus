@@ -17,9 +17,9 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
   onSelect,
   onClose
 }) => {
-  // Filter documents: exclude current document and templates
+  // Filter documents: exclude current document
   const availableDocuments = documents.filter(
-    d => d.id !== currentDocId && !d.isTemplate
+    d => d.id !== currentDocId
   );
 
   const handleSelectDocument = (docId: string) => {

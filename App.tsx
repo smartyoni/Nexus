@@ -26,13 +26,11 @@ const App: React.FC = () => {
     id: generateId(),
     title: '',
     checklist: [],
-    updatedAt: Date.now(),
-    isTemplate: false
+    updatedAt: Date.now()
   });
 
   // --- State ---
   const [documents, setDocuments] = useState<DocumentData[]>([]);
-  const [templates, setTemplates] = useState<DocumentData[]>([]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(screenWidth >= MD_BREAKPOINT);
   const [viewMode, setViewMode] = useState<ViewMode>('EDITOR');
@@ -41,10 +39,7 @@ const App: React.FC = () => {
   const [activeDocument, setActiveDocument] = useState<DocumentData | null>(() => createBlankDocument());
 
   // Delete Confirmation State
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'DOC' | 'TPL', id: string } | null>(null);
-
-  // Track source template ID when in TEMPLATE_PREVIEW mode
-  const [sourceTemplateId, setSourceTemplateId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'DOC', id: string } | null>(null);
 
   // Favorite Document State
   const [favoriteDocId, setFavoriteDocId] = useState<string | null>(null);
@@ -62,11 +57,9 @@ const App: React.FC = () => {
 
       // 데이터 로드
       const docs = await storageService.getDocuments();
-      const tpls = await storageService.getTemplates();
       const favId = await storageService.getFavoriteDocId();
 
       setDocuments(docs);
-      setTemplates(tpls);
       setFavoriteDocId(favId);
 
       // 즐겨찾기 문서가 있으면 로드
@@ -82,9 +75,6 @@ const App: React.FC = () => {
 
   // --- Auto-save with Debounce ---
   const autoSaveDocument = async (doc: DocumentData) => {
-    // Template은 자동 저장 하지 않음 (명시적 저장만)
-    if (doc.isTemplate) return;
-
     // 빈 문서는 자동 저장 하지 않음
     if (!doc.id || (!doc.title && doc.checklist.length === 0)) return;
 
@@ -145,123 +135,24 @@ const App: React.FC = () => {
     if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
   };
 
-  // 2. Create Document From Template
-  const createFromTemplate = (template: DocumentData) => {
-    const newDoc: DocumentData = {
-      id: generateId(),
-      title: `${template.title}`,
-      // Deep copy checklist to avoid reference issues
-      checklist: template.checklist.map(item => ({...item, id: generateId(), isChecked: false})),
-      updatedAt: Date.now(),
-      isTemplate: false
-    };
-    setActiveDocument(newDoc);
-    setViewMode('EDITOR');
-  };
 
-  // 2-1. Template Preview Mode (view and edit template, save as new document)
-  const handleTemplatePreview = (template: DocumentData) => {
-    const previewDoc: DocumentData = {
-      id: generateId(),
-      title: template.title,
-      checklist: template.checklist.map(item => ({
-        ...item,
-        id: generateId(),
-        isChecked: false
-      })),
-      updatedAt: Date.now(),
-      isTemplate: false
-    };
-
-    setActiveDocument(previewDoc);
-    setViewMode('TEMPLATE_PREVIEW');
-    setSourceTemplateId(template.id);
-  };
-
-  // 2-2. Template Original Edit Mode (edit template original)
-  const handleEditTemplateOriginal = (template: DocumentData) => {
-    setActiveDocument(template);
-    setViewMode('EDITOR');
-    setSourceTemplateId(null);
-  };
-
-  // 2-3. Create New Template
-  const handleCreateTemplate = () => {
-    const newTemplate: DocumentData = {
-      id: generateId(),
-      title: '',
-      checklist: [],
-      updatedAt: Date.now(),
-      isTemplate: true
-    };
-    setActiveDocument(newTemplate);
-    setViewMode('EDITOR');
-    setSourceTemplateId(null);
-  };
-
-  // 3. Save Logic
+  // 2. Save Logic
   const handleSave = async (data: DocumentData) => {
-    if (data.isTemplate) {
-      // Saving a Template (original template edit mode)
-      // Provide default title if empty
-      if (!data.title.trim()) {
-        data.title = '무제 템플릿';
-      }
-
-      const exists = templates.find(t => t.id === data.id);
-      let newTemplates;
-      if (exists) {
-        newTemplates = templates.map(t => t.id === data.id ? { ...data, isTemplate: true } : t);
-      } else {
-        newTemplates = [{ ...data, isTemplate: true }, ...templates];
-      }
-      setTemplates(newTemplates);
-      await storageService.saveTemplates(newTemplates);
-      setActiveDocument(data);
-
-    } else if (viewMode === 'TEMPLATE_PREVIEW') {
-      // Saving in Template Preview Mode → save as new document
-      const newDoc: DocumentData = {
-        ...data,
-        id: generateId(), // Generate new ID
-        isTemplate: false,
-        updatedAt: Date.now()
-      };
-
-      // If title is empty, provide a default
-      if (!newDoc.title.trim() && sourceTemplateId) {
-        const sourceTemplate = templates.find(t => t.id === sourceTemplateId);
-        newDoc.title = sourceTemplate ? `${sourceTemplate.title} (사본)` : '무제 (Untitled)';
-      } else if (!newDoc.title.trim()) {
-        newDoc.title = '무제 (Untitled)';
-      }
-
-      const newDocs = [newDoc, ...documents];
-      setDocuments(newDocs);
-      await storageService.saveDocuments(newDocs);
-
-      // Switch to EDITOR mode after saving
-      setActiveDocument(newDoc);
-      setViewMode('EDITOR');
-      setSourceTemplateId(null);
-
+    // Saving a Document
+    const exists = documents.find(d => d.id === data.id);
+    let newDocs;
+    if (exists) {
+      newDocs = documents.map(d => d.id === data.id ? { ...data, updatedAt: Date.now() } : d);
     } else {
-      // Saving a Document (standard EDITOR mode)
-      const exists = documents.find(d => d.id === data.id);
-      let newDocs;
-      if (exists) {
-        newDocs = documents.map(d => d.id === data.id ? { ...data, updatedAt: Date.now() } : d);
-      } else {
-        // If title is empty, provide a default
-        if (!data.title.trim()) {
-          data.title = '무제 (Untitled)';
-        }
-        newDocs = [data, ...documents];
+      // If title is empty, provide a default
+      if (!data.title.trim()) {
+        data.title = '무제 (Untitled)';
       }
-      setDocuments(newDocs);
-      await storageService.saveDocuments(newDocs);
-      setActiveDocument(data);
+      newDocs = [data, ...documents];
     }
+    setDocuments(newDocs);
+    await storageService.saveDocuments(newDocs);
+    setActiveDocument(data);
   };
 
   // --- Backup/Restore Logic ---
@@ -295,9 +186,7 @@ const App: React.FC = () => {
         if (result.success) {
           // Update state
           const docs = await storageService.getDocuments();
-          const tpls = await storageService.getTemplates();
           setDocuments(docs);
-          setTemplates(tpls);
           alert(result.message);
         } else {
           alert(result.message);
@@ -315,40 +204,26 @@ const App: React.FC = () => {
     setDeleteTarget({ type: 'DOC', id });
   };
 
-  const requestDeleteTemplate = (id: string) => {
-    setDeleteTarget({ type: 'TPL', id });
-  };
-
   const executeDelete = async () => {
     if (!deleteTarget) return;
 
-    if (deleteTarget.type === 'DOC') {
-      const id = deleteTarget.id;
-      const newDocs = documents.filter(d => d.id !== id);
-      setDocuments(newDocs);
-      await storageService.saveDocuments(newDocs);
-      await storageService.deleteDocument(id);
+    const id = deleteTarget.id;
+    const newDocs = documents.filter(d => d.id !== id);
+    setDocuments(newDocs);
+    await storageService.saveDocuments(newDocs);
+    await storageService.deleteDocument(id);
 
-      // 즐겨찾기 문서가 삭제되면 즐겨찾기 초기화
-      if (favoriteDocId === id) {
-        await storageService.clearFavoriteDocId();
-        setFavoriteDocId(null);
-      }
-
-      if (activeDocument?.id === id) {
-        // If we deleted the current doc, reset to blank
-        setActiveDocument(createBlankDocument());
-      }
-    } else {
-      const id = deleteTarget.id;
-      const newTemplates = templates.filter(t => t.id !== id);
-      setTemplates(newTemplates);
-      await storageService.saveTemplates(newTemplates);
-      await storageService.deleteTemplate(id);
-      if (activeDocument?.id === id) {
-        setActiveDocument(null);
-      }
+    // 즐겨찾기 문서가 삭제되면 즐겨찾기 초기화
+    if (favoriteDocId === id) {
+      await storageService.clearFavoriteDocId();
+      setFavoriteDocId(null);
     }
+
+    if (activeDocument?.id === id) {
+      // If we deleted the current doc, reset to blank
+      setActiveDocument(createBlankDocument());
+    }
+
     setDeleteTarget(null);
   };
 
@@ -444,22 +319,17 @@ const App: React.FC = () => {
         isAlwaysOpen={screenWidth >= MD_BREAKPOINT}
         onClose={() => setIsSidebarOpen(false)}
         documents={documents}
-        templates={templates}
         favoriteDocId={favoriteDocId}
         onSelectDocument={(doc) => {
           setActiveDocument(doc);
           setViewMode('EDITOR');
           if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
-        onPreviewTemplate={handleTemplatePreview}
-        onCreateTemplate={handleCreateTemplate}
         onCreateNew={() => {
           createNewDocument();
           if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
         }}
         onDeleteDocument={requestDeleteDocument}
-        onDeleteTemplate={requestDeleteTemplate}
-        onEditTemplate={handleEditTemplateOriginal}
         onBackup={handleBackup}
         onRestore={handleRestore}
         onSetFavoriteDocument={handleSetFavoriteDocument}
@@ -472,51 +342,27 @@ const App: React.FC = () => {
         className="flex-1 h-full transition-all duration-300 ease-in-out"
         style={{ marginLeft: screenWidth >= MD_BREAKPOINT && isSidebarOpen ? '250px' : '0px' }}
       >
-        {viewMode === 'TEMPLATE_PREVIEW' ? (
-          // Template Preview Mode (view and edit template, save as new document)
-          <SplitEditor
-            data={activeDocument || createBlankDocument()}
-            onSave={handleSave}
-            isTemplateMode={false}
-            isTemplatePreview={true}
-            sourceTemplateName={templates.find(t => t.id === sourceTemplateId)?.title || '템플릿'}
-            screenWidth={screenWidth}
-            mdBreakpoint={MD_BREAKPOINT}
-            onCancel={() => {
-              setViewMode('EDITOR');
-              setActiveDocument(createBlankDocument());
-              setSourceTemplateId(null);
-            }}
-            onMoveItem={handleMoveItem}
-            availableDocuments={documents}
-            isSaving={isSaving}
-          />
-        ) : (
-          // Standard Editor View (for both documents and templates)
-          <SplitEditor
-            data={activeDocument || createBlankDocument()}
-            onSave={handleSave}
-            isTemplateMode={activeDocument?.isTemplate || false}
-            isTemplatePreview={false}
-            screenWidth={screenWidth}
-            mdBreakpoint={MD_BREAKPOINT}
-            onOpenSidebar={() => setIsSidebarOpen(true)}
-            onCancel={() => {
-              setActiveDocument(createBlankDocument());
-              setViewMode('EDITOR');
-            }}
-            onMoveItem={activeDocument?.isTemplate ? undefined : handleMoveItem}
-            availableDocuments={documents}
-            isSaving={isSaving}
-          />
-        )}
+        <SplitEditor
+          data={activeDocument || createBlankDocument()}
+          onSave={handleSave}
+          screenWidth={screenWidth}
+          mdBreakpoint={MD_BREAKPOINT}
+          onOpenSidebar={() => setIsSidebarOpen(true)}
+          onCancel={() => {
+            setActiveDocument(createBlankDocument());
+            setViewMode('EDITOR');
+          }}
+          onMoveItem={handleMoveItem}
+          availableDocuments={documents}
+          isSaving={isSaving}
+        />
       </main>
 
       {/* Global Delete Confirmation Modal */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={!!deleteTarget}
-        title={deleteTarget?.type === 'DOC' ? '문서 삭제' : '템플릿 삭제'}
-        message={deleteTarget?.type === 'DOC' ? '이 문서를 영구적으로 삭제하시겠습니까?' : '이 템플릿을 삭제하시겠습니까?'}
+        title="문서 삭제"
+        message="이 문서를 영구적으로 삭제하시겠습니까?"
         onConfirm={executeDelete}
         onClose={() => setDeleteTarget(null)}
       />

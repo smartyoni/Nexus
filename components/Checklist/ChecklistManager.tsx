@@ -308,7 +308,7 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
 
   // Calculate available move targets
   const moveTargets = availableDocuments?.filter(
-    d => d.id !== currentDocId && !d.isTemplate
+    d => d.id !== currentDocId
   ) || [];
   const hasMoveTargets = moveTargets.length > 0 && !!onMoveItem;
 

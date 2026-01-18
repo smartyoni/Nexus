@@ -7,15 +7,10 @@ interface SidebarMenuProps {
   isAlwaysOpen: boolean;
   onClose: () => void;
   documents: DocumentData[];
-  templates: DocumentData[];
   favoriteDocId: string | null;
   onSelectDocument: (doc: DocumentData) => void;
-  onPreviewTemplate: (tpl: DocumentData) => void;
-  onCreateTemplate: () => void;
   onCreateNew: () => void;
   onDeleteDocument: (id: string) => void;
-  onDeleteTemplate: (id: string) => void;
-  onEditTemplate: (tpl: DocumentData) => void;
   onBackup: () => void;
   onRestore: (file: File) => void;
   onSetFavoriteDocument: (id: string) => void;
@@ -28,23 +23,16 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   isAlwaysOpen,
   onClose,
   documents,
-  templates,
   favoriteDocId,
   onSelectDocument,
-  onPreviewTemplate,
-  onCreateTemplate,
   onCreateNew,
   onDeleteDocument,
-  onDeleteTemplate,
-  onEditTemplate,
   onBackup,
   onRestore,
   onSetFavoriteDocument,
   onClearFavoriteDocument,
   onReorderDocuments
 }) => {
-  const [activeTab, setActiveTab] = useState<'docs' | 'templates'>('docs');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
@@ -141,26 +129,10 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b">
-          <button
-            className={`flex-1 p-3 text-sm font-medium ${activeTab === 'docs' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('docs')}
-          >
-            문서 ({documents.length})
-          </button>
-          <button
-            className={`flex-1 p-3 text-sm font-medium ${activeTab === 'templates' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('templates')}
-          >
-            템플릿 ({templates.length})
-          </button>
-        </div>
 
         {/* List Content */}
         <div className="flex-1 overflow-y-auto p-2 bg-gray-50/50 relative">
-          {activeTab === 'docs' ? (
-            <div className="space-y-2">
+          <div className="space-y-2">
               {documents.length === 0 && (
                 <div className="text-center py-10 text-gray-400 text-sm">저장된 문서가 없습니다.</div>
               )}
@@ -258,79 +230,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                 <span className="text-xs font-medium">새문서추가</span>
               </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-               {templates.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">
-                  등록된 템플릿이 없습니다.<br/>'템플릿 생성' 버튼을 눌러 생성하세요.
-                </div>
-              )}
-              {templates.map(tpl => (
-                <div
-                  key={tpl.id}
-                  className="bg-white p-3 rounded-lg border border-dashed border-gray-300 hover:border-blue-400 transition-all relative"
-                >
-                  {/* Main clickable area - template preview */}
-                  <div
-                    onClick={() => { onPreviewTemplate(tpl); onClose(); }}
-                    className="cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icons.Copy size={16} className="text-blue-500" />
-                      <span className="font-semibold text-gray-800">{tpl.title || '(제목 없음)'}</span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuId(openMenuId === tpl.id ? null : tpl.id);
-                      }}
-                      className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                    >
-                      <Icons.More size={16} />
-                    </button>
-                  </div>
-
-                  {/* Context Menu */}
-                  {openMenuId === tpl.id && (
-                    <div className="absolute right-2 top-10 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[150px]">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditTemplate(tpl);
-                          setOpenMenuId(null);
-                          onClose();
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-2 border-b border-gray-100"
-                      >
-                        <Icons.Edit size={14} />
-                        <span>원본 수정</span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteTemplate(tpl.id);
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                      >
-                        <Icons.Trash size={14} />
-                        <span>삭제</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* 템플릿추가 버튼 */}
-              <button
-                onClick={() => { onCreateTemplate(); onClose(); }}
-                className="w-full flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mt-2"
-              >
-                <Icons.Plus size={16} className="mr-1" />
-                <span className="text-xs font-medium">템플릿추가</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

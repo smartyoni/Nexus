@@ -34,34 +34,6 @@ export const storageService = {
     }
   },
 
-  getTemplates: async (): Promise<DocumentData[]> => {
-    if (USE_FIRESTORE) {
-      try {
-        return await firestoreService.getTemplates();
-      } catch (error) {
-        console.error('Firestore error, falling back to localStorage', error);
-        return localStorageService.getTemplates();
-      }
-    }
-    return localStorageService.getTemplates();
-  },
-
-  saveTemplates: async (templates: DocumentData[]): Promise<void> => {
-    if (USE_FIRESTORE) {
-      try {
-        for (const template of templates) {
-          await firestoreService.saveTemplate(template);
-        }
-        localStorageService.saveTemplates(templates);
-      } catch (error) {
-        console.error('Failed to save to Firestore', error);
-        localStorageService.saveTemplates(templates);
-      }
-    } else {
-      localStorageService.saveTemplates(templates);
-    }
-  },
-
   exportData: async () => {
     if (USE_FIRESTORE) {
       return await firestoreService.exportData();
@@ -82,16 +54,6 @@ export const storageService = {
         await firestoreService.deleteDocument(id);
       } catch (error) {
         console.error('Failed to delete document from Firestore', error);
-      }
-    }
-  },
-
-  deleteTemplate: async (id: string): Promise<void> => {
-    if (USE_FIRESTORE) {
-      try {
-        await firestoreService.deleteTemplate(id);
-      } catch (error) {
-        console.error('Failed to delete template from Firestore', error);
       }
     }
   },

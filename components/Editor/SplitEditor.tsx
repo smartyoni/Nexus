@@ -7,10 +7,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 interface SplitEditorProps {
   data: DocumentData;
   onSave: (data: DocumentData) => void;
-  isTemplateMode?: boolean; // Changes labels slightly if managing a template
-  isTemplatePreview?: boolean; // Indicate template preview mode (save as new document)
-  sourceTemplateName?: string; // Name of the source template for display
-  onCancel?: () => void; // For template manager back button
+  onCancel?: () => void;
   onOpenSidebar?: () => void; // Function to open the sidebar menu
   screenWidth: number;
   mdBreakpoint: number;
@@ -22,9 +19,6 @@ interface SplitEditorProps {
 export const SplitEditor: React.FC<SplitEditorProps> = ({
   data,
   onSave,
-  isTemplateMode = false,
-  isTemplatePreview = false,
-  sourceTemplateName,
   onCancel,
   onOpenSidebar,
   screenWidth,
@@ -105,28 +99,20 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       {/* Top Bar for Editor - Compact for Sidebar */}
       <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
         <div className="flex items-center gap-2 flex-1 mr-2 min-w-0">
-          
-          {/* Left Navigation Button: Back (for templates) or Menu (for docs) */}
-          {isTemplateMode && onCancel ? (
-            <button onClick={onCancel} className="mr-1 p-1 hover:bg-gray-100 rounded text-gray-600 flex-shrink-0">
-              <Icons.Back size={18} />
+          {screenWidth < mdBreakpoint && onOpenSidebar && (
+            <button
+              onClick={onOpenSidebar}
+              className="mr-1 p-1 hover:bg-gray-100 rounded text-gray-700 flex-shrink-0"
+            >
+              <Icons.Menu size={18} />
             </button>
-          ) : (
-            screenWidth < mdBreakpoint && onOpenSidebar && ( // Only show on small screens
-              <button 
-                onClick={onOpenSidebar}
-                className="mr-1 p-1 hover:bg-gray-100 rounded text-gray-700 flex-shrink-0"
-              >
-                <Icons.Menu size={18} />
-              </button>
-            )
           )}
 
           <input
             type="text"
             value={title}
             onChange={(e) => { setTitle(e.target.value); markDirty(); }}
-            placeholder={isTemplateMode ? "템플릿 제목" : "제목 (선택사항)"}
+            placeholder="제목 (선택사항)"
             className="text-base font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent w-full truncate leading-tight"
           />
         </div>
