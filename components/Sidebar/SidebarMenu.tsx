@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DocumentData } from '../../types';
+import { DocumentData, DocumentCategory } from '../../types';
 import { Icons } from '../ui/Icon';
 
 interface SidebarMenuProps {
@@ -8,6 +8,8 @@ interface SidebarMenuProps {
   onClose: () => void;
   documents: DocumentData[];
   favoriteDocId: string | null;
+  currentCategory: DocumentCategory;
+  onCategoryChange: (category: DocumentCategory) => void;
   onSelectDocument: (doc: DocumentData) => void;
   onCreateNew: () => void;
   onDeleteDocument: (id: string) => void;
@@ -16,6 +18,7 @@ interface SidebarMenuProps {
   onSetFavoriteDocument: (id: string) => void;
   onClearFavoriteDocument: () => void;
   onReorderDocuments: (reorderedDocs: DocumentData[]) => void;
+  onChangeCategoryDocument: (id: string, category: DocumentCategory) => void;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -24,6 +27,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onClose,
   documents,
   favoriteDocId,
+  currentCategory,
+  onCategoryChange,
   onSelectDocument,
   onCreateNew,
   onDeleteDocument,
@@ -31,7 +36,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onRestore,
   onSetFavoriteDocument,
   onClearFavoriteDocument,
-  onReorderDocuments
+  onReorderDocuments,
+  onChangeCategoryDocument
 }) => {
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -71,14 +77,26 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       return;
     }
 
+    const draggedDoc = documents.find(d => d.id === draggedDocId);
+    const targetDoc = documents.find(d => d.id === targetDocId);
+
+    // 같은 분류 내에서만 드래그 허용
+    if (draggedDoc && targetDoc &&
+        (draggedDoc.category || '업무') !== (targetDoc.category || '업무')) {
+      alert('같은 분류 내에서만 순서를 변경할 수 있습니다.');
+      setDraggedDocId(null);
+      setDragOverDocId(null);
+      return;
+    }
+
     const draggedIndex = documents.findIndex(doc => doc.id === draggedDocId);
     const targetIndex = documents.findIndex(doc => doc.id === targetDocId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
     const newDocs = [...documents];
-    const [draggedDoc] = newDocs.splice(draggedIndex, 1);
-    newDocs.splice(targetIndex, 0, draggedDoc);
+    const [draggedDocToMove] = newDocs.splice(draggedIndex, 1);
+    newDocs.splice(targetIndex, 0, draggedDocToMove);
 
     onReorderDocuments(newDocs);
     setDraggedDocId(null);
@@ -129,14 +147,58 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
           </div>
         </div>
 
+        {/* Category Tabs */}
+        <div className="flex border-b bg-white flex-shrink-0">
+          <button
+            onClick={() => onCategoryChange('업무')}
+            className={`flex-1 p-3 text-sm font-medium transition-colors ${
+              currentCategory === '업무'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            업무 ({documents.filter(d => (d.category || '업무') === '업무').length})
+          </button>
+          <button
+            onClick={() => onCategoryChange('개인')}
+            className={`flex-1 p-3 text-sm font-medium transition-colors ${
+              currentCategory === '개인'
+                ? 'text-green-600 border-b-2 border-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            개인 ({documents.filter(d => d.category === '개인').length})
+          </button>
+          <button
+            onClick={() => onCategoryChange('APP')}
+            className={`flex-1 p-3 text-sm font-medium transition-colors ${
+              currentCategory === 'APP'
+                ? 'text-purple-600 border-b-2 border-purple-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            APP ({documents.filter(d => d.category === 'APP').length})
+          </button>
+        </div>
 
         {/* List Content */}
         <div className="flex-1 overflow-y-auto p-2 bg-gray-50/50 relative">
           <div className="space-y-2">
-              {documents.length === 0 && (
-                <div className="text-center py-10 text-gray-400 text-sm">저장된 문서가 없습니다.</div>
-              )}
-              {documents.map(doc => (
+              {(() => {
+                // 현재 탭에 해당하는 문서만 필터링
+                const filteredDocs = documents.filter(
+                  doc => (doc.category || '업무') === currentCategory
+                );
+
+                if (documents.length === 0) {
+                  return <div className="text-center py-10 text-gray-400 text-sm">저장된 문서가 없습니다.</div>;
+                }
+
+                if (filteredDocs.length === 0) {
+                  return <div className="text-center py-10 text-gray-400 text-sm">{currentCategory} 문서가 없습니다.</div>;
+                }
+
+                return filteredDocs.map(doc => (
                 <div
                   key={doc.id}
                   draggable
@@ -216,10 +278,74 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                         <span className="text-lg">⭐</span>
                         <span>{favoriteDocId === doc.id ? '즐겨찾기 해제' : '즐겨찾기 지정'}</span>
                       </button>
+
+                      {/* 구분선 */}
+                      <div className="h-px bg-gray-200 my-1"></div>
+
+                      {/* 분류 변경 메뉴 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if ((doc.category || '업무') !== '업무') {
+                            onChangeCategoryDocument(doc.id, '업무');
+                          }
+                          setContextMenuId(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                          (doc.category || '업무') === '업무' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        업무로 이동
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (doc.category !== '개인') {
+                            onChangeCategoryDocument(doc.id, '개인');
+                          }
+                          setContextMenuId(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-green-50 transition-colors ${
+                          doc.category === '개인' ? 'text-green-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        개인으로 이동
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (doc.category !== 'APP') {
+                            onChangeCategoryDocument(doc.id, 'APP');
+                          }
+                          setContextMenuId(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 transition-colors ${
+                          doc.category === 'APP' ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        APP으로 이동
+                      </button>
+
+                      {/* 구분선 */}
+                      <div className="h-px bg-gray-200 my-1"></div>
+
+                      {/* 삭제 버튼 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteDocument(doc.id);
+                          setContextMenuId(null);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                      >
+                        <Icons.Trash size={16} />
+                        <span>삭제</span>
+                      </button>
                     </div>
                   )}
                 </div>
-              ))}
+              ));
+              })()}
 
               {/* 새문서추가 버튼 */}
               <button

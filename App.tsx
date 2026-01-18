@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Icons } from './components/ui/Icon';
 import { SidebarMenu } from './components/Sidebar/SidebarMenu';
 import { SplitEditor } from './components/Editor/SplitEditor';
-import { DocumentData, ViewMode, generateId, ChecklistItem } from './types';
+import { DocumentData, ViewMode, generateId, ChecklistItem, DocumentCategory } from './types';
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
@@ -22,11 +22,12 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   // --- Helper ---
-  const createBlankDocument = (): DocumentData => ({
+  const createBlankDocument = (category: DocumentCategory = '업무'): DocumentData => ({
     id: generateId(),
     title: '',
     checklist: [],
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    category
   });
 
   // --- State ---
@@ -44,6 +45,9 @@ const App: React.FC = () => {
   // Favorite Document State
   const [favoriteDocId, setFavoriteDocId] = useState<string | null>(null);
 
+  // Current Category State
+  const [currentCategory, setCurrentCategory] = useState<DocumentCategory>('업무');
+
   // Auto-save related states
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedRef = useRef<string>('');
@@ -59,12 +63,18 @@ const App: React.FC = () => {
       const docs = await storageService.getDocuments();
       const favId = await storageService.getFavoriteDocId();
 
-      setDocuments(docs);
+      // category 필드가 없는 기존 문서는 '업무'로 기본 설정
+      const migratedDocs = docs.map(doc => ({
+        ...doc,
+        category: doc.category || '업무' as DocumentCategory
+      }));
+
+      setDocuments(migratedDocs);
       setFavoriteDocId(favId);
 
       // 즐겨찾기 문서가 있으면 로드
-      if (favId && docs.length > 0) {
-        const favDoc = docs.find(d => d.id === favId);
+      if (favId && migratedDocs.length > 0) {
+        const favDoc = migratedDocs.find(d => d.id === favId);
         if (favDoc) {
           setActiveDocument(favDoc);
         }
@@ -130,7 +140,7 @@ const App: React.FC = () => {
 
   // 1. Create New Blank Document
   const createNewDocument = () => {
-    setActiveDocument(createBlankDocument());
+    setActiveDocument(createBlankDocument(currentCategory));
     setViewMode('EDITOR');
     if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
   };
@@ -310,6 +320,20 @@ const App: React.FC = () => {
     }
   };
 
+  // --- Change Document Category ---
+  const handleChangeCategoryDocument = async (id: string, category: DocumentCategory) => {
+    const updatedDocs = documents.map(doc =>
+      doc.id === id ? { ...doc, category, updatedAt: Date.now() } : doc
+    );
+    setDocuments(updatedDocs);
+    await storageService.saveDocuments(updatedDocs);
+
+    // 활성 문서가 변경된 경우 업데이트
+    if (activeDocument?.id === id) {
+      setActiveDocument({ ...activeDocument, category });
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
       
@@ -320,6 +344,8 @@ const App: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
         documents={documents}
         favoriteDocId={favoriteDocId}
+        currentCategory={currentCategory}
+        onCategoryChange={setCurrentCategory}
         onSelectDocument={(doc) => {
           setActiveDocument(doc);
           setViewMode('EDITOR');
@@ -335,6 +361,7 @@ const App: React.FC = () => {
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}
         onReorderDocuments={handleReorderDocuments}
+        onChangeCategoryDocument={handleChangeCategoryDocument}
       />
 
       {/* Main Content Area */}
