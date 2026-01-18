@@ -47,12 +47,60 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
+  const [dragOverDocId, setDragOverDocId] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isMobileOpen && !isAlwaysOpen) return null;
 
   // Format date helper
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // --- Drag and Drop Handlers ---
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, docId: string) => {
+    setDraggedDocId(docId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', docId);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, docId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedDocId && draggedDocId !== docId) {
+      setDragOverDocId(docId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDocId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetDocId: string) => {
+    e.preventDefault();
+    if (!draggedDocId || draggedDocId === targetDocId) {
+      setDraggedDocId(null);
+      setDragOverDocId(null);
+      return;
+    }
+
+    const draggedIndex = documents.findIndex(doc => doc.id === draggedDocId);
+    const targetIndex = documents.findIndex(doc => doc.id === targetDocId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newDocs = [...documents];
+    const [draggedDoc] = newDocs.splice(draggedIndex, 1);
+    newDocs.splice(targetIndex, 0, draggedDoc);
+
+    onReorderDocuments(newDocs);
+    setDraggedDocId(null);
+    setDragOverDocId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedDocId(null);
+    setDragOverDocId(null);
+  };
 
   return (
     <div className={`
@@ -119,8 +167,18 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {documents.map(doc => (
                 <div
                   key={doc.id}
-                  className={`group bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-all relative ${
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, doc.id)}
+                  onDragOver={(e) => handleDragOver(e, doc.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, doc.id)}
+                  onDragEnd={handleDragEnd}
+                  className={`group bg-white p-3 rounded-lg border shadow-sm transition-all relative ${
                     favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
+                  } ${
+                    draggedDocId === doc.id ? 'opacity-40 cursor-grabbing' : 'cursor-grab hover:shadow-md'
+                  } ${
+                    dragOverDocId === doc.id ? 'border-blue-500 border-2 bg-blue-50' : ''
                   }`}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -142,54 +200,26 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                     if (timer) clearTimeout(timer);
                   }}
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-2">
+                    <div
+                      className="flex-none mt-0.5 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="드래그하여 순서 변경"
+                    >
+                      <Icons.DragHandle size={18} />
+                    </div>
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => { onSelectDocument(doc); onClose(); }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
                     </div>
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const currentIndex = documents.indexOf(doc);
-                          if (currentIndex > 0) {
-                            const newDocs = [...documents];
-                            [newDocs[currentIndex], newDocs[currentIndex - 1]] = [newDocs[currentIndex - 1], newDocs[currentIndex]];
-                            onReorderDocuments(newDocs);
-                          }
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
-                        disabled={documents.indexOf(doc) === 0}
-                        title="위로 이동"
-                      >
-                        <Icons.ChevronUp size={16} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const currentIndex = documents.indexOf(doc);
-                          if (currentIndex < documents.length - 1) {
-                            const newDocs = [...documents];
-                            [newDocs[currentIndex], newDocs[currentIndex + 1]] = [newDocs[currentIndex + 1], newDocs[currentIndex]];
-                            onReorderDocuments(newDocs);
-                          }
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
-                        disabled={documents.indexOf(doc) === documents.length - 1}
-                        title="아래로 이동"
-                      >
-                        <Icons.ChevronDown size={16} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="삭제"
-                      >
-                        <Icons.Trash size={16} />
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
+                      className="flex-none p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="삭제"
+                    >
+                      <Icons.Trash size={16} />
+                    </button>
                   </div>
 
                   {/* Context Menu */}
