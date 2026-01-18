@@ -16,6 +16,7 @@ interface SplitEditorProps {
   mdBreakpoint: number;
   onMoveItem?: (itemId: string, targetDocId: string) => void;
   availableDocuments?: DocumentData[];
+  isSaving?: boolean; // Indicate if document is being auto-saved
 }
 
 export const SplitEditor: React.FC<SplitEditorProps> = ({
@@ -29,7 +30,8 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   screenWidth,
   mdBreakpoint,
   onMoveItem,
-  availableDocuments
+  availableDocuments,
+  isSaving = false
 }) => {
   const [title, setTitle] = useState(data.title);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
@@ -43,7 +45,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     setTitle(data.title);
     setChecklist(data.checklist);
     setIsDirty(false);
-  }, [data.id]);
+  }, [data.id, data.title, data.checklist]);
 
   const handleSave = () => {
     onSave({
@@ -136,6 +138,12 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         >
           <Icons.Save size={18} />
         </button>
+        {isSaving && (
+          <div className="ml-1 px-2 py-1.5 rounded-md bg-green-50 flex items-center gap-1 flex-shrink-0 text-green-600 text-xs animate-pulse">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+            저장 중
+          </div>
+        )}
         <button
           onClick={handleRefreshClick}
           className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"

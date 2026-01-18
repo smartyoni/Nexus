@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Icons } from './components/ui/Icon';
 import { SidebarMenu } from './components/Sidebar/SidebarMenu';
 import { SplitEditor } from './components/Editor/SplitEditor';
-import { DocumentData, ViewMode, generateId } from './types';
+import { DocumentData, ViewMode, generateId, ChecklistItem } from './types';
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
@@ -49,6 +49,11 @@ const App: React.FC = () => {
   // Favorite Document State
   const [favoriteDocId, setFavoriteDocId] = useState<string | null>(null);
 
+  // Auto-save related states
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedRef = useRef<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+
   // --- Initial Load ---
   useEffect(() => {
     const loadData = async () => {
@@ -74,6 +79,62 @@ const App: React.FC = () => {
     };
     loadData();
   }, []);
+
+  // --- Auto-save with Debounce ---
+  const autoSaveDocument = async (doc: DocumentData) => {
+    // Template은 자동 저장 하지 않음 (명시적 저장만)
+    if (doc.isTemplate) return;
+
+    // 빈 문서는 자동 저장 하지 않음
+    if (!doc.id || (!doc.title && doc.checklist.length === 0)) return;
+
+    const docString = JSON.stringify(doc);
+
+    // 내용이 변경되지 않았으면 저장하지 않음
+    if (lastSavedRef.current === docString) return;
+
+    setIsSaving(true);
+
+    try {
+      // 기존 문서 업데이트 또는 새 문서 추가
+      const exists = documents.find(d => d.id === doc.id);
+      let newDocs;
+      if (exists) {
+        newDocs = documents.map(d => d.id === doc.id ? { ...doc, updatedAt: Date.now() } : d);
+      } else {
+        newDocs = [doc, ...documents];
+      }
+
+      setDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
+      lastSavedRef.current = docString;
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Debounce auto-save: activeDocument 변경 후 2초 후 저장
+  useEffect(() => {
+    if (!activeDocument) return;
+
+    // 기존 타이머 취소
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // 새로운 타이머 설정 (2초 debounce)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSaveDocument(activeDocument);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [activeDocument?.title, activeDocument?.checklist]);
 
   // --- Actions ---
 
@@ -310,63 +371,68 @@ const App: React.FC = () => {
 
   // --- Move Item to Another Document ---
   const handleMoveItem = async (itemId: string, targetDocId: string) => {
-    // Templates cannot move items
-    if (!activeDocument || activeDocument.isTemplate) return;
+    try {
+      // Templates cannot move items
+      if (!activeDocument || activeDocument.isTemplate) return;
 
-    const sourceDocId = activeDocument.id;
+      const sourceDocId = activeDocument.id;
 
-    // Prevent moving to same document
-    if (sourceDocId === targetDocId) return;
+      // Prevent moving to same document
+      if (sourceDocId === targetDocId) return;
 
-    // Find the item to move
-    const itemToMove = activeDocument.checklist.find(item => item.id === itemId);
-    if (!itemToMove) return;
+      // Find the item to move
+      const itemToMove = activeDocument.checklist.find(item => item.id === itemId);
+      if (!itemToMove) return;
 
-    // Find the target document
-    const targetDoc = documents.find(d => d.id === targetDocId);
-    if (!targetDoc || targetDoc.isTemplate) return;
+      // Find the target document
+      const targetDoc = documents.find(d => d.id === targetDocId);
+      if (!targetDoc || targetDoc.isTemplate) return;
 
-    // Remove item from source checklist
-    const updatedSourceChecklist = activeDocument.checklist.filter(
-      item => item.id !== itemId
-    );
+      // Remove item from source checklist
+      const updatedSourceChecklist = activeDocument.checklist.filter(
+        item => item.id !== itemId
+      );
 
-    // Create moved item with new ID (preserving memo and check state)
-    const movedItem: ChecklistItem = {
-      ...itemToMove,
-      id: generateId()
-    };
+      // Create moved item with new ID (preserving memo and check state)
+      const movedItem: ChecklistItem = {
+        ...itemToMove,
+        id: generateId()
+      };
 
-    // Add item to target document's checklist
-    const updatedTargetChecklist = [...targetDoc.checklist, movedItem];
+      // Add item to target document's checklist
+      const updatedTargetChecklist = [...targetDoc.checklist, movedItem];
 
-    // Update source document
-    const updatedSourceDoc: DocumentData = {
-      ...activeDocument,
-      checklist: updatedSourceChecklist,
-      updatedAt: Date.now()
-    };
+      // Update source document
+      const updatedSourceDoc: DocumentData = {
+        ...activeDocument,
+        checklist: updatedSourceChecklist,
+        updatedAt: Date.now()
+      };
 
-    // Update target document
-    const updatedTargetDoc: DocumentData = {
-      ...targetDoc,
-      checklist: updatedTargetChecklist,
-      updatedAt: Date.now()
-    };
+      // Update target document
+      const updatedTargetDoc: DocumentData = {
+        ...targetDoc,
+        checklist: updatedTargetChecklist,
+        updatedAt: Date.now()
+      };
 
-    // Update documents array
-    const newDocs = documents.map(d => {
-      if (d.id === sourceDocId) return updatedSourceDoc;
-      if (d.id === targetDocId) return updatedTargetDoc;
-      return d;
-    });
+      // Update documents array
+      const newDocs = documents.map(d => {
+        if (d.id === sourceDocId) return updatedSourceDoc;
+        if (d.id === targetDocId) return updatedTargetDoc;
+        return d;
+      });
 
-    // Save and update state
-    setDocuments(newDocs);
-    await storageService.saveDocuments(newDocs);
+      // Save and update state
+      setDocuments(newDocs);
+      await storageService.saveDocuments(newDocs);
 
-    // Update active document to reflect the change
-    setActiveDocument(updatedSourceDoc);
+      // Update active document to reflect the change
+      setActiveDocument(updatedSourceDoc);
+    } catch (error) {
+      console.error('Failed to move item:', error);
+      alert('항목 이동 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -423,6 +489,7 @@ const App: React.FC = () => {
             }}
             onMoveItem={handleMoveItem}
             availableDocuments={documents}
+            isSaving={isSaving}
           />
         ) : (
           // Standard Editor View (for both documents and templates)
@@ -440,6 +507,7 @@ const App: React.FC = () => {
             }}
             onMoveItem={activeDocument?.isTemplate ? undefined : handleMoveItem}
             availableDocuments={documents}
+            isSaving={isSaving}
           />
         )}
       </main>
