@@ -208,14 +208,14 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
   const handleAddItem = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newItemText.trim()) return;
-    
+
     const newItem: ChecklistItem = {
       id: generateId(),
       text: newItemText.trim(),
       isChecked: false
     };
-    
-    onChange([...items, newItem]);
+
+    onChange([newItem, ...items]);
     setNewItemText('');
   };
 
