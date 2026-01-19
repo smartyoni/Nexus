@@ -428,15 +428,20 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
       <div className="px-3 py-3 border-b bg-white flex-none shadow-sm z-10">
         <form onSubmit={handleAddItem} className="flex gap-2 items-center">
           <div className="flex-1 relative">
-             <input 
-              type="text" 
+             <textarea
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
               placeholder="체크리스트 추가..."
-              className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all"
+              className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all resize-none overflow-y-auto"
+              style={{
+                minHeight: '2.5rem',
+                maxHeight: '5rem',
+                lineHeight: '1.5rem'
+              }}
+              rows={2}
             />
           </div>
-          <button 
+          <button
             type="submit"
             className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors flex-shrink-0 shadow-sm"
           >
