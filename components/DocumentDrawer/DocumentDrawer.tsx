@@ -101,8 +101,9 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
     }
   };
 
-  const handleQuickInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleQuickInputKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       handleQuickAddDocument();
     }
   };
@@ -177,7 +178,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
               value={quickInputValue}
               onChange={(e) => setQuickInputValue(e.target.value)}
               onKeyPress={handleQuickInputKeyPress}
-              placeholder="문서 내용 입력..."
+              placeholder="문서 내용 입력... (Ctrl+Enter로 추가)"
               rows={2}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
             />
