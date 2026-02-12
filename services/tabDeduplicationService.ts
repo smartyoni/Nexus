@@ -1,5 +1,5 @@
 import { storageService } from './storageService';
-import { Tab } from '../types';
+import { Tab, generateId } from '../types';
 
 export const tabDeduplicationService = {
   // IN-BOX 탭 중복 제거
@@ -97,6 +97,40 @@ export const tabDeduplicationService = {
       await storageService.saveDocuments(updatedDocs);
     } catch (error) {
       console.error('Document consolidation failed:', error);
+    }
+  },
+
+  // IN-BOX 탭만 보장 (나머지 탭은 제거)
+  async ensureInboxTab(): Promise<void> {
+    try {
+      const tabs = await storageService.getTabs();
+      const inboxTab = tabs.find(t => t.isDefault === true);
+
+      if (!inboxTab) {
+        console.warn('No IN-BOX tab found. Creating one...');
+        const newInbox = {
+          id: generateId(),
+          name: 'IN-BOX',
+          isDefault: true,
+          createdAt: Date.now()
+        };
+        await storageService.saveTabs([newInbox]);
+        await storageService.setCurrentTabId(newInbox.id);
+      } else if (tabs.length > 1) {
+        console.warn(`Found ${tabs.length} tabs. Removing extras...`);
+
+        // 다른 탭의 문서를 모두 IN-BOX로 이동
+        const otherTabs = tabs.filter(t => !t.isDefault);
+        if (otherTabs.length > 0) {
+          await this.consolidateDocuments(otherTabs, inboxTab.id);
+        }
+
+        await storageService.saveTabs([inboxTab]);
+      }
+
+      console.log('ensureInboxTab: OK (single IN-BOX only)');
+    } catch (error) {
+      console.error('Failed to ensure IN-BOX tab:', error);
     }
   }
 };

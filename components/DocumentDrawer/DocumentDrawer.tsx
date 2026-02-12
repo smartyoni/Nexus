@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DocumentData, Tab } from '../../types';
+import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
 
 interface DocumentDrawerProps {
@@ -14,8 +14,6 @@ interface DocumentDrawerProps {
   onSetFavoriteDocument: (id: string) => void;
   onClearFavoriteDocument: () => void;
   onReorderDocuments: (reorderedDocs: DocumentData[]) => void;
-  onMoveToTab: (docId: string, tabId: string) => void;
-  tabs: Tab[];
   onRefresh?: () => void; // Refresh data without page reload
 }
 
@@ -31,8 +29,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   onSetFavoriteDocument,
   onClearFavoriteDocument,
   onReorderDocuments,
-  onMoveToTab,
-  tabs,
   onRefresh
 }) => {
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
@@ -42,25 +38,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
 
   // Filter documents by active tab
   const tabDocuments = documents.filter(doc => doc.tabId === activeTabId);
-
-  // Get active tab name
-  const activeTabName = tabs.find(tab => tab.id === activeTabId)?.name || '탭';
-
-  // Get tab color based on tab index
-  const getTabColor = (tabId: string): string => {
-    const colors = [
-      'bg-blue-500',
-      'bg-red-500',
-      'bg-green-500',
-      'bg-yellow-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-orange-500',
-      'bg-cyan-500',
-    ];
-    const index = tabs.findIndex(t => t.id === tabId);
-    return colors[index >= 0 ? index % colors.length : 0];
-  };
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, docId: string) => {
@@ -154,7 +131,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 gap-2">
-          <h2 className="text-lg font-bold text-gray-800">{activeTabName} 리스트</h2>
+          <h2 className="text-lg font-bold text-gray-800">문서 리스트</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -214,7 +191,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getTabColor(doc.tabId)}`}></div>
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => {
@@ -252,31 +228,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                       </button>
 
                       <div className="h-px bg-gray-200 my-1"></div>
-
-                      {/* Move to tab submenu */}
-                      {tabs.length > 1 && (
-                        <>
-                          {tabs.map(tab => (
-                            <button
-                              key={tab.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (tab.id !== activeTabId) {
-                                  onMoveToTab(doc.id, tab.id);
-                                }
-                                setContextMenuId(null);
-                              }}
-                              disabled={tab.id === activeTabId}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
-                                tab.id === activeTabId ? 'text-blue-600 font-medium bg-blue-50' : 'text-gray-700'
-                              } disabled:cursor-default`}
-                            >
-                              {tab.name}로 이동
-                            </button>
-                          ))}
-                          <div className="h-px bg-gray-200 my-1"></div>
-                        </>
-                      )}
 
                       <button
                         onClick={(e) => {

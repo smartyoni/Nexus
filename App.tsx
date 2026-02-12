@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Icons } from './components/ui/Icon';
 import { SplitEditor } from './components/Editor/SplitEditor';
-import { BottomNavigation } from './components/BottomNavigation/BottomNavigation';
 import { DocumentDrawer } from './components/DocumentDrawer/DocumentDrawer';
 import { DocumentData, ViewMode, generateId, ChecklistItem, Tab } from './types';
 import { storageService } from './services/storageService';
@@ -63,26 +62,21 @@ const App: React.FC = () => {
   // --- Initial Load ---
   useEffect(() => {
     const loadData = async () => {
-      // Perform tab migration (deletes old docs, creates IN-BOX tab)
-      await tabMigrationService.migrateToTabSystem();
-
-      // Deduplicate IN-BOX tabs
-      await tabDeduplicationService.deduplicateInboxTabs();
+      // Ensure single IN-BOX tab
+      await tabMigrationService.ensureSingleInboxTab();
 
       // Load tabs
       const loadedTabs = await storageService.getTabs();
       setTabs(loadedTabs);
 
-      // Get active tab ID from storage
-      let currentTabId = await storageService.getCurrentTabId();
+      // Get IN-BOX tab ID
+      const inboxTab = loadedTabs.find(t => t.isDefault === true);
+      const inboxTabId = inboxTab?.id || '';
 
-      // If no active tab, use first tab (IN-BOX)
-      if (!currentTabId && loadedTabs.length > 0) {
-        currentTabId = loadedTabs[0].id;
-        await storageService.setCurrentTabId(currentTabId);
+      if (inboxTabId) {
+        setActiveTabId(inboxTabId);
+        await storageService.setCurrentTabId(inboxTabId);
       }
-
-      setActiveTabId(currentTabId || '');
 
       // Load documents
       const docs = await storageService.getDocuments();
@@ -98,10 +92,10 @@ const App: React.FC = () => {
         if (favDoc) {
           setActiveDocument(favDoc);
         } else {
-          setActiveDocument(currentTabId ? createBlankDocument(currentTabId) : null);
+          setActiveDocument(inboxTabId ? createBlankDocument(inboxTabId) : null);
         }
       } else {
-        setActiveDocument(currentTabId ? createBlankDocument(currentTabId) : null);
+        setActiveDocument(inboxTabId ? createBlankDocument(inboxTabId) : null);
       }
     };
     loadData();
@@ -380,106 +374,9 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Tab Management ---
-  const handleAddTab = async () => {
-    if (tabs.length >= 4) {
-      alert('최대 4개의 탭만 가능합니다');
-      return;
-    }
-
-    const newTabId = generateId();
-
-    // 중복되지 않는 탭 이름 생성
-    let tabNumber = tabs.filter(t => !t.isDefault).length + 1;
-    let newName = `탭 ${tabNumber}`;
-
-    while (tabs.some(t => t.name === newName)) {
-      tabNumber++;
-      newName = `탭 ${tabNumber}`;
-    }
-
-    const newTab: Tab = {
-      id: newTabId,
-      name: newName,
-      isDefault: false,
-      createdAt: Date.now()
-    };
-
-    const newTabs = [...tabs, newTab];
-    setTabs(newTabs);
-    await storageService.saveTabs(newTabs);
-  };
-
-  const handleRenameTab = async (id: string, name: string) => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
-
-    const tab = tabs.find(t => t.id === id);
-    if (!tab) return;
-
-    // IN-BOX 이름 제한 (기본 탭이 아닌 경우만)
-    if (trimmedName.toUpperCase() === 'IN-BOX') {
-      if (!tab.isDefault) {
-        alert('IN-BOX는 기본 탭 전용 이름입니다');
-        return;
-      }
-    }
-
-    // 중복 이름 검사
-    const isDuplicate = tabs.some(t =>
-      t.id !== id && t.name.trim().toUpperCase() === trimmedName.toUpperCase()
-    );
-    if (isDuplicate) {
-      alert('이미 존재하는 탭 이름입니다');
-      return;
-    }
-
-    const updatedTabs = tabs.map(t =>
-      t.id === id ? { ...t, name: trimmedName } : t
-    );
-    setTabs(updatedTabs);
-    await storageService.saveTabs(updatedTabs);
-  };
-
-  const handleDeleteTab = async (id: string) => {
-    const tab = tabs.find(t => t.id === id);
-    if (!tab || tab.isDefault) {
-      alert('기본 탭은 삭제할 수 없습니다');
-      return;
-    }
-
-    // Check if tab has documents
-    const tabDocs = documents.filter(d => d.tabId === id);
-    if (tabDocs.length > 0) {
-      alert('문서가 있는 탭은 삭제할 수 없습니다');
-      return;
-    }
-
-    const newTabs = tabs.filter(t => t.id !== id);
-    setTabs(newTabs);
-    await storageService.deleteTab(id);
-
-    // If deleted tab was active, switch to IN-BOX
-    if (activeTabId === id) {
-      const inboxTab = newTabs.find(t => t.isDefault);
-      if (inboxTab) {
-        handleTabChange(inboxTab.id);
-      }
-    }
-  };
-
-  const handleTabChange = async (tabId: string) => {
-    setActiveTabId(tabId);
-    await storageService.setCurrentTabId(tabId);
+  // --- Open Document Drawer ---
+  const handleOpenDrawer = () => {
     setIsDrawerOpen(true);
-  };
-
-  const handleMoveDocumentToTab = async (docId: string, targetTabId: string) => {
-    const updatedDocs = documents.map(doc =>
-      doc.id === docId ? { ...doc, tabId: targetTabId } : doc
-    );
-    setDocuments(updatedDocs);
-    await storageService.saveDocuments(updatedDocs);
   };
 
   return (
@@ -491,8 +388,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Main content - padding for bottom nav */}
-      <main className="flex-1 overflow-hidden pb-16">
+      {/* Main content */}
+      <main className="flex-1 overflow-hidden">
         <SplitEditor
           data={activeDocument || (activeTabId ? createBlankDocument(activeTabId) : null)}
           onSave={handleSave}
@@ -515,16 +412,6 @@ const App: React.FC = () => {
         />
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onTabChange={handleTabChange}
-        onAddTab={handleAddTab}
-        onRenameTab={handleRenameTab}
-        onDeleteTab={handleDeleteTab}
-      />
-
       {/* Document Drawer */}
       <DocumentDrawer
         isOpen={isDrawerOpen}
@@ -541,8 +428,6 @@ const App: React.FC = () => {
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}
         onReorderDocuments={handleReorderDocuments}
-        onMoveToTab={handleMoveDocumentToTab}
-        tabs={tabs}
         onRefresh={refreshData}
       />
 
