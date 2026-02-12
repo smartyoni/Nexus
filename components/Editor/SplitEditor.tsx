@@ -47,7 +47,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setContent(data.content || '');
-  }, [data.id]);
+  }, [data.id, data.content]);
 
   const handleSave = () => {
     onSave({
