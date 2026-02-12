@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://smartyoni.github.io/Nexus",
   "scripts": {
     "dev": "vite",
     "dev:pwa": "cross-env BUILD_TARGET=pwa vite",
