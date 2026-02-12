@@ -16,6 +16,7 @@ interface DocumentDrawerProps {
   onReorderDocuments: (reorderedDocs: DocumentData[]) => void;
   onMoveToTab: (docId: string, tabId: string) => void;
   tabs: Tab[];
+  onRefresh?: () => void; // Refresh data without page reload
 }
 
 export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
@@ -31,7 +32,8 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   onClearFavoriteDocument,
   onReorderDocuments,
   onMoveToTab,
-  tabs
+  tabs,
+  onRefresh
 }) => {
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -41,9 +43,23 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   // Filter documents by active tab
   const tabDocuments = documents.filter(doc => doc.tabId === activeTabId);
 
-  const formatDate = (ts: number) => {
-    const date = new Date(ts);
-    return date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  // Get active tab name
+  const activeTabName = tabs.find(tab => tab.id === activeTabId)?.name || '탭';
+
+  // Get tab color based on tab index
+  const getTabColor = (tabId: string): string => {
+    const colors = [
+      'bg-blue-500',
+      'bg-red-500',
+      'bg-green-500',
+      'bg-yellow-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-orange-500',
+      'bg-cyan-500',
+    ];
+    const index = tabs.findIndex(t => t.id === tabId);
+    return colors[index >= 0 ? index % colors.length : 0];
   };
 
   // Drag and drop handlers
@@ -126,26 +142,47 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
       <div
         className="fixed inset-0 bg-black/40 z-30 transition-opacity"
         onClick={onClose}
-        style={{ bottom: '64px' }}
       />
 
-      {/* Drawer */}
+      {/* Drawer - full screen with bottom nav on top */}
       <div
         className={`
-          fixed bottom-16 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-40 flex flex-col max-h-[80vh]
+          fixed inset-0 bg-white shadow-2xl z-30 flex flex-col
           transition-transform duration-300 ease-out
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
-          <h2 className="text-lg font-bold text-gray-800">문서</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-full"
-          >
-            <Icons.Close size={20} />
-          </button>
+        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 gap-2">
+          <h2 className="text-lg font-bold text-gray-800">{activeTabName} 리스트</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                onCreateNew();
+                onClose();
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-medium rounded-lg transition-colors text-sm"
+            >
+              <Icons.Plus size={16} />
+              <span>문서추가</span>
+            </button>
+            <button
+              onClick={() => {
+                console.log('🔄 Refresh button clicked, onRefresh:', typeof onRefresh);
+                onRefresh?.();
+              }}
+              className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              title="새로고침"
+            >
+              <Icons.Refresh size={18} />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 rounded-full"
+            >
+              <Icons.Close size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Document List */}
@@ -176,10 +213,8 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                     dragOverDocId === doc.id ? 'border-blue-500 border-2 bg-blue-50' : ''
                   }`}
                 >
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-none mt-0.5 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Icons.DragHandle size={18} />
-                    </div>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getTabColor(doc.tabId)}`}></div>
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => {
@@ -187,19 +222,10 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                         onClose();
                       }}
                     >
-                      <h3 className="font-semibold text-gray-800 truncate">{doc.title || '제목 없음'}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{formatDate(doc.updatedAt)}</p>
+                      <h3 className="font-semibold text-gray-800 truncate">
+                        {(doc.content?.split('\n')[0] || doc.title || '무제 (Untitled)').slice(0, 30)}
+                      </h3>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteDocument(doc.id);
-                      }}
-                      className="flex-none p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="삭제"
-                    >
-                      <Icons.Trash size={16} />
-                    </button>
                   </div>
 
                   {/* Context Menu */}
@@ -262,6 +288,18 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                       >
                         <Icons.Trash size={16} />
                         <span>삭제</span>
+                      </button>
+
+                      <div className="h-px bg-gray-200 my-1"></div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContextMenuId(null);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        취소
                       </button>
                     </div>
                   )}

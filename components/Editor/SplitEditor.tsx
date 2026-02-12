@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ChecklistItem, DocumentData } from '../../types';
-import { ChecklistManager } from '../Checklist/ChecklistManager';
+import { DocumentData } from '../../types';
+import { TextEditor } from './TextEditor';
 import { Icons } from '../ui/Icon';
-import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface SplitEditorProps {
   data: DocumentData | null;
@@ -13,17 +12,18 @@ interface SplitEditorProps {
   onMoveItem?: (itemId: string, targetDocId: string) => void;
   availableDocuments?: DocumentData[];
   isSaving?: boolean; // Indicate if document is being auto-saved
+  onContentChange?: (content: string) => void; // Propagate content changes to App
+  onRefresh?: () => void; // Refresh data without page reload
+  onGoBack?: () => void; // Go back to document list
 }
 
 export const SplitEditor: React.FC<SplitEditorProps> = ({
   data,
   onSave,
-  onCancel,
-  screenWidth,
-  mdBreakpoint,
-  onMoveItem,
-  availableDocuments,
-  isSaving = false
+  isSaving = false,
+  onContentChange,
+  onRefresh,
+  onGoBack
 }) => {
   // Handle null data gracefully
   if (!data) {
@@ -35,139 +35,61 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       </div>
     );
   }
-  const [title, setTitle] = useState(data.title);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
-  const [isDirty, setIsDirty] = useState(false);
+  const [content, setContent] = useState(data.content || '');
+  const [title, setTitle] = useState('');
 
-  // Save confirmation modal state
-  const [saveConfirmAction, setSaveConfirmAction] = useState<'refresh' | 'cancel' | null>(null);
+  // Auto-extract title from first line of content
+  useEffect(() => {
+    const firstLine = content.split('\n')[0] || '';
+    setTitle(firstLine.slice(0, 20) || '무제 (Untitled)');
+  }, [content]);
 
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
-    setTitle(data.title);
-    setChecklist(data.checklist);
-    setIsDirty(false);
-  }, [data.id, data.title, data.checklist]);
+    setContent(data.content || '');
+  }, [data.id]);
 
   const handleSave = () => {
     onSave({
       ...data,
+      content,
       title,
-      checklist,
       updatedAt: Date.now()
     });
-    setIsDirty(false);
   };
 
-  // Helper to detect changes
-  const markDirty = () => setIsDirty(true);
-
-  // Handle refresh button - check if there are unsaved changes
-  const handleRefreshClick = () => {
-    if (isDirty) {
-      setSaveConfirmAction('refresh');
-    } else {
-      window.location.reload();
-    }
-  };
-
-  // Handle cancel/back button - check if there are unsaved changes
-  const handleCancelClick = () => {
-    if (isDirty && onCancel) {
-      setSaveConfirmAction('cancel');
-    } else if (onCancel) {
-      onCancel();
-    }
-  };
-
-  // Confirm save and then execute the action
-  const handleConfirmSave = () => {
-    handleSave();
-    if (saveConfirmAction === 'refresh') {
-      setTimeout(() => window.location.reload(), 100);
-    } else if (saveConfirmAction === 'cancel' && onCancel) {
-      setTimeout(() => onCancel(), 100);
-    }
-    setSaveConfirmAction(null);
-  };
-
-  // Skip save and execute the action without saving
-  const handleSkipSave = () => {
-    setIsDirty(false);
-    if (saveConfirmAction === 'refresh') {
-      window.location.reload();
-    } else if (saveConfirmAction === 'cancel' && onCancel) {
-      onCancel();
-    }
-    setSaveConfirmAction(null);
+  // Handle content change - propagate to App
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    onContentChange?.(newContent);
   };
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Top Bar for Editor - Compact for Sidebar */}
       <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
-        <div className="flex items-center gap-2 flex-1 mr-2 min-w-0">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
-            placeholder="제목 (선택사항)"
-            className="text-base font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent w-full truncate leading-tight"
-          />
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={!isDirty}
-          className={`p-1.5 rounded-md transition-colors flex-shrink-0 ${isDirty ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-          title="저장"
-        >
-          <Icons.Save size={18} />
-        </button>
+        <h1 className="text-base font-bold text-gray-800 truncate flex-1">{title}</h1>
         {isSaving && (
           <div className="ml-1 px-2 py-1.5 rounded-md bg-green-50 flex items-center gap-1 flex-shrink-0 text-green-600 text-xs animate-pulse">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
             저장 중
           </div>
         )}
-        <button
-          onClick={handleRefreshClick}
-          className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
-          title="새로고침"
-        >
-          <Icons.Refresh size={18} />
-        </button>
-        {onCancel && (
+        {onGoBack && (
           <button
-            onClick={handleCancelClick}
+            onClick={onGoBack}
             className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
-            title="뒤로가기"
+            title="문서 리스트로 돌아가기"
           >
             <Icons.Back size={18} />
           </button>
         )}
       </div>
 
-      {/* Checklist Area - Full Height */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-h-0">
-        <ChecklistManager
-          items={checklist}
-          onChange={(items) => { setChecklist(items); markDirty(); }}
-          onMoveItem={onMoveItem}
-          availableDocuments={availableDocuments}
-          currentDocId={data.id}
-        />
-      </div>
-
-      {/* Save Confirmation Modal */}
-      <ConfirmModal
-        isOpen={saveConfirmAction !== null}
-        title="저장하시겠습니까?"
-        message="변경사항을 저장하지 않으면 손실됩니다."
-        onConfirm={handleConfirmSave}
-        onClose={handleSkipSave}
-        confirmText="저장하기"
-        cancelText="저장하지 않음"
-        isDanger={false}
+      {/* Text Editor Area - Full Height */}
+      <TextEditor
+        content={content}
+        onChange={handleContentChange}
       />
     </div>
   );

@@ -31,10 +31,7 @@ export const TabManagementModal: React.FC<TabManagementModalProps> = ({
   };
 
   const handleDeleteClick = () => {
-    if (window.confirm(`"${tab.name}" 탭을 삭제하시겠습니까?`)) {
-      onDelete();
-      onClose();
-    }
+    onDelete();
   };
 
   return (

@@ -80,11 +80,11 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-40 flex items-center px-2 gap-2 overflow-x-auto safe-bottom">
-        {/* Scrollable tabs container */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-40 flex items-center px-2 gap-2 safe-bottom">
+        {/* Tabs container - equally distributed */}
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-2 flex-1 overflow-x-auto scrollbar-hide"
+          className="flex items-center flex-1"
         >
           {tabs.map(tab => (
             <button
@@ -94,7 +94,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
               onTouchStart={(e) => handleTabLongPress(tab, e)}
               onTouchEnd={(e) => handleTabTouchEnd(e)}
               className={`
-                flex-shrink-0 px-3 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap
+                flex-1 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap truncate
                 ${activeTabId === tab.id
                   ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
                   : 'text-gray-600 hover:bg-gray-50'

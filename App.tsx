@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Icons } from './components/ui/Icon';
 import { SplitEditor } from './components/Editor/SplitEditor';
@@ -55,6 +55,10 @@ const App: React.FC = () => {
   const lastSavedRef = useRef<string>('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Toast message state
+  const [showRefreshMessage, setShowRefreshMessage] = useState(false);
+  const refreshMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // --- Initial Load ---
   useEffect(() => {
     const loadData = async () => {
@@ -99,10 +103,45 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
+  // --- Refresh Data (without page reload) ---
+  const refreshData = useCallback(async () => {
+    console.log('🔄 Refresh started');
+
+    // Show refresh message
+    setShowRefreshMessage(true);
+
+    // Clear any existing timeout
+    if (refreshMessageTimeoutRef.current) {
+      clearTimeout(refreshMessageTimeoutRef.current);
+    }
+
+    // Hide message after 2 seconds
+    refreshMessageTimeoutRef.current = setTimeout(() => {
+      setShowRefreshMessage(false);
+    }, 2000);
+
+    try {
+      const docs = await storageService.getDocuments();
+      console.log('📄 Documents loaded:', docs.length);
+      setDocuments(docs);
+
+      // Update current activeDocument if it exists
+      if (activeDocument) {
+        const updated = docs.find(d => d.id === activeDocument.id);
+        if (updated) {
+          console.log('✅ Active document updated');
+          setActiveDocument(updated);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Refresh failed:', error);
+    }
+  }, [activeDocument]);
+
   // --- Auto-save with Debounce ---
   const autoSaveDocument = async (doc: DocumentData) => {
     // 빈 문서는 자동 저장 하지 않음
-    if (!doc.id || (!doc.title && doc.checklist.length === 0)) return;
+    if (!doc.id || (!doc.title && !doc.content && doc.checklist.length === 0)) return;
 
     const docString = JSON.stringify(doc);
 
@@ -150,7 +189,7 @@ const App: React.FC = () => {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [activeDocument?.title, activeDocument?.checklist]);
+  }, [activeDocument?.title, activeDocument?.content, activeDocument?.checklist]);
 
   // --- Actions ---
 
@@ -411,6 +450,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background font-sans text-gray-900">
+      {/* Refresh Message Toast */}
+      {showRefreshMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold animate-bounce">
+          인사이트부동산 대박
+        </div>
+      )}
+
       {/* Main content - padding for bottom nav */}
       <main className="flex-1 overflow-hidden pb-16">
         <SplitEditor
@@ -427,6 +473,11 @@ const App: React.FC = () => {
           onMoveItem={handleMoveItem}
           availableDocuments={documents}
           isSaving={isSaving}
+          onContentChange={(content) => {
+            setActiveDocument(prev => prev ? { ...prev, content } : null);
+          }}
+          onRefresh={refreshData}
+          onGoBack={() => setIsDrawerOpen(true)}
         />
       </main>
 
@@ -458,6 +509,7 @@ const App: React.FC = () => {
         onReorderDocuments={handleReorderDocuments}
         onMoveToTab={handleMoveDocumentToTab}
         tabs={tabs}
+        onRefresh={refreshData}
       />
 
       {/* Global Delete Confirmation Modal */}
