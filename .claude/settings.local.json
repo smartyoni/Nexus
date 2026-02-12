@@ -26,7 +26,8 @@
       "Bash(npm run deploy:all:*)",
       "mcp__ide__getDiagnostics",
       "Bash(gh repo view:*)",
-      "Bash(npm run deploy:github-pages:*)"
+      "Bash(npm run deploy:github-pages:*)",
+      "Bash(git diff-tree:*)"
     ]
   }
 }

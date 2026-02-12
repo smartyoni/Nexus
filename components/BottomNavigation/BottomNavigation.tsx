@@ -24,6 +24,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [tabModalOpen, setTabModalOpen] = useState(false);
   const [selectedTabForModal, setSelectedTabForModal] = useState<Tab | null>(null);
+  const [deleteConfirmTabId, setDeleteConfirmTabId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Find the active tab
@@ -145,10 +146,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              const tab = tabs.find(t => t.id === contextMenuTabId);
-              if (tab) {
-                handleOpenTabModal(tab);
-              }
+              setDeleteConfirmTabId(contextMenuTabId);
+              setContextMenuTabId(null);
             }}
             className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
@@ -157,7 +156,36 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         </div>
       )}
 
-      {/* Tab Management Modal */}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmTabId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 animate-in">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">탭 삭제</h3>
+            <p className="text-gray-600 mb-6">
+              "{tabs.find(t => t.id === deleteConfirmTabId)?.name}" 탭을 삭제하시겠습니까?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmTabId(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteTab(deleteConfirmTabId);
+                  setDeleteConfirmTabId(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Management Modal (Rename) */}
       {tabModalOpen && selectedTabForModal && (
         <TabManagementModal
           tab={selectedTabForModal}
