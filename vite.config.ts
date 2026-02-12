@@ -6,8 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   const isExtension = process.env.BUILD_TARGET === 'extension';
+  const isPWA = !isExtension;
 
   return {
+    base: isPWA ? '/Nexus/' : '/',
     publicDir: 'public',
     server: {
       port: 3000,
@@ -27,8 +29,8 @@ export default defineConfig(({ mode }) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: '/',
-          scope: '/',
+          start_url: isPWA ? '/Nexus/' : '/',
+          scope: isPWA ? '/Nexus/' : '/',
           icons: [
             {
               src: 'icons/icon-192.png',
