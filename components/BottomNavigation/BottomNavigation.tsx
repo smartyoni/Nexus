@@ -33,10 +33,9 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const handleTabLongPress = (tab: Tab, e: React.TouchEvent<HTMLButtonElement>) => {
     if (tab.isDefault) return;
     if (e.touches.length > 0) {
-      const touch = e.touches[0];
       const longPressTimer = setTimeout(() => {
-        setContextMenuTabId(tab.id);
-        setContextMenuPos({ x: touch.clientX, y: touch.clientY });
+        setSelectedTabForModal(tab);
+        setTabModalOpen(true);
       }, 500);
       (e.currentTarget as any).longPressTimer = longPressTimer;
     }
@@ -45,8 +44,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const handleTabRightClick = (tab: Tab, e: React.MouseEvent<HTMLButtonElement>) => {
     if (tab.isDefault) return;
     e.preventDefault();
-    setContextMenuTabId(tab.id);
-    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setSelectedTabForModal(tab);
+    setTabModalOpen(true);
   };
 
   const handleTabTouchEnd = (e: React.TouchEvent<HTMLButtonElement>) => {
@@ -70,7 +69,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   const handleDeleteConfirm = () => {
     if (selectedTabForModal) {
-      onDeleteTab(selectedTabForModal.id);
+      setDeleteConfirmTabId(selectedTabForModal.id);
     }
     setTabModalOpen(false);
     setSelectedTabForModal(null);
@@ -122,39 +121,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <Icons.Plus size={20} />
         </button>
       </div>
-
-      {/* Context Menu */}
-      {contextMenuTabId && contextMenuPos && (
-        <div
-          className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[160px]"
-          style={{ left: `${contextMenuPos.x}px`, top: `${contextMenuPos.y}px` }}
-          onClick={() => setContextMenuTabId(null)}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const tab = tabs.find(t => t.id === contextMenuTabId);
-              if (tab) {
-                handleOpenTabModal(tab);
-              }
-            }}
-            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            이름 변경
-          </button>
-          <div className="h-px bg-gray-200 my-1"></div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteConfirmTabId(contextMenuTabId);
-              setContextMenuTabId(null);
-            }}
-            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-          >
-            삭제
-          </button>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmTabId && (
