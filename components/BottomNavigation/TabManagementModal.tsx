@@ -7,24 +7,53 @@ interface TabManagementModalProps {
   onRename: (newName: string) => void;
   onDelete: () => void;
   onClose: () => void;
+  allTabs?: Tab[]; // 전체 탭 목록 (검증용)
 }
 
 export const TabManagementModal: React.FC<TabManagementModalProps> = ({
   tab,
   onRename,
   onDelete,
-  onClose
+  onClose,
+  allTabs = []
 }) => {
   const [showRenameInput, setShowRenameInput] = useState(false);
   const [inputValue, setInputValue] = useState(tab.name);
+  const [error, setError] = useState('');
 
   const handleRenameClick = () => {
     setShowRenameInput(true);
+    setError('');
+  };
+
+  const handleNameChange = (value: string) => {
+    setInputValue(value);
+
+    const trimmed = value.trim();
+
+    // IN-BOX 이름 검증 (기본 탭이 아닌 경우만)
+    if (trimmed.toUpperCase() === 'IN-BOX' && !tab.isDefault) {
+      setError('IN-BOX는 기본 탭 전용 이름입니다');
+      return;
+    }
+
+    // 중복 이름 검증
+    if (trimmed && trimmed !== tab.name) {
+      const isDuplicate = allTabs.some(t =>
+        t.id !== tab.id && t.name.trim().toUpperCase() === trimmed.toUpperCase()
+      );
+      if (isDuplicate) {
+        setError('이미 존재하는 탭 이름입니다');
+        return;
+      }
+    }
+
+    setError('');
   };
 
   const handleConfirmRename = () => {
     const trimmedName = inputValue.trim();
-    if (trimmedName && trimmedName !== tab.name) {
+    if (trimmedName && trimmedName !== tab.name && !error) {
       onRename(trimmedName);
       onClose();
     }
@@ -67,25 +96,36 @@ export const TabManagementModal: React.FC<TabManagementModalProps> = ({
             <input
               type="text"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               placeholder="새 탭 이름"
               autoFocus
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+              className={`w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 ${
+                error
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/10'
+              }`}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirmRename();
+                if (e.key === 'Enter' && !error) handleConfirmRename();
                 if (e.key === 'Escape') setShowRenameInput(false);
               }}
             />
+            {error && (
+              <p className="text-xs text-red-500">{error}</p>
+            )}
             <div className="flex gap-2">
               <button
-                onClick={() => setShowRenameInput(false)}
+                onClick={() => {
+                  setShowRenameInput(false);
+                  setError('');
+                  setInputValue(tab.name);
+                }}
                 className="flex-1 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 취소
               </button>
               <button
                 onClick={handleConfirmRename}
-                disabled={!inputValue.trim() || inputValue.trim() === tab.name}
+                disabled={!inputValue.trim() || inputValue.trim() === tab.name || !!error}
                 className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 rounded-lg transition-colors"
               >
                 저장

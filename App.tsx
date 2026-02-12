@@ -8,6 +8,7 @@ import { DocumentData, ViewMode, generateId, ChecklistItem, Tab } from './types'
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
 import { tabMigrationService } from './services/tabMigrationService';
+import { tabDeduplicationService } from './services/tabDeduplicationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 
 const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
@@ -64,6 +65,9 @@ const App: React.FC = () => {
     const loadData = async () => {
       // Perform tab migration (deletes old docs, creates IN-BOX tab)
       await tabMigrationService.migrateToTabSystem();
+
+      // Deduplicate IN-BOX tabs
+      await tabDeduplicationService.deduplicateInboxTabs();
 
       // Load tabs
       const loadedTabs = await storageService.getTabs();
@@ -384,9 +388,19 @@ const App: React.FC = () => {
     }
 
     const newTabId = generateId();
+
+    // 중복되지 않는 탭 이름 생성
+    let tabNumber = tabs.filter(t => !t.isDefault).length + 1;
+    let newName = `탭 ${tabNumber}`;
+
+    while (tabs.some(t => t.name === newName)) {
+      tabNumber++;
+      newName = `탭 ${tabNumber}`;
+    }
+
     const newTab: Tab = {
       id: newTabId,
-      name: `탭 ${tabs.filter(t => !t.isDefault).length + 1}`,
+      name: newName,
       isDefault: false,
       createdAt: Date.now()
     };
@@ -399,6 +413,26 @@ const App: React.FC = () => {
   const handleRenameTab = async (id: string, name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) return;
+
+    const tab = tabs.find(t => t.id === id);
+    if (!tab) return;
+
+    // IN-BOX 이름 제한 (기본 탭이 아닌 경우만)
+    if (trimmedName.toUpperCase() === 'IN-BOX') {
+      if (!tab.isDefault) {
+        alert('IN-BOX는 기본 탭 전용 이름입니다');
+        return;
+      }
+    }
+
+    // 중복 이름 검사
+    const isDuplicate = tabs.some(t =>
+      t.id !== id && t.name.trim().toUpperCase() === trimmedName.toUpperCase()
+    );
+    if (isDuplicate) {
+      alert('이미 존재하는 탭 이름입니다');
+      return;
+    }
 
     const updatedTabs = tabs.map(t =>
       t.id === id ? { ...t, name: trimmedName } : t

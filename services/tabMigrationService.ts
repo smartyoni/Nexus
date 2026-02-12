@@ -17,6 +17,14 @@ export const tabMigrationService = {
   migrateToTabSystem: async (): Promise<void> => {
     // Only migrate once
     if (tabMigrationService.isMigrationComplete()) {
+      // 플래그는 있지만 실제 탭이 없는 경우 복구
+      const tabs = await storageService.getTabs();
+      const hasDefaultTab = tabs.some(t => t.isDefault === true);
+
+      if (!hasDefaultTab) {
+        console.warn('Migration flag exists but no default tab found. Recreating...');
+        await tabMigrationService.createDefaultInboxTab();
+      }
       return;
     }
 
@@ -50,6 +58,34 @@ export const tabMigrationService = {
       console.error('Tab migration failed:', error);
       // Still mark as complete to prevent infinite retries
       localStorage.setItem(MIGRATION_FLAG, 'true');
+    }
+  },
+
+  // 복구: 기본 IN-BOX 탭 생성
+  createDefaultInboxTab: async (): Promise<void> => {
+    try {
+      const tabs = await storageService.getTabs();
+
+      // 이미 isDefault=true인 탭이 있는지 확인
+      if (tabs.some(t => t.isDefault === true)) {
+        console.log('Default IN-BOX tab already exists');
+        return;
+      }
+
+      const inboxTabId = generateId();
+      const inboxTab: Tab = {
+        id: inboxTabId,
+        name: 'IN-BOX',
+        isDefault: true,
+        createdAt: Date.now()
+      };
+
+      await storageService.saveTabs([...tabs, inboxTab]);
+      await storageService.setCurrentTabId(inboxTabId);
+
+      console.log('Default IN-BOX tab recreated');
+    } catch (error) {
+      console.error('Failed to recreate default IN-BOX tab:', error);
     }
   }
 };

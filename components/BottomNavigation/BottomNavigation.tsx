@@ -155,6 +155,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {tabModalOpen && selectedTabForModal && (
         <TabManagementModal
           tab={selectedTabForModal}
+          allTabs={tabs}
           onRename={handleRenameConfirm}
           onDelete={handleDeleteConfirm}
           onClose={() => {
