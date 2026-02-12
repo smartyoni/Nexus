@@ -39,7 +39,7 @@ const App: React.FC = () => {
   // Tab Management State
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
   // Initialize with a blank document so the user can type immediately
   const [activeDocument, setActiveDocument] = useState<DocumentData | null>(null);
