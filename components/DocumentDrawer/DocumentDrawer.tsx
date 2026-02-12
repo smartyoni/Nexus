@@ -184,10 +184,10 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
             />
             <button
               onClick={handleQuickAddDocument}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-1 h-fit"
+              className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center flex-shrink-0"
+              title="추가 (Ctrl+Enter)"
             >
-              <Icons.Plus size={16} />
-              <span>추가</span>
+              <Icons.Plus size={20} />
             </button>
           </div>
         </div>
