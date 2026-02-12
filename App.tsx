@@ -199,6 +199,17 @@ const App: React.FC = () => {
     }
   };
 
+  // Create New Document with initial content
+  const handleCreateNewWithContent = (content: string) => {
+    if (activeTabId) {
+      const newDoc = {
+        ...createBlankDocument(activeTabId),
+        content: content.trim()
+      };
+      setActiveDocument(newDoc);
+      setViewMode('EDITOR');
+    }
+  };
 
   // 2. Save Logic
   const handleSave = async (data: DocumentData) => {
@@ -424,6 +435,7 @@ const App: React.FC = () => {
           setViewMode('EDITOR');
         }}
         onCreateNew={createNewDocument}
+        onCreateNewWithContent={handleCreateNewWithContent}
         onDeleteDocument={requestDeleteDocument}
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}

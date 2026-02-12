@@ -10,6 +10,7 @@ interface DocumentDrawerProps {
   favoriteDocId: string | null;
   onSelectDocument: (doc: DocumentData) => void;
   onCreateNew: () => void;
+  onCreateNewWithContent: (content: string) => void;
   onDeleteDocument: (id: string) => void;
   onSetFavoriteDocument: (id: string) => void;
   onClearFavoriteDocument: () => void;
@@ -25,6 +26,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   favoriteDocId,
   onSelectDocument,
   onCreateNew,
+  onCreateNewWithContent,
   onDeleteDocument,
   onSetFavoriteDocument,
   onClearFavoriteDocument,
@@ -93,7 +95,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   // Quick input handlers
   const handleQuickAddDocument = () => {
     if (quickInputValue.trim()) {
-      onCreateNew();
+      onCreateNewWithContent(quickInputValue);
       setQuickInputValue('');
       onClose();
     }
