@@ -260,19 +260,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
           )}
         </div>
 
-        {/* Footer - New Document Button */}
-        <div className="border-t p-3 flex-shrink-0">
-          <button
-            onClick={() => {
-              onCreateNew();
-              onClose();
-            }}
-            className="w-full flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Icons.Plus size={16} className="mr-1" />
-            <span className="text-sm font-medium">새문서추가</span>
-          </button>
-        </div>
       </div>
     </>
   );
