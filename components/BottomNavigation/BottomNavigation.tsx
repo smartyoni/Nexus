@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Tab } from '../../types';
 import { Icons } from '../ui/Icon';
 import { TabManagementModal } from './TabManagementModal';
+import { DeleteTabModal } from './DeleteTabModal';
 
 interface BottomNavigationProps {
   tabs: Tab[];
@@ -124,31 +125,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmTabId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 animate-in">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">탭 삭제</h3>
-            <p className="text-gray-600 mb-6">
-              "{tabs.find(t => t.id === deleteConfirmTabId)?.name}" 탭을 삭제하시겠습니까?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteConfirmTabId(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  onDeleteTab(deleteConfirmTabId);
-                  setDeleteConfirmTabId(null);
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteTabModal
+          tabName={tabs.find(t => t.id === deleteConfirmTabId)?.name || ''}
+          onConfirm={() => {
+            onDeleteTab(deleteConfirmTabId);
+            setDeleteConfirmTabId(null);
+          }}
+          onCancel={() => setDeleteConfirmTabId(null)}
+        />
       )}
 
       {/* Tab Management Modal (Rename) */}
