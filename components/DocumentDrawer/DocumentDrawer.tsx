@@ -173,17 +173,17 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
         {/* Quick Input Section */}
         <div className="px-2 py-3 border-b bg-gray-50 flex-shrink-0">
           <div className="flex gap-2">
-            <input
-              type="text"
+            <textarea
               value={quickInputValue}
               onChange={(e) => setQuickInputValue(e.target.value)}
               onKeyPress={handleQuickInputKeyPress}
-              placeholder="문서 제목 입력..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              placeholder="문서 내용 입력..."
+              rows={2}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
             />
             <button
               onClick={handleQuickAddDocument}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-1"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-1 h-fit"
             >
               <Icons.Plus size={16} />
               <span>추가</span>
