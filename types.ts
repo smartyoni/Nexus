@@ -5,7 +5,12 @@ export interface ChecklistItem {
   memo?: string;
 }
 
-export type DocumentCategory = '업무' | '개인' | 'APP';
+export interface Tab {
+  id: string;
+  name: string;
+  isDefault: boolean; // true for IN-BOX only
+  createdAt: number;
+}
 
 export interface DocumentData {
   id: string;
@@ -13,7 +18,8 @@ export interface DocumentData {
   content?: string; // DEPRECATED: 더 이상 UI에서 사용하지 않음, backward compatibility를 위해 유지
   checklist: ChecklistItem[];
   updatedAt: number;
-  category?: DocumentCategory; // 새로 추가 (옵셔널로 하위 호환성 보장)
+  tabId: string; // 탭 ID (필수)
+  category?: string; // DEPRECATED: 탭 시스템으로 대체됨
 }
 
 export type ViewMode = 'EDITOR';

@@ -33,6 +33,7 @@ interface ChecklistItemComponentProps {
 const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, onToggle, onEdit, onDelete, onMemoOpen, onMoveClick, onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, isDragging, isDraggedOver, hasMoveTargets, itemIndex, totalItems, onMoveUp, onMoveDown }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,6 +43,14 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [item.text]);
+
+  useEffect(() => {
+    // Focus textarea when entering edit mode
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, [isEditing]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -85,41 +94,39 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         isDraggedOver ? 'border-blue-500 border-2 bg-blue-50' : ''
       }`}
     >
-      <div
-        className="flex-none mt-0.5 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
-        title="드래그하여 순서 변경"
-      >
-        <Icons.DragHandle size={20} />
-      </div>
-
       <button
         onClick={() => onToggle(item.id)}
         className={`mt-0.5 flex-none transition-colors ${item.isChecked ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
       >
         {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-md" />}
       </button>
-      
-      <textarea 
-        ref={textareaRef}
-        className={`flex-1 bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
-        value={item.text}
-        onChange={(e) => onEdit(item.id, e.target.value)}
-        onInput={handleInput}
-        rows={1} // Keep rows={1} to ensure it starts small and grows
-      />
+
+      <div className="flex-1 flex flex-col gap-1">
+        <textarea
+          ref={textareaRef}
+          disabled={!isEditing}
+          onDoubleClick={() => setIsEditing(true)}
+          onBlur={() => setIsEditing(false)}
+          className={`bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 cursor-text ${
+            isEditing ? 'ring-2 ring-blue-500' : 'cursor-pointer'
+          } ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'} disabled:cursor-pointer`}
+          value={item.text}
+          onChange={(e) => onEdit(item.id, e.target.value)}
+          onInput={handleInput}
+          rows={1}
+        />
+        {item.memo && (
+          <button
+            onClick={() => onMemoOpen(item.id)}
+            className="text-left text-xs text-green-600 hover:text-green-700 hover:underline truncate pr-2"
+            title={item.memo}
+          >
+            {item.memo}
+          </button>
+        )}
+      </div>
 
       <div className="flex gap-1 flex-shrink-0 relative" ref={menuRef}>
-        <button
-          onClick={() => onMemoOpen(item.id)}
-          className={`p-2 rounded transition-all flex-shrink-0 ${
-            item.memo
-              ? 'text-green-500 hover:text-green-600 hover:bg-green-50'
-              : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'
-          }`}
-          title="메모"
-        >
-          <Icons.Note size={18} />
-        </button>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-all flex-shrink-0"
@@ -131,6 +138,20 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
         {/* Dropdown Menu */}
         {menuOpen && (
           <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[160px]">
+            <button
+              onClick={() => {
+                onMemoOpen(item.id);
+                setMenuOpen(false);
+              }}
+              className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                item.memo
+                  ? 'text-green-600 hover:bg-green-50'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Icons.Note size={16} />
+              메모
+            </button>
             {itemIndex > 0 && onMoveUp && (
               <button
                 onClick={() => {

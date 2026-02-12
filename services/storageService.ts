@@ -1,4 +1,4 @@
-import { DocumentData } from '../types';
+import { DocumentData, Tab } from '../types';
 import { firestoreService } from './firestoreService';
 import { storageService as localStorageService } from './localStorageService';
 
@@ -95,6 +95,107 @@ export const storageService = {
       }
     } else {
       localStorageService.clearFavoriteDocId();
+    }
+  },
+
+  getTabs: async (): Promise<Tab[]> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getTabs();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage', error);
+        return localStorageService.getTabs();
+      }
+    }
+    return localStorageService.getTabs();
+  },
+
+  saveTabs: async (tabs: Tab[]): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        for (const tab of tabs) {
+          await firestoreService.saveTab(tab);
+        }
+        localStorageService.saveTabs(tabs);
+      } catch (error) {
+        console.error('Failed to save tabs to Firestore', error);
+        localStorageService.saveTabs(tabs);
+      }
+    } else {
+      localStorageService.saveTabs(tabs);
+    }
+  },
+
+  saveTab: async (tab: Tab): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.saveTab(tab);
+        const tabs = localStorageService.getTabs();
+        const index = tabs.findIndex(t => t.id === tab.id);
+        if (index >= 0) {
+          tabs[index] = tab;
+        } else {
+          tabs.push(tab);
+        }
+        localStorageService.saveTabs(tabs);
+      } catch (error) {
+        console.error('Failed to save tab to Firestore', error);
+        const tabs = localStorageService.getTabs();
+        const index = tabs.findIndex(t => t.id === tab.id);
+        if (index >= 0) {
+          tabs[index] = tab;
+        } else {
+          tabs.push(tab);
+        }
+        localStorageService.saveTabs(tabs);
+      }
+    } else {
+      const tabs = localStorageService.getTabs();
+      const index = tabs.findIndex(t => t.id === tab.id);
+      if (index >= 0) {
+        tabs[index] = tab;
+      } else {
+        tabs.push(tab);
+      }
+      localStorageService.saveTabs(tabs);
+    }
+  },
+
+  deleteTab: async (id: string): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.deleteTab(id);
+      } catch (error) {
+        console.error('Failed to delete tab from Firestore', error);
+      }
+    }
+    const tabs = localStorageService.getTabs();
+    localStorageService.saveTabs(tabs.filter(t => t.id !== id));
+  },
+
+  getCurrentTabId: async (): Promise<string | null> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getCurrentTabId();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage', error);
+        return localStorageService.getCurrentTabId();
+      }
+    }
+    return localStorageService.getCurrentTabId();
+  },
+
+  setCurrentTabId: async (id: string): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.setCurrentTabId(id);
+        localStorageService.setCurrentTabId(id);
+      } catch (error) {
+        console.error('Failed to save current tab id to Firestore', error);
+        localStorageService.setCurrentTabId(id);
+      }
+    } else {
+      localStorageService.setCurrentTabId(id);
     }
   }
 };

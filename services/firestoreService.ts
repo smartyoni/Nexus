@@ -5,10 +5,11 @@ import {
   setDoc,
   deleteDoc,
   query,
-  orderBy
+  orderBy,
+  getDoc
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { DocumentData } from '../types';
+import { DocumentData, Tab } from '../types';
 
 // Firestore 컬렉션 이름
 const COLLECTION_DOCS = 'documents';
@@ -122,6 +123,68 @@ export const firestoreService = {
       await setDoc(settingsRef, { favoriteDocId: null });
     } catch (e) {
       console.error("Failed to clear favorite doc id in Firestore", e);
+      throw e;
+    }
+  },
+
+  // 탭 목록 가져오기
+  getTabs: async (): Promise<Tab[]> => {
+    try {
+      const tabsRef = collection(db, `users/${USER_ID}/tabs`);
+      const q = query(tabsRef, orderBy('createdAt', 'asc'));
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as Tab[];
+    } catch (e) {
+      console.error("Failed to load tabs from Firestore", e);
+      return [];
+    }
+  },
+
+  // 탭 저장하기
+  saveTab: async (tab: Tab): Promise<void> => {
+    try {
+      const tabRef = doc(db, `users/${USER_ID}/tabs`, tab.id);
+      await setDoc(tabRef, tab);
+    } catch (e) {
+      console.error("Failed to save tab to Firestore", e);
+      throw e;
+    }
+  },
+
+  // 탭 삭제하기
+  deleteTab: async (id: string): Promise<void> => {
+    try {
+      const tabRef = doc(db, `users/${USER_ID}/tabs`, id);
+      await deleteDoc(tabRef);
+    } catch (e) {
+      console.error("Failed to delete tab from Firestore", e);
+      throw e;
+    }
+  },
+
+  // 현재 탭 ID 가져오기
+  getCurrentTabId: async (): Promise<string | null> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'tabs');
+      const snapshot = await getDoc(settingsRef);
+      return snapshot.exists() ? (snapshot.data().currentTabId || null) : null;
+    } catch (e) {
+      console.error("Failed to get current tab id from Firestore", e);
+      return null;
+    }
+  },
+
+  // 현재 탭 ID 설정하기
+  setCurrentTabId: async (id: string): Promise<void> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'tabs');
+      await setDoc(settingsRef, { currentTabId: id }, { merge: true });
+    } catch (e) {
+      console.error("Failed to set current tab id in Firestore", e);
       throw e;
     }
   }

@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Icons } from './components/ui/Icon';
-import { SidebarMenu } from './components/Sidebar/SidebarMenu';
 import { SplitEditor } from './components/Editor/SplitEditor';
-import { DocumentData, ViewMode, generateId, ChecklistItem, DocumentCategory } from './types';
+import { BottomNavigation } from './components/BottomNavigation/BottomNavigation';
+import { DocumentDrawer } from './components/DocumentDrawer/DocumentDrawer';
+import { DocumentData, ViewMode, generateId, ChecklistItem, Tab } from './types';
 import { storageService } from './services/storageService';
 import { migrationService } from './services/migrationService';
+import { tabMigrationService } from './services/tabMigrationService';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 
 const MD_BREAKPOINT = 768; // Tailwind의 'md' breakpoint
@@ -22,31 +24,31 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   // --- Helper ---
-  const createBlankDocument = (category: DocumentCategory = '업무'): DocumentData => ({
+  const createBlankDocument = (tabId: string): DocumentData => ({
     id: generateId(),
     title: '',
     checklist: [],
     updatedAt: Date.now(),
-    category
+    tabId
   });
 
   // --- State ---
   const [documents, setDocuments] = useState<DocumentData[]>([]);
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(screenWidth >= MD_BREAKPOINT);
   const [viewMode, setViewMode] = useState<ViewMode>('EDITOR');
 
+  // Tab Management State
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   // Initialize with a blank document so the user can type immediately
-  const [activeDocument, setActiveDocument] = useState<DocumentData | null>(() => createBlankDocument());
+  const [activeDocument, setActiveDocument] = useState<DocumentData | null>(null);
 
   // Delete Confirmation State
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'DOC', id: string } | null>(null);
 
   // Favorite Document State
   const [favoriteDocId, setFavoriteDocId] = useState<string | null>(null);
-
-  // Current Category State
-  const [currentCategory, setCurrentCategory] = useState<DocumentCategory>('업무');
 
   // Auto-save related states
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,28 +58,42 @@ const App: React.FC = () => {
   // --- Initial Load ---
   useEffect(() => {
     const loadData = async () => {
-      // 기존 localStorage 데이터를 Firestore로 이전 (최초 1회만)
-      await migrationService.migrateToFirestore();
+      // Perform tab migration (deletes old docs, creates IN-BOX tab)
+      await tabMigrationService.migrateToTabSystem();
 
-      // 데이터 로드
+      // Load tabs
+      const loadedTabs = await storageService.getTabs();
+      setTabs(loadedTabs);
+
+      // Get active tab ID from storage
+      let currentTabId = await storageService.getCurrentTabId();
+
+      // If no active tab, use first tab (IN-BOX)
+      if (!currentTabId && loadedTabs.length > 0) {
+        currentTabId = loadedTabs[0].id;
+        await storageService.setCurrentTabId(currentTabId);
+      }
+
+      setActiveTabId(currentTabId || '');
+
+      // Load documents
       const docs = await storageService.getDocuments();
+      setDocuments(docs);
+
+      // Load favorite document
       const favId = await storageService.getFavoriteDocId();
-
-      // category 필드가 없는 기존 문서는 '업무'로 기본 설정
-      const migratedDocs = docs.map(doc => ({
-        ...doc,
-        category: doc.category || '업무' as DocumentCategory
-      }));
-
-      setDocuments(migratedDocs);
       setFavoriteDocId(favId);
 
-      // 즐겨찾기 문서가 있으면 로드
-      if (favId && migratedDocs.length > 0) {
-        const favDoc = migratedDocs.find(d => d.id === favId);
+      // Set active document to favorite if exists, otherwise blank
+      if (favId && docs.length > 0) {
+        const favDoc = docs.find(d => d.id === favId);
         if (favDoc) {
           setActiveDocument(favDoc);
+        } else {
+          setActiveDocument(currentTabId ? createBlankDocument(currentTabId) : null);
         }
+      } else {
+        setActiveDocument(currentTabId ? createBlankDocument(currentTabId) : null);
       }
     };
     loadData();
@@ -140,9 +156,10 @@ const App: React.FC = () => {
 
   // 1. Create New Blank Document
   const createNewDocument = () => {
-    setActiveDocument(createBlankDocument(currentCategory));
-    setViewMode('EDITOR');
-    if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
+    if (activeTabId) {
+      setActiveDocument(createBlankDocument(activeTabId));
+      setViewMode('EDITOR');
+    }
   };
 
 
@@ -320,63 +337,91 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Change Document Category ---
-  const handleChangeCategoryDocument = async (id: string, category: DocumentCategory) => {
-    const updatedDocs = documents.map(doc =>
-      doc.id === id ? { ...doc, category, updatedAt: Date.now() } : doc
-    );
-    setDocuments(updatedDocs);
-    await storageService.saveDocuments(updatedDocs);
+  // --- Tab Management ---
+  const handleAddTab = async () => {
+    if (tabs.length >= 4) {
+      alert('최대 4개의 탭만 가능합니다');
+      return;
+    }
 
-    // 활성 문서가 변경된 경우 업데이트
-    if (activeDocument?.id === id) {
-      setActiveDocument({ ...activeDocument, category });
+    const newTabId = generateId();
+    const newTab: Tab = {
+      id: newTabId,
+      name: `탭 ${tabs.filter(t => !t.isDefault).length + 1}`,
+      isDefault: false,
+      createdAt: Date.now()
+    };
+
+    const newTabs = [...tabs, newTab];
+    setTabs(newTabs);
+    await storageService.saveTabs(newTabs);
+  };
+
+  const handleRenameTab = async (id: string, name: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    const updatedTabs = tabs.map(t =>
+      t.id === id ? { ...t, name: trimmedName } : t
+    );
+    setTabs(updatedTabs);
+    await storageService.saveTabs(updatedTabs);
+  };
+
+  const handleDeleteTab = async (id: string) => {
+    const tab = tabs.find(t => t.id === id);
+    if (!tab || tab.isDefault) {
+      alert('기본 탭은 삭제할 수 없습니다');
+      return;
+    }
+
+    // Check if tab has documents
+    const tabDocs = documents.filter(d => d.tabId === id);
+    if (tabDocs.length > 0) {
+      alert('문서가 있는 탭은 삭제할 수 없습니다');
+      return;
+    }
+
+    const newTabs = tabs.filter(t => t.id !== id);
+    setTabs(newTabs);
+    await storageService.deleteTab(id);
+
+    // If deleted tab was active, switch to IN-BOX
+    if (activeTabId === id) {
+      const inboxTab = newTabs.find(t => t.isDefault);
+      if (inboxTab) {
+        handleTabChange(inboxTab.id);
+      }
     }
   };
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-background font-sans text-gray-900">
-      
-      {/* Sidebar Menu Overlay */}
-      <SidebarMenu
-        isMobileOpen={isSidebarOpen}
-        isAlwaysOpen={screenWidth >= MD_BREAKPOINT}
-        onClose={() => setIsSidebarOpen(false)}
-        documents={documents}
-        favoriteDocId={favoriteDocId}
-        currentCategory={currentCategory}
-        onCategoryChange={setCurrentCategory}
-        onSelectDocument={(doc) => {
-          setActiveDocument(doc);
-          setViewMode('EDITOR');
-          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
-        }}
-        onCreateNew={() => {
-          createNewDocument();
-          if (screenWidth < MD_BREAKPOINT) setIsSidebarOpen(false);
-        }}
-        onDeleteDocument={requestDeleteDocument}
-        onBackup={handleBackup}
-        onRestore={handleRestore}
-        onSetFavoriteDocument={handleSetFavoriteDocument}
-        onClearFavoriteDocument={handleClearFavoriteDocument}
-        onReorderDocuments={handleReorderDocuments}
-        onChangeCategoryDocument={handleChangeCategoryDocument}
-      />
+  const handleTabChange = async (tabId: string) => {
+    setActiveTabId(tabId);
+    await storageService.setCurrentTabId(tabId);
+    setIsDrawerOpen(true);
+  };
 
-      {/* Main Content Area */}
-      <main
-        className="flex-1 h-full transition-all duration-300 ease-in-out"
-        style={{ marginLeft: screenWidth >= MD_BREAKPOINT && isSidebarOpen ? '250px' : '0px' }}
-      >
+  const handleMoveDocumentToTab = async (docId: string, targetTabId: string) => {
+    const updatedDocs = documents.map(doc =>
+      doc.id === docId ? { ...doc, tabId: targetTabId } : doc
+    );
+    setDocuments(updatedDocs);
+    await storageService.saveDocuments(updatedDocs);
+  };
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden bg-background font-sans text-gray-900">
+      {/* Main content - padding for bottom nav */}
+      <main className="flex-1 overflow-hidden pb-16">
         <SplitEditor
-          data={activeDocument || createBlankDocument()}
+          data={activeDocument || (activeTabId ? createBlankDocument(activeTabId) : null)}
           onSave={handleSave}
           screenWidth={screenWidth}
           mdBreakpoint={MD_BREAKPOINT}
-          onOpenSidebar={() => setIsSidebarOpen(true)}
           onCancel={() => {
-            setActiveDocument(createBlankDocument());
+            if (activeTabId) {
+              setActiveDocument(createBlankDocument(activeTabId));
+            }
             setViewMode('EDITOR');
           }}
           onMoveItem={handleMoveItem}
@@ -384,6 +429,36 @@ const App: React.FC = () => {
           isSaving={isSaving}
         />
       </main>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabChange={handleTabChange}
+        onAddTab={handleAddTab}
+        onRenameTab={handleRenameTab}
+        onDeleteTab={handleDeleteTab}
+      />
+
+      {/* Document Drawer */}
+      <DocumentDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        documents={documents}
+        activeTabId={activeTabId}
+        favoriteDocId={favoriteDocId}
+        onSelectDocument={(doc) => {
+          setActiveDocument(doc);
+          setViewMode('EDITOR');
+        }}
+        onCreateNew={createNewDocument}
+        onDeleteDocument={requestDeleteDocument}
+        onSetFavoriteDocument={handleSetFavoriteDocument}
+        onClearFavoriteDocument={handleClearFavoriteDocument}
+        onReorderDocuments={handleReorderDocuments}
+        onMoveToTab={handleMoveDocumentToTab}
+        tabs={tabs}
+      />
 
       {/* Global Delete Confirmation Modal */}
       <ConfirmModal
@@ -393,7 +468,6 @@ const App: React.FC = () => {
         onConfirm={executeDelete}
         onClose={() => setDeleteTarget(null)}
       />
-
     </div>
   );
 };

@@ -1,7 +1,9 @@
-import { DocumentData } from '../types';
+import { DocumentData, Tab } from '../types';
 
 const STORAGE_KEY_DOCS = 'tm_documents';
 const STORAGE_KEY_FAVORITE_DOC = 'tm_favorite_doc_id';
+const STORAGE_KEY_TABS = 'tm_tabs';
+const STORAGE_KEY_CURRENT_TAB_ID = 'tm_current_tab_id';
 
 export const storageService = {
   getDocuments: (): DocumentData[] => {
@@ -58,5 +60,32 @@ export const storageService = {
 
   clearFavoriteDocId: (): void => {
     localStorage.removeItem(STORAGE_KEY_FAVORITE_DOC);
+  },
+
+  getTabs: (): Tab[] => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_TABS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error("Failed to load tabs", e);
+      return [];
+    }
+  },
+
+  saveTabs: (tabs: Tab[]): void => {
+    localStorage.setItem(STORAGE_KEY_TABS, JSON.stringify(tabs));
+  },
+
+  getCurrentTabId: (): string | null => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_CURRENT_TAB_ID);
+    } catch (e) {
+      console.error("Failed to load current tab id", e);
+      return null;
+    }
+  },
+
+  setCurrentTabId: (id: string): void => {
+    localStorage.setItem(STORAGE_KEY_CURRENT_TAB_ID, id);
   }
 };

@@ -5,10 +5,9 @@ import { Icons } from '../ui/Icon';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface SplitEditorProps {
-  data: DocumentData;
+  data: DocumentData | null;
   onSave: (data: DocumentData) => void;
   onCancel?: () => void;
-  onOpenSidebar?: () => void; // Function to open the sidebar menu
   screenWidth: number;
   mdBreakpoint: number;
   onMoveItem?: (itemId: string, targetDocId: string) => void;
@@ -20,13 +19,22 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   data,
   onSave,
   onCancel,
-  onOpenSidebar,
   screenWidth,
   mdBreakpoint,
   onMoveItem,
   availableDocuments,
   isSaving = false
 }) => {
+  // Handle null data gracefully
+  if (!data) {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <div className="flex-1 flex items-center justify-center text-gray-400">
+          문서를 불러오는 중입니다...
+        </div>
+      </div>
+    );
+  }
   const [title, setTitle] = useState(data.title);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(data.checklist);
   const [isDirty, setIsDirty] = useState(false);
@@ -99,15 +107,6 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       {/* Top Bar for Editor - Compact for Sidebar */}
       <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
         <div className="flex items-center gap-2 flex-1 mr-2 min-w-0">
-          {screenWidth < mdBreakpoint && onOpenSidebar && (
-            <button
-              onClick={onOpenSidebar}
-              className="mr-1 p-1 hover:bg-gray-100 rounded text-gray-700 flex-shrink-0"
-            >
-              <Icons.Menu size={18} />
-            </button>
-          )}
-
           <input
             type="text"
             value={title}
