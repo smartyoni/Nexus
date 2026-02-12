@@ -35,6 +35,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
   const [dragOverDocId, setDragOverDocId] = useState<string | null>(null);
+  const [quickInputValue, setQuickInputValue] = useState<string>('');
 
   // Filter documents by active tab
   const tabDocuments = documents.filter(doc => doc.tabId === activeTabId);
@@ -89,6 +90,21 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
     setDragOverDocId(null);
   };
 
+  // Quick input handlers
+  const handleQuickAddDocument = () => {
+    if (quickInputValue.trim()) {
+      onCreateNew();
+      setQuickInputValue('');
+      onClose();
+    }
+  };
+
+  const handleQuickInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleQuickAddDocument();
+    }
+  };
+
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>, docId: string) => {
     e.preventDefault();
     setContextMenuId(docId);
@@ -135,16 +151,6 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                onCreateNew();
-                onClose();
-              }}
-              className="flex items-center gap-1 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-medium rounded-lg transition-colors text-sm"
-            >
-              <Icons.Plus size={16} />
-              <span>문서추가</span>
-            </button>
-            <button
-              onClick={() => {
                 console.log('🔄 Refresh button clicked, onRefresh:', typeof onRefresh);
                 onRefresh?.();
               }}
@@ -158,6 +164,27 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
               className="p-1 hover:bg-gray-100 rounded-full"
             >
               <Icons.Close size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Input Section */}
+        <div className="px-2 py-3 border-b bg-gray-50 flex-shrink-0">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={quickInputValue}
+              onChange={(e) => setQuickInputValue(e.target.value)}
+              onKeyPress={handleQuickInputKeyPress}
+              placeholder="문서 제목 입력..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+            <button
+              onClick={handleQuickAddDocument}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-1"
+            >
+              <Icons.Plus size={16} />
+              <span>추가</span>
             </button>
           </div>
         </div>
