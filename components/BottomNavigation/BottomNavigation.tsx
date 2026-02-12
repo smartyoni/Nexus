@@ -78,6 +78,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   const canAddTab = tabs.length < 4;
 
+  // Get tab color based on tab index
+  const getTabColor = (tabId: string) => {
+    const colors = [
+      { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-600' },
+      { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-600' },
+      { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-600' },
+      { bg: 'bg-yellow-50', text: 'text-yellow-600', border: 'border-yellow-600' },
+      { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-600' },
+    ];
+    const index = tabs.findIndex(t => t.id === tabId);
+    return colors[index >= 0 ? index % colors.length : 0];
+  };
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-40 flex items-center px-2 gap-2 safe-bottom">
@@ -86,24 +99,27 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           ref={scrollContainerRef}
           className="flex items-center flex-1"
         >
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              onContextMenu={(e) => handleTabRightClick(tab, e)}
-              onTouchStart={(e) => handleTabLongPress(tab, e)}
-              onTouchEnd={(e) => handleTabTouchEnd(e)}
-              className={`
-                flex-1 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap truncate
-                ${activeTabId === tab.id
-                  ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
-                  : 'text-gray-600 hover:bg-gray-50'
-                }
-              `}
-            >
-              {tab.name}
-            </button>
-          ))}
+          {tabs.map(tab => {
+            const tabColor = getTabColor(tab.id);
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                onContextMenu={(e) => handleTabRightClick(tab, e)}
+                onTouchStart={(e) => handleTabLongPress(tab, e)}
+                onTouchEnd={(e) => handleTabTouchEnd(e)}
+                className={`
+                  flex-1 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap truncate
+                  ${activeTabId === tab.id
+                    ? `${tabColor.bg} ${tabColor.text} border-t-2 ${tabColor.border}`
+                    : 'text-gray-600 hover:bg-gray-50'
+                  }
+                `}
+              >
+                {tab.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* Add tab button */}
