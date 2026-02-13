@@ -3,10 +3,11 @@ import React, { useEffect, useRef, useState } from 'react';
 interface TextEditorProps {
   content: string;
   onChange: (content: string) => void;
+  isEditing: boolean;
+  onEditingChange: (editing: boolean) => void;
 }
 
-export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange }) => {
-  const [isEditing, setIsEditing] = useState(false);
+export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEditing, onEditingChange }) => {
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const lastSavedContentRef = useRef(content);
 
@@ -14,15 +15,30 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange }) => 
   useEffect(() => {
     lastSavedContentRef.current = content;
     if (contentEditableRef.current) {
-      contentEditableRef.current.textContent = content;
+      contentEditableRef.current.innerText = content;
     }
-  }, [content]);
+  }, [content, isEditing]);
 
-  // Handle blur - save changes
+  // Auto-focus and set cursor to end when entering edit mode
+  useEffect(() => {
+    if (isEditing && contentEditableRef.current) {
+      contentEditableRef.current.focus();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      if (sel) {
+        range.selectNodeContents(contentEditableRef.current);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  }, [isEditing]);
+
+  // Handle blur - save changes when exiting edit mode
   const handleBlur = () => {
     if (!contentEditableRef.current) return;
 
-    const text = contentEditableRef.current.textContent || '';
+    const text = contentEditableRef.current.innerText || '';
 
     // Only save if content changed
     if (text !== lastSavedContentRef.current) {
@@ -30,26 +46,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange }) => 
       lastSavedContentRef.current = text;
     }
 
-    setIsEditing(false);
-  };
-
-  // Handle double-click to enter edit mode
-  const handleDoubleClick = () => {
-    setIsEditing(true);
-    // Focus and set cursor to end
-    setTimeout(() => {
-      if (contentEditableRef.current) {
-        contentEditableRef.current.focus();
-        const range = document.createRange();
-        const sel = window.getSelection();
-        if (sel) {
-          range.selectNodeContents(contentEditableRef.current);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-      }
-    }, 0);
+    // Exit edit mode when losing focus
+    onEditingChange(false);
   };
 
   // Handle paste to ensure plain text only
@@ -59,14 +57,20 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange }) => 
     document.execCommand('insertText', false, text);
   };
 
-  // Prevent HTML tags from being pasted or inserted
+  // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Allow standard text editing keys
+    // ESC key to exit edit mode
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onEditingChange(false);
+      return;
+    }
+
+    // Prevent rich text formatting (Ctrl+B, Ctrl+I, Ctrl+U, etc.)
     if (e.ctrlKey || e.metaKey) {
-      // Allow Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+Z, Ctrl+Y, etc.
-      const allowedKeys = ['a', 'c', 'x', 'z', 'y'];
-      if (!allowedKeys.includes(e.key.toLowerCase())) {
-        return;
+      const formattingKeys = ['b', 'i', 'u'];
+      if (formattingKeys.includes(e.key.toLowerCase())) {
+        e.preventDefault();
       }
     }
   };
@@ -86,11 +90,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange }) => 
         />
       ) : (
         <pre
-          onDoubleClick={handleDoubleClick}
-          className="whitespace-pre-wrap cursor-text text-gray-800 text-base leading-relaxed font-sans break-words"
+          onDoubleClick={() => onEditingChange(true)}
+          className="whitespace-pre-wrap text-gray-800 text-base leading-relaxed font-sans break-words cursor-text hover:bg-blue-50/30 transition-colors rounded p-2 -m-2"
           style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
         >
-          {content || '더블클릭하여 입력 시작...'}
+          {content || '더블클릭으로 편집을 시작하세요...'}
         </pre>
       )}
     </div>

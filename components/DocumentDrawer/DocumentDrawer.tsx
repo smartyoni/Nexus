@@ -220,7 +220,8 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                     dragOverDocId === doc.id ? 'border-blue-500 border-2 bg-blue-50' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-red-600 text-2xl flex-shrink-0" style={{ transform: 'scale(0.7)' }}>●</span>
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => {
@@ -228,7 +229,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                         onClose();
                       }}
                     >
-                      <h3 className="font-semibold text-gray-800 truncate">
+                      <h3 className="font-semibold text-gray-800 truncate text-lg">
                         {(doc.content?.split('\n')[0] || doc.title || '무제 (Untitled)').slice(0, 30)}
                       </h3>
                     </div>

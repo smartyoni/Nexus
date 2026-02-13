@@ -37,6 +37,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   }
   const [content, setContent] = useState(data.content || '');
   const [title, setTitle] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   // Auto-extract title from first line of content
   useEffect(() => {
@@ -47,7 +48,19 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   // Update local state when prop data changes (switching documents)
   useEffect(() => {
     setContent(data.content || '');
-  }, [data.id, data.content]);
+  }, [data]);
+
+  // Exit edit mode when switching documents
+  useEffect(() => {
+    setIsEditing(false);
+  }, [data?.id]);
+
+  // Auto-enter edit mode for empty new documents
+  useEffect(() => {
+    if (data && !data.content && !data.title && data.checklist.length === 0) {
+      setIsEditing(true);
+    }
+  }, [data?.id]);
 
   const handleSave = () => {
     onSave({
@@ -69,12 +82,41 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       {/* Top Bar for Editor - Compact for Sidebar */}
       <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
         <h1 className="text-base font-bold text-gray-800 truncate flex-1">{title}</h1>
+
+        {/* Edit/Complete Button */}
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className={`
+            px-3 py-1.5 ml-1 rounded-md transition-colors flex items-center gap-1 flex-shrink-0 text-sm font-medium
+            ${isEditing
+              ? 'bg-green-600 hover:bg-green-700 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }
+          `}
+          title={isEditing ? '편집 완료' : '문서 수정'}
+        >
+          {isEditing ? (
+            <>
+              <Icons.Check size={16} />
+              완료
+            </>
+          ) : (
+            <>
+              <Icons.Edit size={16} />
+              수정
+            </>
+          )}
+        </button>
+
+        {/* Saving Indicator */}
         {isSaving && (
           <div className="ml-1 px-2 py-1.5 rounded-md bg-green-50 flex items-center gap-1 flex-shrink-0 text-green-600 text-xs animate-pulse">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
             저장 중
           </div>
         )}
+
+        {/* Back Button */}
         {onGoBack && (
           <button
             onClick={onGoBack}
@@ -90,6 +132,8 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       <TextEditor
         content={content}
         onChange={handleContentChange}
+        isEditing={isEditing}
+        onEditingChange={setIsEditing}
       />
     </div>
   );
