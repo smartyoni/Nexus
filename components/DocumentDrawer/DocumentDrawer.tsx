@@ -263,7 +263,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                       }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate text-lg">
-                        {(doc.title || '무제 (Untitled)').slice(0, 30)}
+                        {(doc.title || '제목없음').slice(0, 30)}
                       </h3>
                     </div>
                   </div>
@@ -343,6 +343,11 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
             </button>
           </div>
         )}
+
+        {/* Footer */}
+        <div className="bg-green-500 text-white py-3 px-4 text-center text-sm font-medium flex-shrink-0">
+          © {new Date().getFullYear()} 인사이트부동산 - 메모장 리스트
+        </div>
 
       </div>
 

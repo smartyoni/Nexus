@@ -111,7 +111,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
               className="text-lg font-bold text-white truncate cursor-pointer hover:bg-blue-700/50 px-1 transition-colors"
               title="더블클릭하여 제목 수정"
             >
-              {title || '무제 (Untitled)'}
+              {title || '제목없음'}
             </h1>
           )}
         </div>
@@ -161,12 +161,19 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
       </div>
 
       {/* Text Editor Area - Full Height */}
-      <TextEditor
-        content={content}
-        onChange={handleContentChange}
-        isEditing={isEditing}
-        onEditingChange={setIsEditing}
-      />
+      <div className="flex-1 overflow-hidden">
+        <TextEditor
+          content={content}
+          onChange={handleContentChange}
+          isEditing={isEditing}
+          onEditingChange={setIsEditing}
+        />
+      </div>
+
+      {/* Footer */}
+      <div className="bg-blue-600 text-white py-3 px-4 text-center text-sm font-medium flex-none">
+        © {new Date().getFullYear()} 인사이트부동산 - 메모 상세
+      </div>
     </div>
   );
 };

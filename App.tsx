@@ -210,7 +210,7 @@ const App: React.FC = () => {
     } else {
       // If title is empty, provide a default
       if (!data.title.trim()) {
-        data.title = '무제 (Untitled)';
+        data.title = '제목없음';
       }
       newDocs = [data, ...documents];
     }

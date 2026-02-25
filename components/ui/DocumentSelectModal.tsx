@@ -77,7 +77,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-800 truncate">{doc.title || '무제'}</div>
+                            <div className="font-medium text-gray-800 truncate">{doc.title || '제목없음'}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               {doc.checklist.length}개 항목
                             </div>
@@ -105,7 +105,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-800 truncate">{doc.title || '무제'}</div>
+                            <div className="font-medium text-gray-800 truncate">{doc.title || '제목없음'}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               {doc.checklist.length}개 항목
                             </div>
@@ -133,7 +133,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-800 truncate">{doc.title || '무제'}</div>
+                            <div className="font-medium text-gray-800 truncate">{doc.title || '제목없음'}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               {doc.checklist.length}개 항목
                             </div>
