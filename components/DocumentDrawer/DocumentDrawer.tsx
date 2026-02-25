@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface DocumentDrawerProps {
   isOpen: boolean;
@@ -10,8 +11,8 @@ interface DocumentDrawerProps {
   favoriteDocId: string | null;
   onSelectDocument: (doc: DocumentData) => void;
   onCreateNew: () => void;
-  onCreateNewWithContent: (content: string) => void;
   onDeleteDocument: (id: string) => void;
+  onMultiDeleteDocuments?: (ids: string[]) => void;
   onSetFavoriteDocument: (id: string) => void;
   onClearFavoriteDocument: () => void;
   onReorderDocuments: (reorderedDocs: DocumentData[]) => void;
@@ -26,8 +27,8 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   favoriteDocId,
   onSelectDocument,
   onCreateNew,
-  onCreateNewWithContent,
   onDeleteDocument,
+  onMultiDeleteDocuments,
   onSetFavoriteDocument,
   onClearFavoriteDocument,
   onReorderDocuments,
@@ -37,7 +38,10 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
   const [dragOverDocId, setDragOverDocId] = useState<string | null>(null);
-  const [quickInputValue, setQuickInputValue] = useState<string>('');
+
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  const [isMultiDeleteModalOpen, setIsMultiDeleteModalOpen] = useState(false);
 
   // Filter documents by active tab
   const tabDocuments = documents.filter(doc => doc.tabId === activeTabId);
@@ -92,26 +96,37 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
     setDragOverDocId(null);
   };
 
-  // Quick input handlers
-  const handleQuickAddDocument = () => {
-    if (quickInputValue.trim()) {
-      onCreateNewWithContent(quickInputValue);
-      setQuickInputValue('');
-      onClose();
-    }
-  };
-
-  const handleQuickInputKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleQuickAddDocument();
-    }
-  };
-
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>, docId: string) => {
     e.preventDefault();
     setContextMenuId(docId);
     setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedDocIds(new Set()); // Reset selection when toggling
+  };
+
+  const toggleDocumentSelection = (id: string) => {
+    const newSelection = new Set(selectedDocIds);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedDocIds(newSelection);
+  };
+
+  const requestMultiDelete = () => {
+    if (selectedDocIds.size === 0) return;
+    setIsMultiDeleteModalOpen(true);
+  };
+
+  const handleMultiDelete = () => {
+    onMultiDeleteDocuments?.(Array.from(selectedDocIds));
+    setIsSelectionMode(false);
+    setSelectedDocIds(new Set());
+    setIsMultiDeleteModalOpen(false);
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, docId: string) => {
@@ -149,45 +164,40 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 gap-2">
-          <h2 className="text-lg font-bold text-gray-800">문서 리스트</h2>
+        <div className="flex items-center justify-between px-4 border-b flex-shrink-0 gap-2 bg-green-500 text-white h-16">
+          <h2 className="text-lg font-bold">메모장</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={onCreateNew}
+              className="px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 transition-colors rounded-none flex items-center justify-center p-1.5"
+              title="새 문서 추가"
+            >
+              <Icons.Plus size={18} />
+            </button>
+            <button
+              onClick={toggleSelectionMode}
+              className={`px-3 py-1 text-sm font-medium rounded-none transition-colors ${isSelectionMode
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                }`}
+            >
+              {isSelectionMode ? '취소' : '선택'}
+            </button>
             <button
               onClick={() => {
                 console.log('🔄 Refresh button clicked, onRefresh:', typeof onRefresh);
                 onRefresh?.();
               }}
-              className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1.5 hover:bg-green-600 rounded-none transition-colors"
               title="새로고침"
             >
               <Icons.Refresh size={18} />
             </button>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-full"
+              className="p-1 hover:bg-green-600 rounded-none"
             >
               <Icons.Close size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Input Section */}
-        <div className="px-2 py-3 border-b bg-gray-50 flex-shrink-0">
-          <div className="flex gap-2">
-            <textarea
-              value={quickInputValue}
-              onChange={(e) => setQuickInputValue(e.target.value)}
-              onKeyPress={handleQuickInputKeyPress}
-              placeholder="문서 내용 입력... (Ctrl+Enter로 추가)"
-              rows={2}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
-            />
-            <button
-              onClick={handleQuickAddDocument}
-              className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center flex-shrink-0"
-              title="추가 (Ctrl+Enter)"
-            >
-              <Icons.Plus size={20} />
             </button>
           </div>
         </div>
@@ -199,8 +209,8 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
               문서가 없습니다
             </div>
           ) : (
-            <div className="space-y-2">
-              {tabDocuments.map(doc => (
+            <div className="space-y-0">
+              {tabDocuments.map((doc, index) => (
                 <div
                   key={doc.id}
                   draggable
@@ -209,28 +219,51 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, doc.id)}
                   onDragEnd={handleDragEnd}
-                  onContextMenu={(e) => handleContextMenu(e, doc.id)}
-                  onTouchStart={(e) => handleTouchStart(e, doc.id)}
-                  onTouchEnd={(e) => handleTouchEnd(e)}
-                  className={`group bg-white p-3 rounded-lg border shadow-sm transition-all relative ${
-                    favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
-                  } ${
-                    draggedDocId === doc.id ? 'opacity-40 cursor-grabbing' : 'cursor-grab hover:shadow-md'
-                  } ${
-                    dragOverDocId === doc.id ? 'border-blue-500 border-2 bg-blue-50' : ''
-                  }`}
+                  onContextMenu={(e) => {
+                    if (!isSelectionMode) handleContextMenu(e, doc.id);
+                  }}
+                  onTouchStart={(e) => {
+                    if (!isSelectionMode) handleTouchStart(e, doc.id);
+                  }}
+                  onTouchEnd={(e) => {
+                    if (!isSelectionMode) handleTouchEnd(e);
+                  }}
+                  className={`group bg-white p-3 transition-all relative ${index < tabDocuments.length - 1 ? 'border-b border-gray-200' : ''
+                    } ${favoriteDocId === doc.id ? 'ring-2 ring-yellow-400' : ''
+                    } ${draggedDocId === doc.id ? 'opacity-40 cursor-grabbing' : (isSelectionMode ? 'cursor-pointer hover:bg-gray-50' : 'cursor-grab hover:bg-gray-50')
+                    } ${dragOverDocId === doc.id ? 'border-blue-500 border-b-2 bg-blue-50' : ''
+                    }`}
+                  onClick={() => {
+                    if (isSelectionMode) {
+                      toggleDocumentSelection(doc.id);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-red-600 text-2xl flex-shrink-0" style={{ transform: 'scale(0.7)' }}>●</span>
+                    {isSelectionMode ? (
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${selectedDocIds.has(doc.id)
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'border-gray-300'
+                        }`}>
+                        {selectedDocIds.has(doc.id) && <Icons.Check size={14} className="text-white" />}
+                      </div>
+                    ) : (
+                      <span className="text-red-600 text-2xl flex-shrink-0" style={{ transform: 'scale(0.7)' }}>●</span>
+                    )}
                     <div
                       className="flex-1 cursor-pointer"
-                      onClick={() => {
-                        onSelectDocument(doc);
-                        onClose();
+                      onClick={(e) => {
+                        if (isSelectionMode) {
+                          e.stopPropagation();
+                          toggleDocumentSelection(doc.id);
+                        } else {
+                          onSelectDocument(doc);
+                          onClose();
+                        }
                       }}
                     >
                       <h3 className="font-semibold text-gray-800 truncate text-lg">
-                        {(doc.content?.split('\n')[0] || doc.title || '무제 (Untitled)').slice(0, 30)}
+                        {(doc.title || '무제 (Untitled)').slice(0, 30)}
                       </h3>
                     </div>
                   </div>
@@ -238,7 +271,7 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
                   {/* Context Menu */}
                   {contextMenuId === doc.id && contextMenuPos && (
                     <div
-                      className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[160px]"
+                      className="fixed bg-white border border-gray-200 rounded-none shadow-lg z-50 min-w-[160px]"
                       style={{ left: `${contextMenuPos.x}px`, top: `${contextMenuPos.y}px` }}
                       onClick={() => setContextMenuId(null)}
                     >
@@ -291,7 +324,36 @@ export const DocumentDrawer: React.FC<DocumentDrawerProps> = ({
           )}
         </div>
 
+        {/* Selection Mode Bottom Action Bar */}
+        {isSelectionMode && (
+          <div className="px-4 py-3 bg-white border-t flex justify-between items-center shadow-lg">
+            <span className="text-sm font-medium text-gray-700">
+              {selectedDocIds.size}개 선택됨
+            </span>
+            <button
+              onClick={requestMultiDelete}
+              disabled={selectedDocIds.size === 0}
+              className={`px-4 py-2 rounded-none font-medium transition-colors flex items-center gap-2 ${selectedDocIds.size > 0
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+            >
+              <Icons.Trash size={18} />
+              삭제
+            </button>
+          </div>
+        )}
+
       </div>
+
+      {/* Multi-Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isMultiDeleteModalOpen}
+        title="문서 다중 삭제"
+        message={`선택한 ${selectedDocIds.size}개의 문서를 영구적으로 삭제하시겠습니까?`}
+        onConfirm={handleMultiDelete}
+        onClose={() => setIsMultiDeleteModalOpen(false)}
+      />
     </>
   );
 };

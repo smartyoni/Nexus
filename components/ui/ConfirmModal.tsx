@@ -32,7 +32,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-[280px] bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transform">
+      <div className="relative w-full max-w-[280px] bg-white rounded-none shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transform">
         <div className="p-5 text-center">
           <h3 className="text-lg font-bold text-gray-800 mb-2">{title}</h3>
           <p className="text-sm text-gray-500 leading-relaxed break-keep">
@@ -49,11 +49,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <div className="w-px bg-gray-100"></div>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-3 text-sm font-bold transition-colors active:bg-opacity-75 ${
-              isDanger
+            className={`flex-1 py-3 text-sm font-bold transition-colors active:bg-opacity-75 ${isDanger
                 ? 'text-red-600 hover:bg-red-50 active:bg-red-100'
                 : 'text-blue-600 hover:bg-blue-50 active:bg-blue-100'
-            }`}
+              }`}
           >
             {confirmText}
           </button>

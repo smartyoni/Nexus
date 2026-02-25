@@ -84,21 +84,18 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       data-checklist-item-id={item.id}
-      className={`group flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 ${
-        item.isChecked
+      className={`group flex items-start gap-3 p-3 rounded-none border shadow-sm transition-all duration-200 ${item.isChecked
           ? 'bg-gray-50 border-gray-200'
           : 'bg-white border-gray-300 hover:border-blue-400 hover:shadow-md'
-      } ${
-        isDragging ? 'opacity-40 cursor-grabbing' : 'cursor-grab'
-      } ${
-        isDraggedOver ? 'border-blue-500 border-2 bg-blue-50' : ''
-      }`}
+        } ${isDragging ? 'opacity-40 cursor-grabbing' : 'cursor-grab'
+        } ${isDraggedOver ? 'border-blue-500 border-2 bg-blue-50' : ''
+        }`}
     >
       <button
         onClick={() => onToggle(item.id)}
         className={`mt-0.5 flex-none transition-colors ${item.isChecked ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
       >
-        {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-md" />}
+        {item.isChecked ? <Icons.Check size={20} /> : <div className="w-[20px] h-[20px] border-2 border-current rounded-none" />}
       </button>
 
       <div className="flex-1 flex flex-col gap-1">
@@ -107,9 +104,8 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
           disabled={!isEditing}
           onDoubleClick={() => setIsEditing(true)}
           onBlur={() => setIsEditing(false)}
-          className={`bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 cursor-text ${
-            isEditing ? 'ring-2 ring-blue-500' : 'cursor-pointer'
-          } ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'} disabled:cursor-pointer`}
+          className={`bg-transparent text-sm resize-none outline-none h-auto min-h-[1.5rem] leading-relaxed py-0.5 cursor-text ${isEditing ? 'ring-2 ring-blue-500' : 'cursor-pointer'
+            } ${item.isChecked ? 'line-through text-gray-400' : 'text-gray-800 font-medium'} disabled:cursor-pointer`}
           value={item.text}
           onChange={(e) => onEdit(item.id, e.target.value)}
           onInput={handleInput}
@@ -137,17 +133,16 @@ const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ item, o
 
         {/* Dropdown Menu */}
         {menuOpen && (
-          <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[160px]">
+          <div className="absolute right-0 top-full mt-1 bg-white rounded-none shadow-lg border border-gray-200 py-1 z-20 min-w-[160px]">
             <button
               onClick={() => {
                 onMemoOpen(item.id);
                 setMenuOpen(false);
               }}
-              className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
-                item.memo
+              className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${item.memo
                   ? 'text-green-600 hover:bg-green-50'
                   : 'text-gray-700 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <Icons.Note size={16} />
               메모
@@ -449,11 +444,11 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
       <div className="px-3 py-3 border-b bg-white flex-none shadow-sm z-10">
         <form onSubmit={handleAddItem} className="flex gap-2 items-center">
           <div className="flex-1 relative">
-             <textarea
+            <textarea
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
               placeholder="체크리스트 추가..."
-              className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all resize-none overflow-y-auto"
+              className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all resize-none overflow-y-auto"
               style={{
                 minHeight: '2.5rem',
                 maxHeight: '5rem',
@@ -464,7 +459,7 @@ export const ChecklistManager: React.FC<ChecklistManagerProps> = ({ items, onCha
           </div>
           <button
             type="submit"
-            className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors flex-shrink-0 shadow-sm"
+            className="bg-blue-600 text-white p-2 rounded-none hover:bg-blue-700 transition-colors flex-shrink-0 shadow-sm"
           >
             <Icons.Plus size={18} />
           </button>

@@ -28,7 +28,9 @@
       "Bash(gh repo view:*)",
       "Bash(npm run deploy:github-pages:*)",
       "Bash(git diff-tree:*)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:pwa:*)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:pwa:*)",
+      "Bash(git rm:*)",
+      "Bash(tee:*)"
     ]
   }
 }

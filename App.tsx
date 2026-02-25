@@ -196,18 +196,7 @@ const App: React.FC = () => {
     if (activeTabId) {
       setActiveDocument(createBlankDocument(activeTabId));
       setViewMode('EDITOR');
-    }
-  };
-
-  // Create New Document with initial content
-  const handleCreateNewWithContent = (content: string) => {
-    if (activeTabId) {
-      const newDoc = {
-        ...createBlankDocument(activeTabId),
-        content: content.trim()
-      };
-      setActiveDocument(newDoc);
-      setViewMode('EDITOR');
+      setIsDrawerOpen(false); // Close drawer after creation
     }
   };
 
@@ -296,10 +285,30 @@ const App: React.FC = () => {
 
     if (activeDocument?.id === id) {
       // If we deleted the current doc, reset to blank
-      setActiveDocument(createBlankDocument());
+      setActiveDocument(activeTabId ? createBlankDocument(activeTabId) : null);
     }
 
     setDeleteTarget(null);
+  };
+
+  const executeMultiDelete = async (ids: string[]) => {
+    const newDocs = documents.filter(d => !ids.includes(d.id));
+    setDocuments(newDocs);
+    await storageService.saveDocuments(newDocs);
+
+    for (const id of ids) {
+      await storageService.deleteDocument(id);
+    }
+
+    // 즐겨찾기 문서가 삭제되면 즐겨찾기 초기화
+    if (favoriteDocId && ids.includes(favoriteDocId)) {
+      await storageService.clearFavoriteDocId();
+      setFavoriteDocId(null);
+    }
+
+    if (activeDocument?.id && ids.includes(activeDocument.id)) {
+      setActiveDocument(activeTabId ? createBlankDocument(activeTabId) : null);
+    }
   };
 
   // --- Favorite Document ---
@@ -394,7 +403,7 @@ const App: React.FC = () => {
     <div className="flex flex-col h-screen overflow-hidden bg-background font-sans text-gray-900">
       {/* Refresh Message Toast */}
       {showRefreshMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold animate-bounce">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-none shadow-lg font-semibold animate-bounce">
           인사이트부동산 대박
         </div>
       )}
@@ -435,8 +444,8 @@ const App: React.FC = () => {
           setViewMode('EDITOR');
         }}
         onCreateNew={createNewDocument}
-        onCreateNewWithContent={handleCreateNewWithContent}
         onDeleteDocument={requestDeleteDocument}
+        onMultiDeleteDocuments={executeMultiDelete}
         onSetFavoriteDocument={handleSetFavoriteDocument}
         onClearFavoriteDocument={handleClearFavoriteDocument}
         onReorderDocuments={handleReorderDocuments}

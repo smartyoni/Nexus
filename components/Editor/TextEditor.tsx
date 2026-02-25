@@ -76,7 +76,10 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
   };
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white p-4">
+    <div
+      className="flex-1 overflow-y-auto overflow-x-hidden bg-white p-4 cursor-text"
+      onDoubleClick={() => !isEditing && onEditingChange(true)}
+    >
       {isEditing ? (
         <div
           ref={contentEditableRef}
@@ -90,8 +93,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         />
       ) : (
         <pre
-          onDoubleClick={() => onEditingChange(true)}
-          className="whitespace-pre-wrap text-gray-800 text-base leading-relaxed font-sans break-words cursor-text hover:bg-blue-50/30 transition-colors rounded p-2 -m-2"
+          className="whitespace-pre-wrap text-gray-800 text-base leading-relaxed font-sans break-words rounded-none"
           style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
         >
           {content || '더블클릭으로 편집을 시작하세요...'}

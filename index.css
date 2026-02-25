@@ -9,6 +9,11 @@ html, body, #root {
   font-size: 14px;
 }
 
+/* 글로벌 라운딩 효과 제거 */
+* {
+  border-radius: 0 !important;
+}
+
 /* Custom Scrollbar for a cleaner look in sidebar */
 ::-webkit-scrollbar {
   width: 4px;
@@ -18,7 +23,7 @@ html, body, #root {
 }
 ::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
-  border-radius: 2px;
+  border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;

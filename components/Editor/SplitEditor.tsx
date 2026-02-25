@@ -38,16 +38,12 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
   const [content, setContent] = useState(data.content || '');
   const [title, setTitle] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
 
-  // Auto-extract title from first line of content
-  useEffect(() => {
-    const firstLine = content.split('\n')[0] || '';
-    setTitle(firstLine.slice(0, 20) || '무제 (Untitled)');
-  }, [content]);
-
-  // Update local state when prop data changes (switching documents)
+  // Sync local state when prop data changes (switching documents)
   useEffect(() => {
     setContent(data.content || '');
+    setTitle(data.title || '');
   }, [data]);
 
   // Exit edit mode when switching documents
@@ -77,20 +73,56 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     onContentChange?.(newContent);
   };
 
+  const handleTitleBlur = () => {
+    if (isTitleEditing) {
+      handleSave();
+      setIsTitleEditing(false);
+    }
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleBlur();
+    } else if (e.key === 'Escape') {
+      setTitle(data.title || '');
+      setIsTitleEditing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Top Bar for Editor - Compact for Sidebar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-white flex-none h-12">
-        <h1 className="text-base font-bold text-gray-800 truncate flex-1">{title}</h1>
+      <div className="flex items-center justify-between px-3 py-2 border-b shadow-sm z-10 bg-blue-600 flex-none h-16">
+        <div className="flex-1 min-w-0 mr-2">
+          {isEditing || isTitleEditing ? (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleTitleBlur}
+              onKeyDown={handleTitleKeyDown}
+              placeholder="제목 (Untitled)"
+              className="w-full bg-transparent text-white font-bold text-lg border-none focus:outline-none placeholder:text-blue-100/50"
+              autoFocus={isTitleEditing || (!data.content && !data.title)}
+            />
+          ) : (
+            <h1
+              onDoubleClick={() => setIsTitleEditing(true)}
+              className="text-lg font-bold text-white truncate cursor-pointer hover:bg-blue-700/50 px-1 transition-colors"
+              title="더블클릭하여 제목 수정"
+            >
+              {title || '무제 (Untitled)'}
+            </h1>
+          )}
+        </div>
 
-        {/* Edit/Complete Button */}
         <button
           onClick={() => setIsEditing(!isEditing)}
           className={`
-            px-3 py-1.5 ml-1 rounded-md transition-colors flex items-center gap-1 flex-shrink-0 text-sm font-medium
+            px-3 py-1.5 ml-1 rounded-none transition-colors flex items-center gap-1 flex-shrink-0 text-sm font-medium
             ${isEditing
-              ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+              : 'bg-yellow-500 hover:bg-yellow-600 text-white'
             }
           `}
           title={isEditing ? '편집 완료' : '문서 수정'}
@@ -110,8 +142,8 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
 
         {/* Saving Indicator */}
         {isSaving && (
-          <div className="ml-1 px-2 py-1.5 rounded-md bg-green-50 flex items-center gap-1 flex-shrink-0 text-green-600 text-xs animate-pulse">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+          <div className="ml-1 px-2 py-1.5 rounded-none bg-green-50 flex items-center gap-1 flex-shrink-0 text-green-600 text-xs animate-pulse">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-none"></div>
             저장 중
           </div>
         )}
@@ -120,7 +152,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         {onGoBack && (
           <button
             onClick={onGoBack}
-            className="p-1.5 ml-1 rounded-md transition-colors flex-shrink-0 text-gray-600 hover:bg-gray-100"
+            className="p-1.5 ml-1 rounded-none transition-colors flex-shrink-0 text-white hover:bg-blue-700"
             title="문서 리스트로 돌아가기"
           >
             <Icons.Back size={18} />

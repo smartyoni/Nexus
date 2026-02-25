@@ -49,7 +49,7 @@ export const InputModal: React.FC<InputModalProps> = ({
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-[320px] bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transform">
+      <div className="relative w-full max-w-[320px] bg-white rounded-none shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transform">
         <div className="p-5">
           <h3 className="text-lg font-bold text-gray-800 mb-4">{title}</h3>
           <input
@@ -58,7 +58,7 @@ export const InputModal: React.FC<InputModalProps> = ({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             autoFocus
           />
         </div>

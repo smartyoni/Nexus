@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocumentData, DocumentCategory } from '../../types';
+import { DocumentData } from '../../types';
 import { Icons } from './Icon';
 
 interface DocumentSelectModalProps {
@@ -38,13 +38,13 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-md flex flex-col pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-none shadow-lg w-[90%] max-w-md flex flex-col pointer-events-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0 bg-purple-100">
           <h2 className="text-lg font-semibold text-gray-800">항목 이동</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-none transition-colors"
           >
             <Icons.Close size={20} />
           </button>
@@ -72,7 +72,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                       <button
                         key={doc.id}
                         onClick={() => handleSelectDocument(doc.id)}
-                        className="w-full text-left p-3 rounded-lg border border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                        className="w-full text-left p-3 rounded-none border border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all"
                       >
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
@@ -100,7 +100,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                       <button
                         key={doc.id}
                         onClick={() => handleSelectDocument(doc.id)}
-                        className="w-full text-left p-3 rounded-lg border border-gray-300 hover:border-green-400 hover:bg-green-50 transition-all"
+                        className="w-full text-left p-3 rounded-none border border-gray-300 hover:border-green-400 hover:bg-green-50 transition-all"
                       >
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
@@ -128,7 +128,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
                       <button
                         key={doc.id}
                         onClick={() => handleSelectDocument(doc.id)}
-                        className="w-full text-left p-3 rounded-lg border border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all"
+                        className="w-full text-left p-3 rounded-none border border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all"
                       >
                         <div className="flex items-start gap-2">
                           <Icons.File size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
@@ -152,7 +152,7 @@ export const DocumentSelectModal: React.FC<DocumentSelectModalProps> = ({
         <div className="flex gap-2 p-4 border-t border-gray-200 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-3 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex-1 px-3 py-2 text-gray-700 border border-gray-300 rounded-none hover:bg-gray-50 transition-colors"
           >
             취소
           </button>
