@@ -11,17 +11,23 @@ interface SplitEditorProps {
   mdBreakpoint: number;
   onMoveItem?: (itemId: string, targetDocId: string) => void;
   availableDocuments?: DocumentData[];
-  isSaving?: boolean; // Indicate if document is being auto-saved
-  onContentChange?: (content: string) => void; // Propagate content changes to App
-  onRefresh?: () => void; // Refresh data without page reload
-  onGoBack?: () => void; // Go back to document list
+  isSaving?: boolean;
+  isEditing: boolean;
+  setIsEditing: (editing: boolean) => void;
+  onContentChange?: (content: string) => void;
+  onDelete?: () => void;
+  onRefresh?: () => void;
+  onGoBack?: () => void;
 }
 
 export const SplitEditor: React.FC<SplitEditorProps> = ({
   data,
   onSave,
   isSaving = false,
+  isEditing,
+  setIsEditing,
   onContentChange,
+  onDelete,
   onRefresh,
   onGoBack
 }) => {
@@ -36,8 +42,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     );
   }
   const [content, setContent] = useState(data.content || '');
-  const [title, setTitle] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(data.title || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
 
   // Sync local state when prop data changes (switching documents)
@@ -46,9 +51,9 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     setTitle(data.title || '');
   }, [data]);
 
-  // Exit edit mode when switching documents
+  // Exit title edit mode when switching documents
   useEffect(() => {
-    setIsEditing(false);
+    setIsTitleEditing(false);
   }, [data?.id]);
 
   // Auto-enter edit mode for empty new documents
@@ -56,7 +61,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     if (data && !data.content && !data.title && data.checklist.length === 0) {
       setIsEditing(true);
     }
-  }, [data?.id]);
+  }, [data?.id, setIsEditing]);
 
   const handleSave = () => {
     onSave({
@@ -73,9 +78,20 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
     onContentChange?.(newContent);
   };
 
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    // Propagate title change to App so navigation guard sees the latest
+    onSave({
+      ...data,
+      title: newTitle,
+      content, // Use current local content
+      updatedAt: Date.now()
+    });
+  };
+
   const handleTitleBlur = () => {
     if (isTitleEditing) {
-      handleSave();
+      handleTitleChange(title);
       setIsTitleEditing(false);
     }
   };
@@ -117,20 +133,26 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
         </div>
 
         <button
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={() => {
+            if (isEditing) {
+              handleSave();
+            } else {
+              setIsEditing(true);
+            }
+          }}
           className={`
-            px-3 py-1.5 ml-1 rounded-none transition-colors flex items-center gap-1 flex-shrink-0 text-sm font-medium
+            px-4 py-1.5 ml-1 rounded-none transition-all flex items-center gap-1.5 flex-shrink-0 text-sm font-bold shadow-sm
             ${isEditing
-              ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+              ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse-subtle'
               : 'bg-yellow-500 hover:bg-yellow-600 text-white'
             }
           `}
-          title={isEditing ? '편집 완료' : '문서 수정'}
+          title={isEditing ? '저장 및 편집 종료' : '문서 수정'}
         >
           {isEditing ? (
             <>
-              <Icons.Check size={16} />
-              완료
+              <Icons.Save size={16} />
+              저장
             </>
           ) : (
             <>
@@ -138,6 +160,15 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
               수정
             </>
           )}
+        </button>
+
+        {/* Delete Button */}
+        <button
+          onClick={onDelete}
+          className="p-1.5 ml-1 rounded-none bg-red-500 hover:bg-red-600 text-white transition-colors flex-shrink-0"
+          title="문서 삭제"
+        >
+          <Icons.Trash size={18} />
         </button>
 
         {/* Saving Indicator */}
@@ -148,14 +179,15 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
           </div>
         )}
 
-        {/* Back Button */}
+        {/* List Button (Back) */}
         {onGoBack && (
           <button
             onClick={onGoBack}
-            className="p-1.5 ml-1 rounded-none transition-colors flex-shrink-0 text-white hover:bg-blue-700"
+            className="px-4 py-1.5 ml-1 rounded-none bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1.5 flex-shrink-0 text-sm font-bold shadow-sm"
             title="문서 리스트로 돌아가기"
           >
-            <Icons.Back size={18} />
+            <Icons.List size={16} />
+            리스트
           </button>
         )}
       </div>

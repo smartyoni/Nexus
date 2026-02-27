@@ -59,6 +59,11 @@ const App: React.FC = () => {
   const [showRefreshMessage, setShowRefreshMessage] = useState(false);
   const refreshMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Edit Mode & Navigation Guard State
+  const [isEditing, setIsEditing] = useState(false);
+  const [showSaveConfirmModal, setShowSaveConfirmModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'GO_BACK' | 'SELECT_DOC', data?: any } | null>(null);
+
   // --- Initial Load ---
   useEffect(() => {
     const loadData = async () => {
@@ -193,10 +198,15 @@ const App: React.FC = () => {
 
   // 1. Create New Blank Document
   const createNewDocument = () => {
-    if (activeTabId) {
-      setActiveDocument(createBlankDocument(activeTabId));
-      setViewMode('EDITOR');
-      setIsDrawerOpen(false); // Close drawer after creation
+    if (isEditing) {
+      setPendingAction({ type: 'SELECT_DOC', data: activeTabId ? createBlankDocument(activeTabId) : null });
+      setShowSaveConfirmModal(true);
+    } else {
+      if (activeTabId) {
+        setActiveDocument(createBlankDocument(activeTabId));
+        setViewMode('EDITOR');
+        setIsDrawerOpen(false); // Close drawer after creation
+      }
     }
   };
 
@@ -217,6 +227,75 @@ const App: React.FC = () => {
     setDocuments(newDocs);
     await storageService.saveDocuments(newDocs);
     setActiveDocument(data);
+    setIsEditing(false); // Exit edit mode after explicit save
+  };
+
+  // --- Navigation Guard Handlers ---
+  const handleGoBackWithGuard = () => {
+    if (isEditing) {
+      setPendingAction({ type: 'GO_BACK' });
+      setShowSaveConfirmModal(true);
+    } else {
+      setIsDrawerOpen(true);
+    }
+  };
+
+  const handleSelectDocumentWithGuard = (doc: DocumentData) => {
+    if (isEditing && doc.id !== activeDocument?.id) {
+      setPendingAction({ type: 'SELECT_DOC', data: doc });
+      setShowSaveConfirmModal(true);
+    } else {
+      setActiveDocument(doc);
+      setViewMode('EDITOR');
+      setIsEditing(false);
+    }
+  };
+
+  const confirmSaveAndNavigate = async () => {
+    if (!activeDocument) return;
+
+    // Save current active document
+    await handleSave(activeDocument);
+    // Modal state and isEditing are already handled inside handleSave/here
+
+    // Execute pending action
+    if (pendingAction?.type === 'GO_BACK') {
+      setIsDrawerOpen(true);
+    } else if (pendingAction?.type === 'SELECT_DOC' && pendingAction.data) {
+      setActiveDocument(pendingAction.data);
+      setViewMode('EDITOR');
+    }
+
+    setShowSaveConfirmModal(false);
+    setPendingAction(null);
+  };
+
+  const discardChangesAndNavigate = () => {
+    // Reset local changes by refreshing from documents list
+    if (activeDocument) {
+      const originalDoc = documents.find(d => d.id === activeDocument.id);
+      if (originalDoc) {
+        setActiveDocument(originalDoc);
+      }
+    }
+
+    // Execute pending action
+    if (pendingAction?.type === 'GO_BACK') {
+      setIsDrawerOpen(true);
+    } else if (pendingAction?.type === 'SELECT_DOC' && pendingAction.data) {
+      setActiveDocument(pendingAction.data);
+      setViewMode('EDITOR');
+    }
+
+    setIsEditing(false);
+    setShowSaveConfirmModal(false);
+    setPendingAction(null);
+  };
+
+  const handleDeleteActiveDocument = () => {
+    if (activeDocument) {
+      requestDeleteDocument(activeDocument.id);
+    }
   };
 
   // --- Backup/Restore Logic ---
@@ -424,11 +503,14 @@ const App: React.FC = () => {
           onMoveItem={handleMoveItem}
           availableDocuments={documents}
           isSaving={isSaving}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
           onContentChange={(content) => {
             setActiveDocument(prev => prev ? { ...prev, content } : null);
           }}
+          onDelete={handleDeleteActiveDocument}
           onRefresh={refreshData}
-          onGoBack={() => setIsDrawerOpen(true)}
+          onGoBack={handleGoBackWithGuard}
         />
       </main>
 
@@ -439,10 +521,7 @@ const App: React.FC = () => {
         documents={documents}
         activeTabId={activeTabId}
         favoriteDocId={favoriteDocId}
-        onSelectDocument={(doc) => {
-          setActiveDocument(doc);
-          setViewMode('EDITOR');
-        }}
+        onSelectDocument={handleSelectDocumentWithGuard}
         onCreateNew={createNewDocument}
         onDeleteDocument={requestDeleteDocument}
         onMultiDeleteDocuments={executeMultiDelete}
@@ -459,6 +538,23 @@ const App: React.FC = () => {
         message="이 문서를 영구적으로 삭제하시겠습니까?"
         onConfirm={executeDelete}
         onClose={() => setDeleteTarget(null)}
+      />
+
+      {/* Save Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showSaveConfirmModal}
+        title="저장하시겠습니까?"
+        message="변경 중인 내용이 있습니다. 저장하시겠습니까?"
+        confirmText="저장"
+        cancelText="저장안함"
+        thirdButtonText="취소"
+        isDanger={false}
+        onConfirm={confirmSaveAndNavigate}
+        onClose={discardChangesAndNavigate}
+        onThirdButtonClick={() => {
+          setShowSaveConfirmModal(false);
+          setPendingAction(null);
+        }}
       />
     </div>
   );

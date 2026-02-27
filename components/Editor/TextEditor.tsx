@@ -34,20 +34,17 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
     }
   }, [isEditing]);
 
-  // Handle blur - save changes when exiting edit mode
+  // Handle blur - sync changes to parent but don't exit edit mode
   const handleBlur = () => {
     if (!contentEditableRef.current) return;
 
     const text = contentEditableRef.current.innerText || '';
 
-    // Only save if content changed
+    // Only update parent if content changed
     if (text !== lastSavedContentRef.current) {
       onChange(text);
       lastSavedContentRef.current = text;
     }
-
-    // Exit edit mode when losing focus
-    onEditingChange(false);
   };
 
   // Handle paste to ensure plain text only
@@ -59,13 +56,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
 
   // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // ESC key to exit edit mode
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onEditingChange(false);
-      return;
-    }
-
     // Prevent rich text formatting (Ctrl+B, Ctrl+I, Ctrl+U, etc.)
     if (e.ctrlKey || e.metaKey) {
       const formattingKeys = ['b', 'i', 'u'];

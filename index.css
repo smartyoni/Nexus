@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   margin: 0;
@@ -18,21 +20,26 @@ html, body, #root {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 0;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
 }
 
 /* 모바일 터치 최적화 */
 @media (hover: none) and (pointer: coarse) {
+
   /* 터치 타겟 크기 */
-  button, a {
+  button,
+  a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -78,4 +85,23 @@ html, body, #root {
   [data-checklist-item-id] {
     touch-action: pan-y;
   }
+}
+
+/* 애니메이션 효과 */
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
