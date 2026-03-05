@@ -218,7 +218,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
             )}
 
             {/* 모바일 전용 기호 입력창 (진짜 모바일 기기 + 편집 모드 + 포커스(키보드 활성화) 시에만 나타남) */}
-            {isEditing && isFocused && isMobile && !isExtension && (
+            {isEditing && isFocused && isMobile && !isExtension && keyboardHeight > 0 && (
                 <div
                     className="fixed left-0 right-0 z-[60] bg-slate-50/95 backdrop-blur-md border-t border-slate-200 p-2 flex justify-around items-center shadow-[0_-4px_12px_rgba(0,0,0,0.05)] animate-slide-up transition-all duration-200 ease-out"
                     style={{ bottom: `${keyboardHeight}px` }} // 키보드 높이에 맞춰 바닥에서 띄워줌
