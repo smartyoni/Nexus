@@ -158,7 +158,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
 
     const isExtension = process.env.BUILD_TARGET === 'extension';
 
-    const SYMBOLS = ['•', '-', '?', 'undo'];
+    const SYMBOLS = ['•', '-', '?', '※'];
 
     const handleSymbolClick = (e: React.MouseEvent, symbol: string) => {
         e.preventDefault(); // 포커스 해제 방지
@@ -228,19 +228,16 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                             key={s}
                             onMouseDown={(e) => handleSymbolClick(e, s)}
                             className="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all"
-                            title={s === 'undo' ? "되돌리기" : undefined}
                         >
-                            {s === 'undo' ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
-                            ) : s}
+                            {s}
                         </button>
                     ))}
                     <button
-                        onMouseDown={handleContextMenu}
-                        className="w-12 h-10 flex items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md active:scale-90 active:bg-indigo-700 transition-all ml-1"
-                        title="수정 종료"
+                        onMouseDown={(e) => handleSymbolClick(e, 'undo')}
+                        className="w-12 h-10 flex items-center justify-center rounded-xl bg-slate-100 border border-slate-200 text-slate-700 shadow-sm active:scale-90 active:bg-slate-200 transition-all ml-1"
+                        title="되돌리기"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
                     </button>
                 </div>
             )}
