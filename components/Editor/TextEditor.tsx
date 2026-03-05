@@ -53,8 +53,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         // Tab key for bullet point insertion
         if (e.key === 'Tab') {
             e.preventDefault();
-            const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span> `;
-            document.execCommand('insertHTML', false, bulletHtml);
+            document.execCommand('insertText', false, '● ');
         }
 
         if (e.ctrlKey || e.metaKey) {
@@ -164,12 +163,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
     const handleSymbolClick = (e: React.MouseEvent, symbol: string) => {
         e.preventDefault(); // 포커스 해제 방지
         if (contentEditableRef.current) {
-            if (symbol === '•') {
-                const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span><span style="font-size: initial;">&#8203;</span>`;
-                document.execCommand('insertHTML', false, bulletHtml);
-            } else {
-                document.execCommand('insertText', false, symbol);
-            }
+            const textToInsert = symbol === '•' ? '●' : symbol;
+            document.execCommand('insertText', false, textToInsert);
 
             // 최신 텍스트 상위에 전달
             const text = contentEditableRef.current.innerText || '';
