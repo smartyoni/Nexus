@@ -53,7 +53,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         // Tab key for bullet point insertion
         if (e.key === 'Tab') {
             e.preventDefault();
-            document.execCommand('insertText', false, '● ');
+            document.execCommand('insertText', false, '• ');
         }
 
         if (e.ctrlKey || e.metaKey) {
@@ -166,8 +166,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
             if (symbol === 'undo') {
                 document.execCommand('undo', false, undefined);
             } else {
-                const textToInsert = symbol === '•' ? '●' : symbol;
-                document.execCommand('insertText', false, textToInsert);
+                document.execCommand('insertText', false, symbol);
             }
 
             // 최신 텍스트 상위에 전달
