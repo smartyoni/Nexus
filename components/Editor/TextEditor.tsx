@@ -106,6 +106,56 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
     };
 
     const [isFocused, setIsFocused] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // 모바일 기기 감지 (User Agent)
+    useEffect(() => {
+        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+        // iOS 또는 Android 기반의 모바일/태블릿 기기인지 확인
+        if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
+            setIsMobile(true);
+        }
+    }, []);
+
+    // 키보드 높이/화면 리사이즈 감지 로직 (Visual Viewport API 활용)
+    useEffect(() => {
+        if (!isMobile || !isFocused) return;
+
+        const handleResize = () => {
+            if (window.visualViewport) {
+                // 전체 창 높이에서 실제 눈에 보이는 화면 높이를 빼면 키보드 높이가 산출됨 (근사치)
+                const viewportHeight = window.visualViewport.height;
+                const windowHeight = window.innerHeight;
+
+                // 만약 보이는 화면이 전체 화면의 90% 이하라면 키보드가 올라온 것으로 간주
+                if (viewportHeight < windowHeight * 0.9) {
+                    // 키보드 높이 계산 (visualViewport의 offsetTop이 밀려 올라간 경우를 보정)
+                    const offsetElement = document.getElementById('root') || document.body;
+                    const keyboardH = windowHeight - viewportHeight - window.visualViewport.offsetTop;
+                    // 높이가 음수가 되지 않도록 방어 로직 추가
+                    setKeyboardHeight(Math.max(0, keyboardH));
+                } else {
+                    setKeyboardHeight(0);
+                }
+            }
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            window.visualViewport.addEventListener('scroll', handleResize);
+            // 초기 평가
+            handleResize();
+        }
+
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.removeEventListener('scroll', handleResize);
+            }
+        };
+    }, [isMobile, isFocused]);
+
     const isExtension = process.env.BUILD_TARGET === 'extension';
 
     const SYMBOLS = ['•', '-', '?', '※'];
@@ -135,6 +185,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     onFocus={() => setIsFocused(true)}
                     onBlur={(e) => {
                         setIsFocused(false);
+                        setKeyboardHeight(0); // 포커스 잃으면 키보드 닫힘 상태로 간주
                         handleBlur();
                     }}
                     onInput={() => {
@@ -147,7 +198,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     }}
                     onPaste={handlePaste}
                     onKeyDown={handleKeyDown}
-                    className="outline-none min-h-full whitespace-pre-wrap break-words text-slate-800 text-[12px] leading-relaxed font-sans border-none focus:ring-0 shadow-none appearance-none pb-16 sm:pb-0"
+                    className={`outline-none min-h-full whitespace-pre-wrap break-words text-slate-800 text-[12px] leading-relaxed font-sans border-none focus:ring-0 shadow-none appearance-none ${isMobile ? 'pb-24' : 'pb-16 sm:pb-0'}`}
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word', outline: 'none' }}
                 />
             ) : (
@@ -161,9 +212,12 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                 </pre>
             )}
 
-            {/* 모바일 기호 입력창 (모바일 PWA 환경 + 편집 모드 + 포커스 시에만 나타남) */}
-            {isEditing && isFocused && !isExtension && (
-                <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[60] bg-slate-50/95 backdrop-blur-md border-t border-slate-200 p-2 flex justify-around items-center shadow-[0_-4px_12px_rgba(0,0,0,0.05)] animate-slide-up">
+            {/* 모바일 전용 기호 입력창 (진짜 모바일 기기 + 편집 모드 + 포커스(키보드 활성화) 시에만 나타남) */}
+            {isEditing && isFocused && isMobile && !isExtension && (
+                <div
+                    className="fixed left-0 right-0 z-[60] bg-slate-50/95 backdrop-blur-md border-t border-slate-200 p-2 flex justify-around items-center shadow-[0_-4px_12px_rgba(0,0,0,0.05)] animate-slide-up transition-all duration-200 ease-out"
+                    style={{ bottom: `${keyboardHeight}px` }} // 키보드 높이에 맞춰 바닥에서 띄워줌
+                >
                     {SYMBOLS.map((s) => (
                         <button
                             key={s}
