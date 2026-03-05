@@ -222,7 +222,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                         <button
                             key={s}
                             onMouseDown={(e) => handleSymbolClick(e, s)}
-                            className="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all"
+                            className={`w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all ${s === '•' ? 'scale-150' : ''}`}
                         >
                             {s}
                         </button>
