@@ -212,9 +212,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     className={`whitespace-pre-wrap text-slate-700 ${isMobile ? 'text-[14px]' : 'text-[12px]'} leading-relaxed font-sans break-words border-none m-0 p-0`}
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                 >
-                    {content ? (
-                        <div dangerouslySetInnerHTML={{ __html: contentEditableRef.current?.innerHTML || content }} />
-                    ) : (
+                    {content || (
                         <span className="text-slate-300 italic font-light">이곳에 자유롭게 메모를 작성하세요...</span>
                     )}
                 </div>
