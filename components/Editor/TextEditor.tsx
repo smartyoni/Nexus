@@ -165,7 +165,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         e.preventDefault(); // 포커스 해제 방지
         if (contentEditableRef.current) {
             if (symbol === '•') {
-                const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span>`;
+                const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span><span style="font-size: initial;">&#8203;</span>`;
                 document.execCommand('insertHTML', false, bulletHtml);
             } else {
                 document.execCommand('insertText', false, symbol);
