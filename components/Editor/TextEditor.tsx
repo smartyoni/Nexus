@@ -53,7 +53,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         // Tab key for bullet point insertion
         if (e.key === 'Tab') {
             e.preventDefault();
-            document.execCommand('insertText', false, '• ');
+            const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span> `;
+            document.execCommand('insertHTML', false, bulletHtml);
         }
 
         if (e.ctrlKey || e.metaKey) {
@@ -163,7 +164,13 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
     const handleSymbolClick = (e: React.MouseEvent, symbol: string) => {
         e.preventDefault(); // 포커스 해제 방지
         if (contentEditableRef.current) {
-            document.execCommand('insertText', false, symbol);
+            if (symbol === '•') {
+                const bulletHtml = `<span style="font-size: 200%; line-height: 1;">•</span>`;
+                document.execCommand('insertHTML', false, bulletHtml);
+            } else {
+                document.execCommand('insertText', false, symbol);
+            }
+
             // 최신 텍스트 상위에 전달
             const text = contentEditableRef.current.innerText || '';
             onChange(text);
@@ -202,14 +209,16 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word', outline: 'none' }}
                 />
             ) : (
-                <pre
+                <div
                     className="whitespace-pre-wrap text-slate-700 text-[12px] leading-relaxed font-sans break-words border-none m-0 p-0"
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                 >
-                    {content || (
+                    {content ? (
+                        <div dangerouslySetInnerHTML={{ __html: contentEditableRef.current?.innerHTML || content }} />
+                    ) : (
                         <span className="text-slate-300 italic font-light">이곳에 자유롭게 메모를 작성하세요...</span>
                     )}
-                </pre>
+                </div>
             )}
 
             {/* 모바일 전용 기호 입력창 (진짜 모바일 기기 + 편집 모드 + 포커스(키보드 활성화) 시에만 나타남) */}
@@ -222,7 +231,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                         <button
                             key={s}
                             onMouseDown={(e) => handleSymbolClick(e, s)}
-                            className={`w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all ${s === '•' ? 'scale-[2]' : ''}`}
+                            className="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all"
                         >
                             {s}
                         </button>
