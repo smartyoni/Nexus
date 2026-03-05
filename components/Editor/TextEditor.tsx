@@ -205,12 +205,12 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     }}
                     onPaste={handlePaste}
                     onKeyDown={handleKeyDown}
-                    className={`outline-none min-h-full whitespace-pre-wrap break-words text-slate-800 text-[12px] leading-relaxed font-sans border-none focus:ring-0 shadow-none appearance-none ${isMobile ? 'pb-24' : 'pb-16 sm:pb-0'}`}
+                    className={`outline-none min-h-full whitespace-pre-wrap break-words text-slate-800 ${isMobile ? 'text-[14px]' : 'text-[12px]'} leading-relaxed font-sans border-none focus:ring-0 shadow-none appearance-none ${isMobile ? 'pb-24' : 'pb-16 sm:pb-0'}`}
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word', outline: 'none' }}
                 />
             ) : (
                 <div
-                    className="whitespace-pre-wrap text-slate-700 text-[12px] leading-relaxed font-sans break-words border-none m-0 p-0"
+                    className={`whitespace-pre-wrap text-slate-700 ${isMobile ? 'text-[14px]' : 'text-[12px]'} leading-relaxed font-sans break-words border-none m-0 p-0`}
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                 >
                     {content ? (
