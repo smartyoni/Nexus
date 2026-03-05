@@ -105,6 +105,9 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         }
     };
 
+    const [isFocused, setIsFocused] = useState(false);
+    const isExtension = process.env.BUILD_TARGET === 'extension';
+
     const SYMBOLS = ['•', '-', '?', '※'];
 
     const handleSymbolClick = (e: React.MouseEvent, symbol: string) => {
@@ -129,7 +132,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                     ref={contentEditableRef}
                     contentEditable
                     suppressContentEditableWarning
-                    onBlur={handleBlur}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={(e) => {
+                        setIsFocused(false);
+                        handleBlur();
+                    }}
                     onInput={() => {
                         // 실시간 타이핑 내용 추출 버퍼 (리렌더링 최소화)
                         if (contentEditableRef.current) {
@@ -154,8 +161,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                 </pre>
             )}
 
-            {/* 모바일 기호 입력창 (편집 모드 시 키보드 위 효과) */}
-            {isEditing && (
+            {/* 모바일 기호 입력창 (모바일 PWA 환경 + 편집 모드 + 포커스 시에만 나타남) */}
+            {isEditing && isFocused && !isExtension && (
                 <div className="sm:hidden fixed bottom-0 left-0 right-0 z-[60] bg-slate-50/95 backdrop-blur-md border-t border-slate-200 p-2 flex justify-around items-center shadow-[0_-4px_12px_rgba(0,0,0,0.05)] animate-slide-up">
                     {SYMBOLS.map((s) => (
                         <button

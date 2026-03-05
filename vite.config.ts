@@ -73,7 +73,8 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.BUILD_TARGET': JSON.stringify(process.env.BUILD_TARGET || 'pwa')
     },
     resolve: {
       alias: {
