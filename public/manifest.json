@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Template Master Sidebar",
-  "description": "A split-screen text and checklist manager for chrome sidebar with template support.",
+  "name": "Nexus | Premium Sidebar Note",
+  "description": "A premium minimalist text memo manager for chrome sidebar.",
   "version": "1.0.0",
   "icons": {
     "16": "icons/icon-16.png",
@@ -24,6 +24,6 @@
     "service_worker": "background.js"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: wss:; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https: wss:; object-src 'self'"
   }
 }

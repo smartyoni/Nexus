@@ -10,13 +10,15 @@
     "dev:extension": "cross-env BUILD_TARGET=extension vite",
     "build": "npm run build:pwa && npm run build:extension",
     "build:pwa": "cross-env BUILD_TARGET=pwa vite build",
+    "build:firebase": "cross-env BUILD_TARGET=pwa DEPLOY_TARGET=firebase vite build",
+    "build:github": "cross-env BUILD_TARGET=pwa DEPLOY_TARGET=github vite build",
     "build:extension": "cross-env BUILD_TARGET=extension vite build",
     "preview": "vite preview",
     "preview:pwa": "cross-env BUILD_TARGET=pwa vite preview --outDir dist-pwa",
     "generate-icons": "node scripts/generate-icons.js",
-    "deploy": "npm run build:pwa && firebase deploy",
-    "deploy:github-pages": "gh-pages -d dist-pwa",
-    "deploy:all": "npm run build && git push && npm run deploy && npm run deploy:github-pages"
+    "deploy": "npm run build:firebase && firebase deploy",
+    "deploy:github-pages": "npm run build:github && gh-pages -d dist-pwa",
+    "deploy:all": "npm run build:extension && git push && npm run deploy && npm run deploy:github-pages"
   },
   "dependencies": {
     "firebase": "^12.6.0",

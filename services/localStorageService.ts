@@ -62,6 +62,26 @@ export const storageService = {
     localStorage.removeItem(STORAGE_KEY_FAVORITE_DOC);
   },
 
+  getTabNames: (): string[] | null => {
+    try {
+      const data = localStorage.getItem('app_tab_names');
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length === 4) {
+          return parsed;
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error("Failed to load tab names", e);
+      return null;
+    }
+  },
+
+  saveTabNames: (names: string[]): void => {
+    localStorage.setItem('app_tab_names', JSON.stringify(names));
+  },
+
   getTabs: (): Tab[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEY_TABS);

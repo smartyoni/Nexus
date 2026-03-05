@@ -7,9 +7,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   const isExtension = process.env.BUILD_TARGET === 'extension';
   const isPWA = !isExtension;
+  const deployTarget = process.env.DEPLOY_TARGET; // 'firebase' | 'github' | undefined
+
+  // Firebase는 root에서 서빙하므로 base: '/', GitHub Pages는 /Nexus/
+  const base = isExtension ? '/' : (deployTarget === 'firebase' ? '/' : '/Nexus/');
 
   return {
-    base: isPWA ? '/Nexus/' : '/',
+    base,
     publicDir: 'public',
     server: {
       port: 3000,
@@ -22,15 +26,15 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['icons/icon.svg'],
         manifest: {
-          name: 'Template Master',
-          short_name: 'TempMaster',
-          description: 'A split-screen text and checklist manager with template support',
-          theme_color: '#2563eb',
-          background_color: '#ffffff',
+          name: 'Nexus | Premium Note',
+          short_name: 'Nexus',
+          description: 'A premium minimalist text memo manager for focus',
+          theme_color: '#f8fafc',
+          background_color: '#f8fafc',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: isPWA ? '/Nexus/' : '/',
-          scope: isPWA ? '/Nexus/' : '/',
+          start_url: base,
+          scope: base,
           icons: [
             {
               src: 'icons/icon-192.png',

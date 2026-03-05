@@ -110,6 +110,32 @@ export const storageService = {
     return localStorageService.getTabs();
   },
 
+  getTabNames: async (): Promise<string[] | null> => {
+    if (USE_FIRESTORE) {
+      try {
+        return await firestoreService.getTabNames();
+      } catch (error) {
+        console.error('Firestore error, falling back to localStorage for tab names', error);
+        return localStorageService.getTabNames();
+      }
+    }
+    return localStorageService.getTabNames();
+  },
+
+  saveTabNames: async (names: string[]): Promise<void> => {
+    if (USE_FIRESTORE) {
+      try {
+        await firestoreService.saveTabNames(names);
+        localStorageService.saveTabNames(names);
+      } catch (error) {
+        console.error('Failed to save tab names to Firestore', error);
+        localStorageService.saveTabNames(names);
+      }
+    } else {
+      localStorageService.saveTabNames(names);
+    }
+  },
+
   saveTabs: async (tabs: Tab[]): Promise<void> => {
     if (USE_FIRESTORE) {
       try {
@@ -197,5 +223,22 @@ export const storageService = {
     } else {
       localStorageService.setCurrentTabId(id);
     }
-  }
+  },
+
+  // 실시간 구독: 메모 본문 변경 수신 (onSnapshot)
+  subscribeToDocuments: (callback: (docs: import('../types').DocumentData[]) => void): (() => void) => {
+    if (USE_FIRESTORE) {
+      return firestoreService.subscribeToDocuments(callback);
+    }
+    // localStorage는 실시간 구독 미지원 → 아무것도 안하는 구독 해제 함수 반환
+    return () => { };
+  },
+
+  // 실시간 구독: 탭 이름 변경 수신 (onSnapshot)
+  subscribeToTabNames: (callback: (names: string[] | null) => void): (() => void) => {
+    if (USE_FIRESTORE) {
+      return firestoreService.subscribeToTabNames(callback);
+    }
+    return () => { };
+  },
 };

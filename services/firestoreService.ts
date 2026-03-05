@@ -6,7 +6,8 @@ import {
   deleteDoc,
   query,
   orderBy,
-  getDoc
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { DocumentData, Tab } from '../types';
@@ -127,7 +128,7 @@ export const firestoreService = {
     }
   },
 
-  // 탭 목록 가져오기
+  // 탭 목록 가져오기 (Tab 엔티티, 더 이상 안 쓰임)
   getTabs: async (): Promise<Tab[]> => {
     try {
       const tabsRef = collection(db, `users/${USER_ID}/tabs`);
@@ -144,7 +145,30 @@ export const firestoreService = {
     }
   },
 
-  // 탭 저장하기
+  // 탭 이름 배열 가져오기 (신규)
+  getTabNames: async (): Promise<string[] | null> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'tabNames');
+      const snapshot = await getDoc(settingsRef);
+      return snapshot.exists() ? (snapshot.data().names || null) : null;
+    } catch (e) {
+      console.error("Failed to get tab names from Firestore", e);
+      return null;
+    }
+  },
+
+  // 탭 이름 배열 저장하기 (신규)
+  saveTabNames: async (names: string[]): Promise<void> => {
+    try {
+      const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'tabNames');
+      await setDoc(settingsRef, { names }, { merge: true });
+    } catch (e) {
+      console.error("Failed to save tab names in Firestore", e);
+      throw e;
+    }
+  },
+
+  // 탭 저장하기 (Tab 엔티티)
   saveTab: async (tab: Tab): Promise<void> => {
     try {
       const tabRef = doc(db, `users/${USER_ID}/tabs`, tab.id);
@@ -187,5 +211,33 @@ export const firestoreService = {
       console.error("Failed to set current tab id in Firestore", e);
       throw e;
     }
-  }
+  },
+
+  // 실시간: 모든 대상 문서 변경 수신
+  subscribeToDocuments: (callback: (docs: DocumentData[]) => void): (() => void) => {
+    const docsRef = collection(db, `users/${USER_ID}/${COLLECTION_DOCS}`);
+    const q = query(docsRef, orderBy('updatedAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(d => ({
+        ...d.data(),
+        id: d.id,
+      })) as DocumentData[];
+      callback(docs);
+    }, (error) => {
+      console.error('Real-time documents subscription error:', error);
+    });
+    return unsubscribe;
+  },
+
+  // 실시간: 탭 이름 변경 수신
+  subscribeToTabNames: (callback: (names: string[] | null) => void): (() => void) => {
+    const settingsRef = doc(db, `users/${USER_ID}/${COLLECTION_SETTINGS}`, 'tabNames');
+    const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+      const names = snapshot.exists() ? (snapshot.data().names || null) : null;
+      callback(names);
+    }, (error) => {
+      console.error('Real-time tab names subscription error:', error);
+    });
+    return unsubscribe;
+  },
 };
