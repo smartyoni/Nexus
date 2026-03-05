@@ -158,13 +158,17 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
 
     const isExtension = process.env.BUILD_TARGET === 'extension';
 
-    const SYMBOLS = ['•', '-', '?', '※'];
+    const SYMBOLS = ['•', '-', '?', 'undo'];
 
     const handleSymbolClick = (e: React.MouseEvent, symbol: string) => {
         e.preventDefault(); // 포커스 해제 방지
         if (contentEditableRef.current) {
-            const textToInsert = symbol === '•' ? '●' : symbol;
-            document.execCommand('insertText', false, textToInsert);
+            if (symbol === 'undo') {
+                document.execCommand('undo', false, undefined);
+            } else {
+                const textToInsert = symbol === '•' ? '●' : symbol;
+                document.execCommand('insertText', false, textToInsert);
+            }
 
             // 최신 텍스트 상위에 전달
             const text = contentEditableRef.current.innerText || '';
@@ -227,8 +231,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                             key={s}
                             onMouseDown={(e) => handleSymbolClick(e, s)}
                             className="w-12 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-lg font-bold shadow-sm active:scale-90 active:bg-indigo-50 active:text-indigo-600 transition-all"
+                            title={s === 'undo' ? "되돌리기" : undefined}
                         >
-                            {s}
+                            {s === 'undo' ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+                            ) : s}
                         </button>
                     ))}
                     <button
