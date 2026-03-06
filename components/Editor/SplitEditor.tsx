@@ -112,6 +112,17 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
                     {/* 구분선 (매우 가늘게) */}
                     <div className="w-[1px] h-3 bg-slate-300/60 mx-1" />
 
+                    {/* 저장 버튼 (편집 모드일 때만 강조됨) */}
+                    {isEditing && (
+                        <button
+                            onClick={() => onSave({ ...data, content: latestContentRef.current, updatedAt: Date.now() })}
+                            className="flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 mr-1"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            저장하기
+                        </button>
+                    )}
+
                     <button
                         onClick={() => {
                             if (isEditing) {
@@ -120,8 +131,8 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
                             setIsEditing(!isEditing);
                         }}
                         className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${isEditing
-                                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50'
-                                : 'text-slate-600 hover:bg-white/50'
+                            ? 'bg-white text-slate-600 border border-slate-200/50'
+                            : 'text-slate-600 hover:bg-white/50'
                             }`}
                     >
                         {isEditing ? (

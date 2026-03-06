@@ -18,7 +18,6 @@ const App: React.FC = () => {
 
   const handleTabSwitch = async (index: number) => {
     if (index === tabs.activeTabIndex) return;
-    await docs.saveBeforeSwitch();
     tabs.switchTab(index);
   };
 

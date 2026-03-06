@@ -28,7 +28,6 @@ export const useDocumentManagement = (
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
-    const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedRef = useRef<string>('');
 
     // 현재 활성 문서
@@ -59,42 +58,6 @@ export const useDocumentManagement = (
     const initialize = useCallback(async () => {
         // 실시간 구독으로 대체되었으므로 빈 함수 유지
     }, []);
-
-    // --- 자동 저장 (디바운스) ---
-    const autoSaveDocument = useCallback(async (doc: DocumentData) => {
-        if (!doc.id) return;
-        const docString = JSON.stringify(doc);
-        if (lastSavedRef.current === docString) return;
-
-        setIsSaving(true);
-        try {
-            const updatedDoc = { ...doc, updatedAt: Date.now() };
-            const allDocs = tabDocuments.map((d, i) =>
-                i === activeTabIndex ? updatedDoc : d
-            ).filter(Boolean) as DocumentData[];
-
-            await storageService.saveDocuments(allDocs);
-            lastSavedRef.current = docString;
-        } catch (error) {
-            console.error('자동 저장 실패:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    }, [tabDocuments, activeTabIndex]);
-
-    // 디바운스 타이머
-    useEffect(() => {
-        if (!activeDocument || isLoading) return;
-        if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
-
-        autoSaveTimeoutRef.current = setTimeout(() => {
-            autoSaveDocument(activeDocument);
-        }, 1500);
-
-        return () => {
-            if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
-        };
-    }, [activeDocument?.title, activeDocument?.content]);
 
     // --- 명시적 저장 ---
     const saveDocument = useCallback(async (data: DocumentData) => {
