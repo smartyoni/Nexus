@@ -64,8 +64,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
         }
     };
 
-    const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
-
     const handleContextMenu = (e: React.MouseEvent) => {
         if (isEditing) {
             // 편집 모드에서 우클릭 시: 현재 내용 저장하고 보기 모드로 전환
@@ -76,17 +74,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                 lastSavedContentRef.current = text;
             }
             onEditingChange(false);
-            return;
         }
-        e.preventDefault();
-        setContextMenu({ x: e.clientX, y: e.clientY });
+        // 보기 모드에서는 브라우저 기본 컨텍스트 메뉴를 사용하도록 방치합니다.
     };
 
-    useEffect(() => {
-        const handleClick = () => setContextMenu(null);
-        window.addEventListener('click', handleClick);
-        return () => window.removeEventListener('click', handleClick);
-    }, []);
+    // 컨텍스트 메뉴 관련 상태 및 효과 제거
 
     const handleDoubleClick = (e: React.MouseEvent) => {
         if (!isEditing) {
@@ -242,27 +234,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, onChange, isEdi
                 </div>
             )}
 
-            {/* 컨텍스트 메뉴 (Light Theme) */}
-            {contextMenu && (
-                <div
-                    className="fixed z-[100] bg-white border border-slate-200 shadow-xl py-1 min-w-[160px] rounded-xl overflow-hidden animate-fade-in"
-                    style={{ top: contextMenu.y, left: contextMenu.x }}
-                >
-                    <button
-                        className="w-full text-left px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-all duration-200 flex items-center gap-3 font-semibold"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEditingChange(true);
-                            setContextMenu(null);
-                        }}
-                    >
-                        <span className="text-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </span>
-                        메모 수정하기
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
