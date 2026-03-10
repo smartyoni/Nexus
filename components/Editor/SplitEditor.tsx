@@ -85,17 +85,8 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
                         className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 text-slate-500 hover:text-rose-600 hover:bg-white/50"
                         title="초기화"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        <span className="hidden xs:inline">초기화</span>
-                    </button>
-
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800 hover:bg-white/50"
-                        title="새로고침"
-                    >
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M21 13a9 9 0 1 1-3-7.7L21 8"></path></svg>
-                        <span className="hidden xs:inline">새로고침</span>
+                        <span className="hidden xs:inline">초기화</span>
                     </button>
 
                     <button
@@ -148,7 +139,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
                             <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-2">메모 초기화</h3>
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">초기화하시겠습니까?</h3>
                             <p className="text-sm text-slate-500 leading-relaxed">
                                 내용을 초기화합니다.<br />
                                 <span className="text-slate-400 mt-1 inline-block">Enter 키를 누르면 즉시 삭제됩니다.</span>
