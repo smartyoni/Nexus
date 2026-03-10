@@ -6,8 +6,8 @@ if (!fs.existsSync('./scripts')) {
   fs.mkdirSync('./scripts');
 }
 
-const sizes = [192, 512];
-const inputPng = './public/icons/icon-128.png'; // 기존 아이콘 사용
+const sizes = [16, 32, 64, 128, 192, 512];
+const inputPng = './public/icons/노트앱.png'; // 새 아이콘 사용
 
 async function generateIcons() {
   for (const size of sizes) {
