@@ -128,8 +128,22 @@ body,
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Selection color */
@@ -158,4 +172,38 @@ input::placeholder {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* Legal Pad Aesthetics */
+.legal-pad-container {
+  background-image: 
+    linear-gradient(90deg, transparent 39px, #ffadaa 39px, #ffadaa 40px, transparent 40px, transparent 43px, #ffadaa 43px, #ffadaa 44px, transparent 44px),
+    linear-gradient(#e2e8f0 0.1rem, transparent 0.1rem);
+  background-size: 100% 2.2rem;
+  line-height: 2.2rem !important;
+  min-height: 100%;
+  position: relative;
+  background-attachment: local;
+  background-color: #fdfdfd;
+}
+
+.legal-pad-paper {
+  min-height: 100%;
+  padding-left: 60px;
+  padding-top: 0.5rem;
+  padding-right: 20px;
+  padding-bottom: 10rem;
+}
+
+.legal-pad-editor {
+  line-height: 2.2rem !important;
+  background: transparent !important;
+  outline: none;
+  border: none;
+  width: 100%;
+  min-height: 20rem;
+  font-size: 15px;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

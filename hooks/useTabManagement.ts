@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { storageService } from '../services/storageService';
 
 // 탭 설정 상수
-const TAB_COUNT = 4;
-const DEFAULT_TAB_NAMES = ['탭 1', '탭 2', '탭 3', '탭 4'];
+const TAB_COUNT = 1;
+const DEFAULT_TAB_NAMES = ['상세내용'];
 const ACTIVE_TAB_KEY = 'app_active_tab';
 
 /**

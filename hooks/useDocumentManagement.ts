@@ -1,121 +1,189 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DocumentData } from '../types';
 import { storageService } from '../services/storageService';
 
-// 탭별 문서 ID 생성 유틸리티
-const getTabDocId = (tabIndex: number) => `tab_doc_${tabIndex}`;
+type ViewMode = 'list' | 'detail' | 'toc';
 
-// 빈 문서 생성 유틸리티
-const createBlankDocument = (tabIndex: number): DocumentData => ({
-    id: getTabDocId(tabIndex),
-    title: '',
-    content: '',
-    updatedAt: Date.now(),
-    tabId: `tab_${tabIndex}`
-});
-
-/**
- * 4개 탭의 문서 로딩, 자동 저장(디바운스), 데이터 초기화 로직을 담당하는 훅
- */
-export const useDocumentManagement = (
-    tabCount: number,
-    activeTabIndex: number
-) => {
-    const [tabDocuments, setTabDocuments] = useState<(DocumentData | null)[]>(
-        Array(tabCount).fill(null)
-    );
+export const useDocumentManagement = () => {
+    const [allDocuments, setAllDocuments] = useState<DocumentData[]>([]);
+    const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
-    const lastSavedRef = useRef<string>('');
-
     // 현재 활성 문서
-    const activeDocument = tabDocuments[activeTabIndex];
+    const activeDocument = allDocuments.find(d => d.id === activeDocumentId) || null;
 
-
-    // --- 실시간 데이터 구독 ---
-    useEffect(() => {
-        setIsLoading(true);
-
-        // Firestore onSnapshot: 다른 기기에서 데이터가 바뀌면 즉시 반영
-        const unsubscribe = storageService.subscribeToDocuments((allDocs) => {
-            const docs: (DocumentData | null)[] = Array(tabCount).fill(null);
-            for (let i = 0; i < tabCount; i++) {
-                const docId = getTabDocId(i);
-                const found = allDocs.find(d => d.id === docId);
-                docs[i] = found || createBlankDocument(i);
-            }
-            setTabDocuments(docs);
-            setIsLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, [tabCount]);
-
-
-    // 하위 호환을 위한 initialize (App.tsx에서 직접 호출 시 사용)
+    // --- 초기화 ---
     const initialize = useCallback(async () => {
-        // 실시간 구독으로 대체되었으므로 빈 함수 유지
+        setIsLoading(true);
+        try {
+            const docs = await storageService.getDocuments();
+            setAllDocuments(docs);
+            if (docs.length > 0 && !activeDocumentId) {
+                setActiveDocumentId(docs[0].id);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [activeDocumentId]);
+
+    // --- 문서 저장 ---
+    const saveDocument = useCallback(async (doc: DocumentData) => {
+        setIsSaving(true);
+        try {
+            await storageService.saveDocuments([doc]);
+            setAllDocuments(prev => {
+                const exists = prev.find(d => d.id === doc.id);
+                if (exists) {
+                    return prev.map(d => d.id === doc.id ? doc : d);
+                }
+                return [doc, ...prev];
+            });
+        } finally {
+            setIsSaving(false);
+        }
     }, []);
 
-    // --- 명시적 저장 ---
-    const saveDocument = useCallback(async (data: DocumentData) => {
-        const updatedDoc = { ...data, updatedAt: Date.now() };
-        const newDocs = [...tabDocuments];
-        newDocs[activeTabIndex] = updatedDoc;
-        setTabDocuments(newDocs);
-
-        const allDocs = newDocs.filter(Boolean) as DocumentData[];
-        await storageService.saveDocuments(allDocs);
-        lastSavedRef.current = JSON.stringify(updatedDoc);
-        setIsEditing(false);
-    }, [tabDocuments, activeTabIndex]);
-
-    // --- 탭 전환 시 현재 문서 저장 ---
-    const saveBeforeSwitch = useCallback(async () => {
-        if (activeDocument) {
-            const updatedDoc = { ...activeDocument, updatedAt: Date.now() };
-            const newDocs = [...tabDocuments];
-            newDocs[activeTabIndex] = updatedDoc;
-            setTabDocuments(newDocs);
-
-            const allDocs = newDocs.filter(Boolean) as DocumentData[];
-            await storageService.saveDocuments(allDocs);
+    // --- 문서 삭제 ---
+    const deleteDocument = useCallback(async (id: string) => {
+        await storageService.deleteDocument(id);
+        setAllDocuments(prev => prev.filter(d => d.id !== id));
+        if (activeDocumentId === id) {
+            setActiveDocumentId(null);
+            setViewMode('list');
         }
-        setIsEditing(false);
-        lastSavedRef.current = '';
-    }, [activeDocument, tabDocuments, activeTabIndex]);
+    }, [activeDocumentId]);
 
-    // --- 콘텐츠 변경 핸들러 ---
+    // --- 내용 업데이트 (메모리 내) ---
     const updateContent = useCallback((content: string) => {
-        const newDocs = [...tabDocuments];
-        newDocs[activeTabIndex] = activeDocument
-            ? { ...activeDocument, content }
-            : { ...createBlankDocument(activeTabIndex), content };
-        setTabDocuments(newDocs);
-    }, [tabDocuments, activeTabIndex, activeDocument]);
+        if (!activeDocument) return;
+        const newPages = [...(activeDocument.pages || [])];
+        newPages[currentPageIndex] = content;
+        
+        const updatedDoc = {
+            ...activeDocument,
+            pages: newPages,
+            content: newPages[0] || '', // 검색 등을 위한 대표 컨텐츠
+            updatedAt: Date.now()
+        };
+        
+        setAllDocuments(prev => prev.map(d => d.id === activeDocument.id ? updatedDoc : d));
+    }, [activeDocument, currentPageIndex]);
+
+    // --- 페이지 제목 업데이트 ---
+    const updatePageTitle = useCallback((title: string) => {
+        if (!activeDocument) return;
+        const newTitles = [...(activeDocument.pageTitles || [])];
+        if (newTitles.length === 0 && activeDocument.pages) {
+            // 초기화가 안되어있으면 빈 배열로 채움
+            activeDocument.pages.forEach(() => newTitles.push(''));
+        }
+        newTitles[currentPageIndex] = title;
+        
+        const updatedDoc = {
+            ...activeDocument,
+            pageTitles: newTitles,
+            updatedAt: Date.now()
+        };
+        
+        setAllDocuments(prev => prev.map(d => d.id === activeDocument.id ? updatedDoc : d));
+    }, [activeDocument, currentPageIndex]);
+
+    const addPage = useCallback(() => {
+        if (!activeDocument) return;
+        const newPages = [...(activeDocument.pages || [activeDocument.content || '']), ''];
+        const newPageTitles = [...(activeDocument.pageTitles || []), ''];
+        const updatedDoc = { ...activeDocument, pages: newPages, pageTitles: newPageTitles };
+        const newDocs = allDocuments.map(d => d.id === activeDocument.id ? updatedDoc : d);
+        setAllDocuments(newDocs);
+        setCurrentPageIndex(newPages.length - 1);
+    }, [activeDocument, allDocuments]);
+
+    const removePage = useCallback((index: number) => {
+        if (!activeDocument || !activeDocument.pages || activeDocument.pages.length <= 1) return;
+        const newPages = activeDocument.pages.filter((_, i) => i !== index);
+        const newPageTitles = (activeDocument.pageTitles || []).filter((_, i) => i !== index);
+        const updatedDoc = {
+            ...activeDocument,
+            pages: newPages,
+            pageTitles: newPageTitles,
+            content: newPages[0] || ''
+        };
+        const newDocs = allDocuments.map(d => d.id === activeDocument.id ? updatedDoc : d);
+        setAllDocuments(newDocs);
+        setCurrentPageIndex(Math.max(0, index - 1));
+    }, [activeDocument, allDocuments]);
+
+    const switchPage = useCallback((index: number) => {
+        if (activeDocument?.pages && index >= 0 && index < activeDocument.pages.length) {
+            setCurrentPageIndex(index);
+        }
+    }, [activeDocument]);
+
+    const createNewDocument = useCallback(() => {
+        const newDoc: DocumentData = {
+            id: `doc_${Date.now()}`,
+            title: '',
+            content: '',
+            pages: [''],
+            updatedAt: Date.now(),
+            tabId: 'main' // 기본 tabId 부여
+        };
+        setActiveDocumentId(newDoc.id);
+        setViewMode('detail');
+        setCurrentPageIndex(0);
+        setIsEditing(true);
+        // 저장은 사용자가 입력 후 '저장' 버튼을 누를 때 수행하거나, 즉시 저장 가능
+        saveDocument(newDoc);
+    }, [saveDocument]);
+
+    // --- 문서 선택 ---
+    const selectDocument = useCallback((id: string) => {
+        setActiveDocumentId(id);
+        setViewMode('detail');
+        setCurrentPageIndex(0);
+    }, []);
 
     // --- 빈 문서 가져오기 ---
     const getBlankDocument = useCallback(
-        () => createBlankDocument(activeTabIndex),
-        [activeTabIndex]
+        () => ({
+            id: `doc_blank_${Date.now()}`,
+            title: '',
+            content: '',
+            pages: [''],
+            updatedAt: Date.now()
+        }),
+        []
     );
 
     return {
         // 상태
-        tabDocuments,
+        allDocuments,
         activeDocument,
+        activeDocumentId,
+        currentPageIndex,
+        viewMode,
         isLoading,
         isSaving,
         isEditing,
 
         // 액션
+        setViewMode,
         setIsEditing,
+        setCurrentPageIndex,
         initialize,
         saveDocument,
-        saveBeforeSwitch,
+        deleteDocument,
         updateContent,
+        updatePageTitle,
         getBlankDocument,
+        createNewDocument,
+        selectDocument,
+        addPage,
+        removePage,
+        switchPage,
     };
 };
