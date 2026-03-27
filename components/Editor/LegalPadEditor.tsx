@@ -287,12 +287,12 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                 </div>
             </div>
 
-            {/* Main Content Area (Lined Paper or Clean Markdown) */}
-            <main className={`flex-1 relative overflow-y-auto group ${isPreviewMode ? 'bg-[#f4f7f6]' : 'legal-pad-container'}`}>
-                {isPreviewMode ? (
-                    <MarkdownPreview content={currentContent} className="shadow-2xl my-10 rounded-xl" />
-                ) : (
-                    <div className="legal-pad-paper min-h-full">
+            {/* Main Content Area (Lined Paper) */}
+            <main className="flex-1 relative overflow-y-auto group legal-pad-container">
+                <div className="legal-pad-paper min-h-full">
+                    {isPreviewMode ? (
+                        <MarkdownPreview content={currentContent} />
+                    ) : (
                         <div
                             ref={editorRef}
                             contentEditable
@@ -303,8 +303,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             onCompositionEnd={() => { isComposingBody.current = false; handleInput(); }}
                             className="legal-pad-editor"
                         />
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {/* Floating Next Page Arrow */}
                 {currentPageIndex < totalPages - 1 && (
