@@ -41,7 +41,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [isDeletingDoc, setIsDeletingDoc] = React.useState(false);
     const [isDeletingPageIndex, setIsDeletingPageIndex] = React.useState<number | null>(null);
     const [showSavedToast, setShowSavedToast] = React.useState(false);
-    const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [localDocTitle, setLocalDocTitle] = useState(data.title);
     const editorRef = useRef<HTMLDivElement>(null);
     const isComposingBody = useRef(false);
@@ -94,7 +94,10 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const handleLocalSave = () => {
         onSave();
         setShowSavedToast(true);
-        setTimeout(() => setShowSavedToast(false), 1000);
+        setTimeout(() => {
+            setShowSavedToast(false);
+            setIsPreviewMode(true); // Return to view mode after saving
+        }, 1000);
     };
 
     return (
@@ -253,38 +256,33 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                         </>
                     )}
 
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center p-[1px] bg-indigo-50 rounded-lg border border-indigo-100 shadow-sm overflow-hidden">
-                        <button
-                            onClick={() => setIsPreviewMode(false)}
-                            className={`w-8 h-7 flex items-center justify-center rounded-md transition-all ${!isPreviewMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-300 hover:text-indigo-500'}`}
-                            title="편집 모드"
-                        >
-                            <Edit3 size={14} />
-                        </button>
-                        <button
-                            onClick={() => setIsPreviewMode(true)}
-                            className={`w-8 h-7 flex items-center justify-center rounded-md transition-all ${isPreviewMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-300 hover:text-indigo-500'}`}
-                            title="보기 모드"
-                        >
-                            <Eye size={14} />
-                        </button>
-                    </div>
 
                     <div className="ml-auto flex items-center gap-1.5">
-                        <button 
-                            onClick={() => setIsEditing(false)}
-                            className="px-2 py-1.5 rounded-lg text-[9px] font-black text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-all"
-                        >
-                            취소
-                        </button>
-                        <button 
-                            onClick={handleLocalSave}
-                            disabled={isSaving}
-                            className="px-3 py-1.5 rounded-lg text-[9px] font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all active:scale-95 disabled:opacity-50"
-                        >
-                            저장
-                        </button>
+                        {isPreviewMode ? (
+                            <button 
+                                onClick={() => setIsPreviewMode(false)}
+                                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <Edit3 size={14} />
+                                수정하기
+                            </button>
+                        ) : (
+                            <>
+                                <button 
+                                    onClick={() => setIsPreviewMode(true)}
+                                    className="px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-all font-serif"
+                                >
+                                    취소
+                                </button>
+                                <button 
+                                    onClick={handleLocalSave}
+                                    disabled={isSaving}
+                                    className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all active:scale-95 disabled:opacity-50 font-serif"
+                                >
+                                    저장
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
