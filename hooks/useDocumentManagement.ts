@@ -12,6 +12,7 @@ export const useDocumentManagement = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [scrollTarget, setScrollTarget] = useState<{ pageIndex: number; lineIndex: number; timestamp: number } | null>(null);
 
     // 현재 활성 문서
     const activeDocument = allDocuments.find(d => d.id === activeDocumentId) || null;
@@ -147,6 +148,12 @@ export const useDocumentManagement = () => {
         setCurrentPageIndex(0);
     }, []);
 
+    const scrollToTarget = useCallback((pageIndex: number, lineIndex: number) => {
+        setCurrentPageIndex(pageIndex);
+        setScrollTarget({ pageIndex, lineIndex, timestamp: Date.now() });
+        setViewMode('detail');
+    }, []);
+
     // --- 빈 문서 가져오기 ---
     const getBlankDocument = useCallback(
         () => ({
@@ -169,6 +176,7 @@ export const useDocumentManagement = () => {
         isLoading,
         isSaving,
         isEditing,
+        scrollTarget,
 
         // 액션
         setViewMode,
@@ -185,5 +193,6 @@ export const useDocumentManagement = () => {
         addPage,
         removePage,
         switchPage,
+        scrollToTarget,
     };
 };

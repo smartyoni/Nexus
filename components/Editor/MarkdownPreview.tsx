@@ -14,23 +14,23 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
             
             // Heading 1 (#)
             if (trimmedLine.startsWith('# ')) {
-                return <h1 key={index} className="text-xl font-bold text-slate-800 font-serif border-b border-slate-100">{trimmedLine.substring(2)}</h1>;
+                return <h1 key={index} id={`toc-${index}`} className="text-xl font-bold text-slate-800 font-serif border-b border-slate-100">{trimmedLine.substring(2)}</h1>;
             }
             
             // Heading 2 (##)
             if (trimmedLine.startsWith('## ')) {
-                return <h2 key={index} className="text-lg font-bold text-slate-700 font-serif">{trimmedLine.substring(3)}</h2>;
+                return <h2 key={index} id={`toc-${index}`} className="text-lg font-bold text-slate-700 font-serif">{trimmedLine.substring(3)}</h2>;
             }
 
             // Heading 3 (###)
             if (trimmedLine.startsWith('### ')) {
-                return <h3 key={index} className="text-base font-bold text-slate-600 font-serif">{trimmedLine.substring(4)}</h3>;
+                return <h3 key={index} id={`toc-${index}`} className="text-base font-bold text-slate-600 font-serif">{trimmedLine.substring(4)}</h3>;
             }
 
             // List Item (- or * or •)
             if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ') || trimmedLine.startsWith('• ')) {
                 return (
-                    <div key={index} className="flex gap-3 ml-4 items-center group min-h-[2.2rem]">
+                    <div key={index} id={`toc-${index}`} className="flex gap-3 ml-4 items-center group min-h-[2.2rem]">
                         <span className="text-indigo-400 flex-none w-1 h-1 rounded-full bg-indigo-300 group-hover:bg-indigo-400 transition-colors" />
                         <p className="text-[13px] text-slate-600 italic">{trimmedLine.substring(2)}</p>
                     </div>

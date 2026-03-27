@@ -5,6 +5,7 @@ import { LegalPadEditor } from './LegalPadEditor';
 interface SplitEditorProps {
     data: DocumentData;
     currentPageIndex: number;
+    scrollTarget?: { pageIndex: number; lineIndex: number; timestamp: number } | null;
     onSave: (data: DocumentData) => void;
     isSaving?: boolean;
     isEditing: boolean;
@@ -23,6 +24,7 @@ interface SplitEditorProps {
 export const SplitEditor: React.FC<SplitEditorProps> = ({
     data,
     currentPageIndex,
+    scrollTarget,
     onSave,
     isSaving = false,
     isEditing,
@@ -109,6 +111,7 @@ export const SplitEditor: React.FC<SplitEditorProps> = ({
                 <LegalPadEditor
                     data={data}
                     currentPageIndex={currentPageIndex}
+                    scrollTarget={scrollTarget}
                     onContentChange={handleContentChange}
                     onAddPage={onAddPage}
                     onRemovePage={onRemovePage}

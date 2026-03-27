@@ -72,6 +72,7 @@ const App: React.FC = () => {
             <SplitEditor
               data={docs.activeDocument}
               currentPageIndex={docs.currentPageIndex}
+              scrollTarget={docs.scrollTarget}
               onSave={docs.saveDocument}
               isSaving={docs.isSaving}
               isEditing={docs.isEditing}
@@ -106,6 +107,7 @@ const App: React.FC = () => {
               currentPageIndex={docs.currentPageIndex}
               onSwitchPage={docs.switchPage}
               onViewDetail={() => docs.setViewMode('detail')}
+              onNavigate={docs.scrollToTarget}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center bg-slate-50">

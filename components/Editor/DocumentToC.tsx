@@ -7,29 +7,34 @@ interface DocumentToCProps {
     currentPageIndex: number;
     onSwitchPage: (index: number) => void;
     onViewDetail: () => void;
+    onNavigate?: (pageIndex: number, lineIndex: number) => void;
 }
 
 export const DocumentToC: React.FC<DocumentToCProps> = ({
     data,
     currentPageIndex,
     onSwitchPage,
-    onViewDetail
+    onViewDetail,
+    onNavigate
 }) => {
     const totalPages = data.pages?.length || 1;
 
     const extractSubItems = (content: string) => {
         if (!content) return [];
         return content.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.startsWith('#'))
-            .map(line => {
-                let text = line.substring(1).trim();
+            .map((line, index) => ({ line: line.trim(), index }))
+            .filter(item => item.line.startsWith('#'))
+            .map(item => {
+                let text = item.line.substring(1).trim();
+                // If it's ## or ###, remove leading #s as well for cleaner display
+                text = text.replace(/^#+\s*/, '');
+                
                 if (text && !text.endsWith('.')) {
                     text += '.';
                 }
-                return text;
+                return { text, index: item.index };
             })
-            .filter(text => text.length > 0);
+            .filter(item => item.text.length > 0);
     };
 
     return (
@@ -97,12 +102,16 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                         return (
                                             <div className="flex flex-col gap-2 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1">
                                                 {subItems.map((sub, idx) => (
-                                                    <div key={idx} className="group/sub flex items-start gap-2.5">
+                                                    <button 
+                                                        key={idx} 
+                                                        onClick={() => onNavigate?.(i, sub.index)}
+                                                        className="group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-0.5 px-1 transition-colors"
+                                                    >
                                                         <span className="text-[10px] text-indigo-300 mt-1 flex-none">•</span>
-                                                        <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors cursor-default">
-                                                            {sub}
+                                                        <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors">
+                                                            {sub.text}
                                                         </span>
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </div>
                                         );

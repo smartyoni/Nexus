@@ -8,6 +8,7 @@ import { DeleteConfirmPopover } from '../ui/DeleteConfirmPopover';
 interface LegalPadEditorProps {
     data: DocumentData;
     currentPageIndex: number;
+    scrollTarget?: { pageIndex: number; lineIndex: number; timestamp: number } | null;
     onContentChange: (content: string) => void;
     onAddPage: () => void;
     onRemovePage: (index: number) => void;
@@ -24,6 +25,7 @@ interface LegalPadEditorProps {
 export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     data,
     currentPageIndex,
+    scrollTarget,
     onContentChange,
     onAddPage,
     onRemovePage,
@@ -44,6 +46,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [localDocTitle, setLocalDocTitle] = useState(data.title);
     const editorRef = useRef<HTMLDivElement>(null);
+    const mainAreaRef = useRef<HTMLElement>(null);
     const isComposingBody = useRef(false);
     const isComposingTitle = useRef(false);
     const isTitleFocused = useRef(false);
@@ -73,6 +76,29 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             }
         }
     }, [currentContent, currentPageIndex, isPreviewMode]);
+
+    // ToC Navigation Support
+    useEffect(() => {
+        if (scrollTarget && scrollTarget.pageIndex === currentPageIndex) {
+            setIsPreviewMode(true);
+            
+            // Give some time for MarkdownPreview to render
+            const timer = setTimeout(() => {
+                const element = document.getElementById(`toc-${scrollTarget.lineIndex}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.classList.add('highlight-target');
+                    
+                    // Remove class after animation
+                    setTimeout(() => {
+                        element.classList.remove('highlight-target');
+                    }, 3000);
+                }
+            }, 100);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [scrollTarget, currentPageIndex]);
 
     const handleInput = () => {
         if (editorRef.current) {
