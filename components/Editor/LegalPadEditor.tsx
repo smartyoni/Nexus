@@ -131,7 +131,6 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             {/* Unified Header (Title & Sub-Title) */}
             <header className="relative flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-30 h-11">
                 <div className="flex-1 flex items-center px-4 border-r border-slate-50 group/title">
-                    <span className="text-[10px] font-black text-slate-300 whitespace-nowrap uppercase tracking-widest mr-3">제목</span>
                     <input 
                         type="text"
                         value={localDocTitle}
@@ -151,16 +150,16 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                 onTitleChange?.(e.target.value);
                             }
                         }}
-                        placeholder="제목 없음"
-                        className="text-sm font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-200"
+                        placeholder="제목"
+                        className="text-sm font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
                     />
                 </div>
                 <div className="flex-1 flex items-center px-4 group/page">
-                    <span className="text-[10px] font-black text-slate-300 whitespace-nowrap uppercase tracking-widest mr-3">대항목</span>
                     {isEditingPageTitle ? (
                         <input
                             type="text"
                             value={tempPageTitle}
+                            placeholder="대항목"
                             onFocus={() => { isPageTitleFocused.current = true; }}
                             onCompositionStart={() => { isComposingPageTitle.current = true; }}
                             onCompositionEnd={() => { isComposingPageTitle.current = false; }}
@@ -177,15 +176,15 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                     onPageTitleChange?.(tempPageTitle);
                                 }
                             }}
-                            className="text-sm font-bold text-indigo-600 outline-none border-none bg-transparent flex-1"
+                            className="text-sm font-bold text-indigo-600 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
                             autoFocus
                         />
                     ) : (
                         <div 
-                            className="text-sm font-medium text-slate-500 cursor-text flex-1 truncate"
+                            className={`text-sm cursor-text flex-1 truncate ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
                             onDoubleClick={() => setIsEditingPageTitle(true)}
                         >
-                            {currentPageTitle}
+                            {tempPageTitle || '대항목'}
                         </div>
                     )}
                 </div>
