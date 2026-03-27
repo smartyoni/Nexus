@@ -100,29 +100,30 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
 
                                             {/* Dotted Leader */}
                                             <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
-
-                                            {/* Page Info / Character Count */}
-                                            <div className="flex items-baseline gap-2 flex-none">
-                                                <span className="text-[11px] font-bold text-slate-400 italic">
-                                                    {charCount} chars
-                                                </span>
-                                                <span className={`text-[13px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                                    p.{i + 1}
-                                                </span>
-                                            </div>
                                         </button>
 
-                                        {/* Accordion Toggle Button */}
-                                        {subItems.length > 0 && (
-                                            <button 
-                                                onClick={(e) => togglePage(i, e)}
-                                                className={`flex-none w-6 h-6 flex items-center justify-center rounded-full transition-all ${
-                                                    isExpanded ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:bg-slate-50 hover:text-indigo-400'
-                                                }`}
-                                            >
-                                                {isExpanded ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
-                                            </button>
-                                        )}
+                                        {/* Page Indicator & Accordion Toggle */}
+                                        <div className="flex items-center gap-1 flex-none ml-2">
+                                            {subItems.length > 0 ? (
+                                                <button 
+                                                    onClick={(e) => togglePage(i, e)}
+                                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all ${
+                                                        isExpanded ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-50 hover:text-indigo-500'
+                                                    }`}
+                                                >
+                                                    <span className="text-[13px] font-bold">
+                                                        p.{i + 1}
+                                                    </span>
+                                                    {isExpanded ? <Minus size={10} strokeWidth={3} /> : <Plus size={10} strokeWidth={3} />}
+                                                </button>
+                                            ) : (
+                                                <div className="px-2 py-1 text-slate-400">
+                                                    <span className="text-[13px] font-bold">
+                                                        p.{i + 1}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Sub Items Area (Level 2 & 3) - Accordion Content */}
