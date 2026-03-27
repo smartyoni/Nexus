@@ -13,6 +13,7 @@ export interface DocumentData {
   tabId: string; // 탭 ID (필수)
   pages?: string[]; // 페이지별 내용 (선택적, 없을 경우 content 사용)
   pageTitles?: string[]; // 페이지별 대항목 제목
+  order?: number; // 정렬 순서
 }
 
 export type ViewMode = 'list' | 'detail';

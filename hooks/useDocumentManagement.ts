@@ -22,7 +22,20 @@ export const useDocumentManagement = () => {
         setIsLoading(true);
         try {
             const docs = await storageService.getDocuments();
-            setAllDocuments(docs);
+            
+            // --- Migration/Initialization: Assign order if missing ---
+            const needsOrder = docs.some(d => d.order === undefined);
+            if (needsOrder) {
+                const legacyDocs = [...docs].sort((a, b) => b.updatedAt - a.updatedAt);
+                const updatedDocs = legacyDocs.map((d, index) => ({
+                    ...d,
+                    order: d.order ?? (index + 1) * 1000
+                }));
+                await storageService.saveDocuments(updatedDocs);
+                setAllDocuments(updatedDocs);
+            } else {
+                setAllDocuments(docs);
+            }
             if (docs.length > 0 && !activeDocumentId) {
                 setActiveDocumentId(docs[0].id);
             }
@@ -131,7 +144,8 @@ export const useDocumentManagement = () => {
             content: '',
             pages: [''],
             updatedAt: Date.now(),
-            tabId: 'main' // 기본 tabId 부여
+            tabId: 'main', // 기본 tabId 부여
+            order: allDocuments.length > 0 ? Math.min(...allDocuments.map(d => d.order ?? 999999)) - 1000 : 1000
         };
         setActiveDocumentId(newDoc.id);
         setViewMode('detail');
@@ -166,6 +180,18 @@ export const useDocumentManagement = () => {
         []
     );
 
+    const reorderDocuments = useCallback(async (newOrderDocs: DocumentData[]) => {
+        // 인메모리 업데이트 (즉시 반응성)
+        const updatedDocs = newOrderDocs.map((doc, index) => ({
+            ...doc,
+            order: (index + 1) * 1000
+        }));
+        setAllDocuments(updatedDocs);
+        
+        // 데이터베이스 배치 저장
+        await storageService.saveDocuments(updatedDocs);
+    }, []);
+
     return {
         // 상태
         allDocuments,
@@ -194,5 +220,6 @@ export const useDocumentManagement = () => {
         removePage,
         switchPage,
         scrollToTarget,
+        reorderDocuments,
     };
 };

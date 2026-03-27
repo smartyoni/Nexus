@@ -66,6 +66,7 @@ const App: React.FC = () => {
               docs.selectDocument(id);
             }}
             onDelete={docs.deleteDocument}
+            onReorder={docs.reorderDocuments}
           />
         )}
 
