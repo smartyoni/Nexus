@@ -33,19 +33,25 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     const extractSubItems = (content: string) => {
         if (!content) return [];
         return content.split('\n')
-            .map((line, index) => ({ line: line.trim(), index }))
-            .filter(item => item.line.startsWith('#'))
-            .map(item => {
-                let text = item.line.substring(1).trim();
-                // If it's ## or ###, remove leading #s as well for cleaner display
-                text = text.replace(/^#+\s*/, '');
+            .map((line, index) => {
+                const trimmed = line.trim();
+                let level = 0;
+                if (trimmed.startsWith('## ')) level = 2;
+                else if (trimmed.startsWith('# ')) level = 1;
                 
-                if (text && !text.endsWith('.')) {
-                    text += '.';
+                if (level > 0) {
+                    let text = trimmed.substring(level).trim();
+                    // Remove any remaining leading #s for safety
+                    text = text.replace(/^#+\s*/, '');
+                    
+                    if (text && !text.endsWith('.')) {
+                        text += '.';
+                    }
+                    return { text, index, level };
                 }
-                return { text, index: item.index };
+                return null;
             })
-            .filter(item => item.text.length > 0);
+            .filter((item): item is { text: string; index: number; level: number } => item !== null && item.text.length > 0);
     };
 
     return (
@@ -122,17 +128,25 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                         )}
                                     </div>
 
-                                    {/* Sub Items Area (Level 2) - Accordion Content */}
+                                    {/* Sub Items Area (Level 2 & 3) - Accordion Content */}
                                     {isExpanded && subItems.length > 0 && (
-                                        <div className="flex flex-col gap-2 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1 animate-fade-in">
+                                        <div className="flex flex-col gap-1.5 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1 animate-fade-in text-serif">
                                             {subItems.map((sub, idx) => (
                                                 <button 
                                                     key={idx} 
                                                     onClick={() => onNavigate?.(i, sub.index)}
-                                                    className="group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-0.5 px-1 transition-colors"
+                                                    className={`group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-1 px-1.5 transition-colors ${
+                                                        sub.level === 2 ? 'ml-5' : ''
+                                                    }`}
                                                 >
-                                                    <span className="text-[10px] text-indigo-300 mt-1 flex-none">•</span>
-                                                    <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors">
+                                                    <span className={`mt-1 flex-none ${sub.level === 2 ? 'text-[8px] text-slate-300' : 'text-[10px] text-indigo-300'}`}>
+                                                        {sub.level === 2 ? '◦' : '•'}
+                                                    </span>
+                                                    <span className={`leading-relaxed tracking-tight transition-colors ${
+                                                        sub.level === 2 
+                                                            ? 'text-[11px] text-slate-500 font-medium group-hover/sub:text-indigo-500' 
+                                                            : 'text-[12px] text-slate-600 font-bold group-hover/sub:text-indigo-600'
+                                                    }`}>
                                                         {sub.text}
                                                     </span>
                                                 </button>
