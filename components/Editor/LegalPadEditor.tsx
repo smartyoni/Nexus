@@ -72,7 +72,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                 editorRef.current.innerText = currentContent;
             }
         }
-    }, [currentContent, currentPageIndex]);
+    }, [currentContent, currentPageIndex, isPreviewMode]);
 
     const handleInput = () => {
         if (editorRef.current) {
