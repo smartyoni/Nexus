@@ -128,10 +128,10 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
     return (
         <div className="flex flex-col h-full bg-white select-none">
-            {/* Top Header */}
-            <header className="relative flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-white z-30">
-                <div className="flex items-center gap-2 flex-1 mr-4">
-                    <span className="text-[11px] font-black text-slate-400 whitespace-nowrap uppercase tracking-widest">제목:</span>
+            {/* Unified Header (Title & Sub-Title) */}
+            <header className="relative flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-30 h-11">
+                <div className="flex-1 flex items-center px-4 border-r border-slate-50 group/title">
+                    <span className="text-[10px] font-black text-slate-300 whitespace-nowrap uppercase tracking-widest mr-3">제목</span>
                     <input 
                         type="text"
                         value={localDocTitle}
@@ -143,53 +143,20 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                         onCompositionStart={() => { isComposingTitle.current = true; }}
                         onCompositionEnd={(e) => { 
                             isComposingTitle.current = false; 
-                            // Final sync on composition end
                             onTitleChange?.((e.target as HTMLInputElement).value);
                         }}
                         onChange={(e) => {
                             setLocalDocTitle(e.target.value);
-                            // Only update parent if NOT composing to keep list in sync
                             if (!isComposingTitle.current) {
                                 onTitleChange?.(e.target.value);
                             }
                         }}
                         placeholder="제목 없음"
-                        className="text-base font-bold text-slate-800 outline-none border-none bg-transparent flex-1"
+                        className="text-sm font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-200"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <button 
-                            onClick={() => setIsDeletingDoc(true)}
-                            className={`text-slate-400 p-1.5 rounded-lg transition-all ${
-                                isDeletingDoc ? 'text-rose-600 bg-rose-50' : 'hover:text-rose-500 hover:bg-rose-50'
-                            }`}
-                        >
-                            <Icons.Trash size={18} />
-                        </button>
-
-                        {isDeletingDoc && (
-                            <DeleteConfirmPopover
-                                onConfirm={() => {
-                                    onDeleteDocument?.(data.id);
-                                    setIsDeletingDoc(false);
-                                }}
-                                onCancel={() => setIsDeletingDoc(false)}
-                                message="이 문서를 완전히 삭제하시겠습니까?"
-                                className="right-0 top-full mt-2"
-                            />
-                        )}
-                    </div>
-                </div>
-            </header>
-
-            {/* Sub Header (Page Title) */}
-            <div className="relative flex-shrink-0 flex items-center justify-between px-6 py-2 bg-slate-50 border-b border-slate-100 z-20">
-                <div 
-                    className="text-slate-500 text-[11px] font-black cursor-text hover:text-indigo-600 transition-colors flex items-center gap-2"
-                    onDoubleClick={() => setIsEditingPageTitle(true)}
-                >
-                    <div className="w-1 h-1 rounded-full bg-indigo-400" />
+                <div className="flex-1 flex items-center px-4 group/page">
+                    <span className="text-[10px] font-black text-slate-300 whitespace-nowrap uppercase tracking-widest mr-3">대항목</span>
                     {isEditingPageTitle ? (
                         <input
                             type="text"
@@ -210,14 +177,19 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                     onPageTitleChange?.(tempPageTitle);
                                 }
                             }}
-                            className="bg-white border border-indigo-200 rounded px-2 py-0.5 text-indigo-600 outline-none w-[80vw] max-w-full"
+                            className="text-sm font-bold text-indigo-600 outline-none border-none bg-transparent flex-1"
                             autoFocus
                         />
                     ) : (
-                        <span>{currentPageTitle}</span>
+                        <div 
+                            className="text-sm font-medium text-slate-500 cursor-text flex-1 truncate"
+                            onDoubleClick={() => setIsEditingPageTitle(true)}
+                        >
+                            {currentPageTitle}
+                        </div>
                     )}
                 </div>
-            </div>
+            </header>
 
             {/* Consolidated Segmented Toolbar */}
             <div className="relative flex-shrink-0 px-2 py-1.5 bg-white border-b border-slate-100 z-[40] overflow-visible">
@@ -283,13 +255,37 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
                     <div className="ml-auto flex items-center gap-1.5">
                         {isPreviewMode ? (
-                            <button 
-                                onClick={() => setIsPreviewMode(false)}
-                                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all active:scale-95 flex items-center gap-2"
-                            >
-                                <Edit3 size={14} />
-                                수정하기
-                            </button>
+                            <>
+                                <button 
+                                    onClick={() => setIsPreviewMode(false)}
+                                    className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all active:scale-95 flex items-center gap-2"
+                                >
+                                    <Edit3 size={14} />
+                                    수정하기
+                                </button>
+                                {/* Delete in View Mode */}
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setIsDeletingDoc(true)}
+                                        className={`p-1.5 rounded-lg transition-all ${
+                                            isDeletingDoc ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                                        }`}
+                                    >
+                                        <Icons.Trash size={16} />
+                                    </button>
+                                    {isDeletingDoc && (
+                                        <DeleteConfirmPopover
+                                            onConfirm={() => {
+                                                onDeleteDocument?.(data.id);
+                                                setIsDeletingDoc(false);
+                                            }}
+                                            onCancel={() => setIsDeletingDoc(false)}
+                                            message="이 문서를 완전히 삭제하시겠습니까?"
+                                            className="right-0 top-full mt-2"
+                                        />
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <>
                                 <button 
@@ -305,6 +301,28 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                 >
                                     저장
                                 </button>
+                                {/* Delete in Edit Mode */}
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setIsDeletingDoc(true)}
+                                        className={`p-1.5 rounded-lg transition-all ${
+                                            isDeletingDoc ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                                        }`}
+                                    >
+                                        <Icons.Trash size={16} />
+                                    </button>
+                                    {isDeletingDoc && (
+                                        <DeleteConfirmPopover
+                                            onConfirm={() => {
+                                                onDeleteDocument?.(data.id);
+                                                setIsDeletingDoc(false);
+                                            }}
+                                            onCancel={() => setIsDeletingDoc(false)}
+                                            message="이 문서를 완전히 삭제하시겠습니까?"
+                                            className="right-0 top-full mt-2"
+                                        />
+                                    )}
+                                </div>
                             </>
                         )}
                     </div>
