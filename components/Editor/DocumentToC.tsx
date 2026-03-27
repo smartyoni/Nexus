@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DocumentData } from '../../types';
-import { List, ArrowLeft } from 'lucide-react';
+import { List, ArrowLeft, Plus, Minus } from 'lucide-react';
 
 interface DocumentToCProps {
     data: DocumentData;
@@ -17,7 +17,18 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     onViewDetail,
     onNavigate
 }) => {
+    const [expandedPages, setExpandedPages] = useState<Set<number>>(new Set());
     const totalPages = data.pages?.length || 1;
+
+    const togglePage = (index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setExpandedPages(prev => {
+            const next = new Set(prev);
+            if (next.has(index)) next.delete(index);
+            else next.add(index);
+            return next;
+        });
+    };
 
     const extractSubItems = (content: string) => {
         if (!content) return [];
@@ -61,61 +72,73 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                             const title = data.pageTitles?.[i] || `Chapter ${i + 1}`;
                             const isActive = i === currentPageIndex;
                             const charCount = data.pages?.[i]?.length || 0;
+                            const isExpanded = expandedPages.has(i);
+                            const subItems = extractSubItems(data.pages?.[i] || '');
                             
                             return (
                                 <div key={i} className="flex flex-col">
-                                    <button
-                                        onClick={() => {
-                                            onSwitchPage(i);
-                                            onViewDetail();
-                                        }}
-                                        className="w-full group flex items-baseline gap-2 text-left hover:opacity-70 transition-opacity"
-                                    >
-                                        {/* Chapter Number & Title */}
-                                        <div className="flex items-baseline gap-4 flex-none">
-                                            <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
-                                                {String(i + 1).padStart(2, '0')}.
-                                            </span>
-                                            <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}>
-                                                {title}
-                                            </span>
-                                        </div>
-
-                                        {/* Dotted Leader */}
-                                        <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
-
-                                        {/* Page Info / Character Count */}
-                                        <div className="flex items-baseline gap-2 flex-none">
-                                            <span className="text-[11px] font-bold text-slate-400 italic">
-                                                {charCount} chars
-                                            </span>
-                                            <span className={`text-[13px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                                p.{i + 1}
-                                            </span>
-                                        </div>
-                                    </button>
-
-                                    {/* Sub Items Area (Level 2) */}
-                                    {(() => {
-                                        const subItems = extractSubItems(data.pages?.[i] || '');
-                                        if (subItems.length === 0) return null;
-                                        return (
-                                            <div className="flex flex-col gap-2 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1">
-                                                {subItems.map((sub, idx) => (
-                                                    <button 
-                                                        key={idx} 
-                                                        onClick={() => onNavigate?.(i, sub.index)}
-                                                        className="group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-0.5 px-1 transition-colors"
-                                                    >
-                                                        <span className="text-[10px] text-indigo-300 mt-1 flex-none">•</span>
-                                                        <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors">
-                                                            {sub.text}
-                                                        </span>
-                                                    </button>
-                                                ))}
+                                    <div className="w-full group flex items-baseline gap-2 text-left transition-opacity">
+                                        <button
+                                            onClick={() => {
+                                                onSwitchPage(i);
+                                                onViewDetail();
+                                            }}
+                                            className="flex-1 flex items-baseline gap-2 text-left hover:opacity-70 transition-opacity"
+                                        >
+                                            {/* Chapter Number & Title */}
+                                            <div className="flex items-baseline gap-4 flex-none">
+                                                <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
+                                                    {String(i + 1).padStart(2, '0')}.
+                                                </span>
+                                                <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}>
+                                                    {title}
+                                                </span>
                                             </div>
-                                        );
-                                    })()}
+
+                                            {/* Dotted Leader */}
+                                            <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
+
+                                            {/* Page Info / Character Count */}
+                                            <div className="flex items-baseline gap-2 flex-none">
+                                                <span className="text-[11px] font-bold text-slate-400 italic">
+                                                    {charCount} chars
+                                                </span>
+                                                <span className={`text-[13px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                                    p.{i + 1}
+                                                </span>
+                                            </div>
+                                        </button>
+
+                                        {/* Accordion Toggle Button */}
+                                        {subItems.length > 0 && (
+                                            <button 
+                                                onClick={(e) => togglePage(i, e)}
+                                                className={`flex-none w-6 h-6 flex items-center justify-center rounded-full transition-all ${
+                                                    isExpanded ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:bg-slate-50 hover:text-indigo-400'
+                                                }`}
+                                            >
+                                                {isExpanded ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Sub Items Area (Level 2) - Accordion Content */}
+                                    {isExpanded && subItems.length > 0 && (
+                                        <div className="flex flex-col gap-2 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1 animate-fade-in">
+                                            {subItems.map((sub, idx) => (
+                                                <button 
+                                                    key={idx} 
+                                                    onClick={() => onNavigate?.(i, sub.index)}
+                                                    className="group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-0.5 px-1 transition-colors"
+                                                >
+                                                    <span className="text-[10px] text-indigo-300 mt-1 flex-none">•</span>
+                                                    <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors">
+                                                        {sub.text}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
