@@ -7,7 +7,9 @@
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
     "64": "icons/icon-64.png",
-    "128": "icons/icon-128.png"
+    "128": "icons/icon-128.png",
+    "192": "icons/icon-192.png",
+    "512": "icons/icon-512.png"
   },
   "side_panel": {
     "default_path": "index.html"
