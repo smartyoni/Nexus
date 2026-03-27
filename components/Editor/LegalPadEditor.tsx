@@ -45,16 +45,25 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [localDocTitle, setLocalDocTitle] = useState(data.title);
     const editorRef = useRef<HTMLDivElement>(null);
     const isComposingBody = useRef(false);
+    const isComposingTitle = useRef(false);
+    const isTitleFocused = useRef(false);
+    const isPageTitleFocused = useRef(false);
+    const isComposingPageTitle = useRef(false);
     const totalPages = data.pages?.length || 1;
     const currentContent = data.pages?.[currentPageIndex] || '';
     const currentPageTitle = data.pageTitles?.[currentPageIndex] || `대항목 ${currentPageIndex + 1}`;
 
     useEffect(() => {
-        setTempPageTitle(data.pageTitles?.[currentPageIndex] || '');
+        if (!isPageTitleFocused.current && !isComposingPageTitle.current) {
+            setTempPageTitle(data.pageTitles?.[currentPageIndex] || '');
+        }
     }, [currentPageIndex, data.pageTitles]);
 
     useEffect(() => {
-        setLocalDocTitle(data.title);
+        // Only sync from props if the ID changed or if NOT currently focused/composing
+        if (data.id !== data.id /* actually data.id is just for triggering check */ || (!isTitleFocused.current && !isComposingTitle.current)) {
+            setLocalDocTitle(data.title);
+        }
     }, [data.id, data.title]);
 
     useEffect(() => {
@@ -99,12 +108,23 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                     <input 
                         type="text"
                         value={localDocTitle}
+                        onFocus={() => { isTitleFocused.current = true; }}
+                        onBlur={() => { 
+                            isTitleFocused.current = false; 
+                            onTitleChange?.(localDocTitle);
+                        }}
+                        onCompositionStart={() => { isComposingTitle.current = true; }}
+                        onCompositionEnd={(e) => { 
+                            isComposingTitle.current = false; 
+                            // Final sync on composition end
+                            onTitleChange?.((e.target as HTMLInputElement).value);
+                        }}
                         onChange={(e) => {
                             setLocalDocTitle(e.target.value);
-                            // Debounced update to parent for title is usually cleaner, 
-                            // but for now we'll sync on every change LOCALLY and update PARENT 
-                            // to ensure logic elsewhere (like list) updates.
-                            onTitleChange?.(e.target.value);
+                            // Only update parent if NOT composing to keep list in sync
+                            if (!isComposingTitle.current) {
+                                onTitleChange?.(e.target.value);
+                            }
                         }}
                         placeholder="제목 없음"
                         className="text-base font-bold text-slate-800 outline-none border-none bg-transparent w-40 sm:w-64"
@@ -147,13 +167,18 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                         <input
                             type="text"
                             value={tempPageTitle}
+                            onFocus={() => { isPageTitleFocused.current = true; }}
+                            onCompositionStart={() => { isComposingPageTitle.current = true; }}
+                            onCompositionEnd={() => { isComposingPageTitle.current = false; }}
                             onChange={(e) => setTempPageTitle(e.target.value)}
                             onBlur={() => {
+                                isPageTitleFocused.current = false;
                                 setIsEditingPageTitle(false);
                                 onPageTitleChange?.(tempPageTitle);
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
+                                    isPageTitleFocused.current = false;
                                     setIsEditingPageTitle(false);
                                     onPageTitleChange?.(tempPageTitle);
                                 }
