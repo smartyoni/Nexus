@@ -104,10 +104,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         <div className="flex flex-col h-full bg-white select-none">
             {/* Top Header */}
             <header className="relative flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-white z-30">
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
-                        <Pin size={16} fill="currentColor" />
-                    </div>
+                <div className="flex items-center gap-2 flex-1 mr-4">
+                    <span className="text-[11px] font-black text-slate-400 whitespace-nowrap uppercase tracking-widest">제목:</span>
                     <input 
                         type="text"
                         value={localDocTitle}
@@ -130,7 +128,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             }
                         }}
                         placeholder="제목 없음"
-                        className="text-base font-bold text-slate-800 outline-none border-none bg-transparent w-40 sm:w-64"
+                        className="text-base font-bold text-slate-800 outline-none border-none bg-transparent flex-1"
                     />
                 </div>
                 <div className="flex items-center gap-2">
