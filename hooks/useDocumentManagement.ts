@@ -23,18 +23,25 @@ export const useDocumentManagement = () => {
         try {
             const docs = await storageService.getDocuments();
             
+            // --- Sort by order (asc) or updatedAt (desc) ---
+            const sortedDocsForState = [...docs].sort((a, b) => {
+                const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+                const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+                if (orderA !== orderB) return orderA - orderB;
+                return b.updatedAt - a.updatedAt;
+            });
+
             // --- Migration/Initialization: Assign order if missing ---
             const needsOrder = docs.some(d => d.order === undefined);
             if (needsOrder) {
-                const legacyDocs = [...docs].sort((a, b) => b.updatedAt - a.updatedAt);
-                const updatedDocs = legacyDocs.map((d, index) => ({
+                const updatedDocs = sortedDocsForState.map((d, index) => ({
                     ...d,
                     order: d.order ?? (index + 1) * 1000
                 }));
                 await storageService.saveDocuments(updatedDocs);
                 setAllDocuments(updatedDocs);
             } else {
-                setAllDocuments(docs);
+                setAllDocuments(sortedDocsForState);
             }
             if (docs.length > 0 && !activeDocumentId) {
                 setActiveDocumentId(docs[0].id);

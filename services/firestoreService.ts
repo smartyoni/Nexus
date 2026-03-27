@@ -24,7 +24,7 @@ export const firestoreService = {
   getDocuments: async (): Promise<DocumentData[]> => {
     try {
       const docsRef = collection(db, `users/${USER_ID}/${COLLECTION_DOCS}`);
-      const q = query(docsRef, orderBy('order', 'asc'));
+      const q = query(docsRef);
       const querySnapshot = await getDocs(q);
 
       return querySnapshot.docs.map(doc => ({
@@ -216,7 +216,7 @@ export const firestoreService = {
   // 실시간: 모든 대상 문서 변경 수신
   subscribeToDocuments: (callback: (docs: DocumentData[]) => void): (() => void) => {
     const docsRef = collection(db, `users/${USER_ID}/${COLLECTION_DOCS}`);
-    const q = query(docsRef, orderBy('order', 'asc'));
+    const q = query(docsRef);
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(d => ({
         ...d.data(),
