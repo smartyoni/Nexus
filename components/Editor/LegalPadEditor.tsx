@@ -184,7 +184,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                     onPageTitleChange?.(tempPageTitle);
                                 }
                             }}
-                            className="bg-white border border-indigo-200 rounded px-2 py-0.5 text-indigo-600 outline-none w-32"
+                            className="bg-white border border-indigo-200 rounded px-2 py-0.5 text-indigo-600 outline-none w-[80vw] max-w-full"
                             autoFocus
                         />
                     ) : (
