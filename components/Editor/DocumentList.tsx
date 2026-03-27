@@ -162,7 +162,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     <span>Total: {documents.length} Documents</span>
                     <span className="w-1 h-1 rounded-full bg-slate-200" />
-                    <span className="text-slate-300">v1.2.4</span>
+                    <span className="text-slate-300">v1.2.5</span>
                 </div>
             </div>
         </div>

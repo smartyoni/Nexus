@@ -45,6 +45,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [showSavedToast, setShowSavedToast] = React.useState(false);
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [localDocTitle, setLocalDocTitle] = useState(data.title);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const editorRef = useRef<HTMLDivElement>(null);
     const mainAreaRef = useRef<HTMLElement>(null);
     const isComposingBody = useRef(false);
@@ -124,6 +126,36 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             setShowSavedToast(false);
             setIsPreviewMode(true); // Return to view mode after saving
         }, 1000);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!isPreviewMode) return;
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isPreviewMode) return;
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (!isPreviewMode || !touchStart || !touchEnd) return;
+        
+        const distance = touchStart - touchEnd;
+        const Threshold = 70; // Slightly higher threshold for page turns
+        
+        if (distance > Threshold && currentPageIndex < totalPages - 1) {
+            // Swipe Left -> Next Page
+            onSwitchPage(currentPageIndex + 1);
+            e.stopPropagation();
+        } else if (distance < -Threshold && currentPageIndex > 0) {
+            // Swipe Right -> Previous Page
+            onSwitchPage(currentPageIndex - 1);
+            e.stopPropagation();
+        }
+        
+        setTouchStart(null);
+        setTouchEnd(null);
     };
 
     return (
@@ -329,7 +361,12 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             </div>
 
             {/* Main Content Area (Lined Paper) */}
-            <main className="flex-1 relative overflow-y-auto group legal-pad-container">
+            <main 
+                className="flex-1 relative overflow-y-auto group legal-pad-container"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
                 <div className="legal-pad-paper min-h-full">
                     {isPreviewMode ? (
                         <MarkdownPreview content={currentContent} />
