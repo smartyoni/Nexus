@@ -90,16 +90,18 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                         </div>
                                     </button>
 
-                                    {/* Sub Items Area */}
+                                    {/* Sub Items Area (Level 2) */}
                                     {(() => {
                                         const subItems = extractSubItems(data.pages?.[i] || '');
                                         if (subItems.length === 0) return null;
                                         return (
-                                            <div className="flex flex-col gap-1.5 ml-[42px] mt-2 mb-3">
+                                            <div className="flex flex-col gap-2 ml-[42px] mt-2 mb-4 border-l-2 border-slate-50 pl-4 py-1">
                                                 {subItems.map((sub, idx) => (
-                                                    <div key={idx} className="text-[12px] text-slate-500 font-serif font-bold italic leading-snug flex items-start gap-2">
-                                                        <span className="text-[10px] pb-1 text-slate-400">•</span>
-                                                        <span>{sub}</span>
+                                                    <div key={idx} className="group/sub flex items-start gap-2.5">
+                                                        <span className="text-[10px] text-indigo-300 mt-1 flex-none">•</span>
+                                                        <span className="text-[12px] text-slate-600 font-bold leading-relaxed tracking-tight group-hover/sub:text-indigo-600 transition-colors cursor-default">
+                                                            {sub}
+                                                        </span>
                                                     </div>
                                                 ))}
                                             </div>

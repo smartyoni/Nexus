@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
-import { ChevronLeft, ChevronRight, Pin, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pin, Plus, Eye, Edit3, Bold, Italic, Type, List as ListIcon, Quote } from 'lucide-react';
+import { MarkdownPreview } from './MarkdownPreview';
 import { DeleteConfirmPopover } from '../ui/DeleteConfirmPopover';
 
 interface LegalPadEditorProps {
@@ -40,6 +41,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [isDeletingDoc, setIsDeletingDoc] = React.useState(false);
     const [isDeletingPageIndex, setIsDeletingPageIndex] = React.useState<number | null>(null);
     const [showSavedToast, setShowSavedToast] = React.useState(false);
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
     const editorRef = useRef<HTMLDivElement>(null);
     const totalPages = data.pages?.length || 1;
     const currentContent = data.pages?.[currentPageIndex] || '';
@@ -61,11 +63,13 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         }
     };
 
-    const SYMBOLS = ['•', '※', '#'];
-
-    const insertSymbol = (symbol: string) => {
+    const insertMarkdown = (syntax: string, type: 'wrap' | 'prefix' = 'prefix') => {
         if (editorRef.current) {
-            document.execCommand('insertText', false, symbol);
+            if (type === 'prefix') {
+                document.execCommand('insertText', false, syntax + ' ');
+            } else {
+                document.execCommand('insertText', false, syntax + '텍스트' + syntax);
+            }
             handleInput();
         }
     };
@@ -152,27 +156,12 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             {/* Consolidated Segmented Toolbar */}
             <div className="relative flex-shrink-0 px-2 py-1.5 bg-white border-b border-slate-100 z-[40] overflow-visible">
                 <div className="flex items-center gap-1.5">
-                    {/* Symbols Group */}
-                    <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm">
-                        {SYMBOLS.map(symbol => (
-                            <button
-                                key={symbol}
-                                onClick={() => insertSymbol(symbol)}
-                                className="w-7 h-7 flex items-center justify-center rounded-md text-slate-600 text-sm font-bold hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all active:scale-90"
-                            >
-                                {symbol}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="w-[1px] h-5 bg-slate-200" />
-
                     {/* Pagination Group */}
                     <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm">
                         <button 
                             onClick={() => onSwitchPage(Math.max(0, currentPageIndex - 1))}
                             disabled={currentPageIndex === 0}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all font-bold"
                         >
                             <ChevronLeft size={14} />
                         </button>
@@ -182,51 +171,64 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                         <button 
                             onClick={() => onSwitchPage(Math.min(totalPages - 1, currentPageIndex + 1))}
                             disabled={currentPageIndex === totalPages - 1}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all font-bold"
                         >
                             <ChevronRight size={14} />
                         </button>
 
-                        {totalPages > 1 && (
-                            <>
-                                <div className="w-[1px] h-3 bg-slate-200 mx-0.5" />
-                                <div className="relative">
-                                    <button 
-                                        onClick={() => setIsDeletingPageIndex(currentPageIndex)}
-                                        className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${
-                                            isDeletingPageIndex === currentPageIndex 
-                                                ? 'text-rose-600 bg-white shadow-sm' 
-                                                : 'text-slate-300 hover:bg-white hover:text-rose-500'
-                                        }`}
-                                    >
-                                        <Icons.Trash size={12} />
-                                    </button>
-                                    {isDeletingPageIndex === currentPageIndex && (
-                                        <DeleteConfirmPopover
-                                            onConfirm={() => {
-                                                onRemovePage(currentPageIndex);
-                                                setIsDeletingPageIndex(null);
-                                            }}
-                                            onCancel={() => setIsDeletingPageIndex(null)}
-                                            message="삭제?"
-                                            className="left-0 top-full mt-1.5"
-                                        />
-                                    )}
-                                </div>
-                            </>
-                        )}
+                        <div className="w-[1px] h-3 bg-slate-200 mx-0.5" />
+                        <button 
+                            onClick={onAddPage}
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-indigo-500 hover:bg-white hover:shadow-sm transition-all"
+                            title="항목 추가"
+                        >
+                            <Plus size={14} strokeWidth={3} />
+                        </button>
                     </div>
 
                     <div className="w-[1px] h-5 bg-slate-200" />
 
-                    {/* Context Actions */}
-                    <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm">
-                        <button 
-                            onClick={onAddPage}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-indigo-500 hover:bg-white hover:shadow-sm transition-all"
-                            title="추가"
+                    {/* Markdown Tools Group */}
+                    {!isPreviewMode && (
+                        <>
+                            <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm overflow-hidden">
+                                {[
+                                    { icon: <Type size={13} />, syntax: '#', label: 'H1' },
+                                    { icon: <Type size={11} />, syntax: '##', label: 'H2' },
+                                    { icon: <Bold size={13} />, syntax: '**', type: 'wrap', label: 'B' },
+                                    { icon: <Italic size={13} />, syntax: '*', type: 'wrap', label: 'I' },
+                                    { icon: <ListIcon size={13} />, syntax: '-', label: 'Li' },
+                                    { icon: <Quote size={13} />, syntax: '>', label: 'Qt' }
+                                ].map((tool, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => insertMarkdown(tool.syntax, tool.type as 'wrap' | 'prefix')}
+                                        className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-white hover:text-indigo-600 transition-all active:scale-90"
+                                        title={tool.label}
+                                    >
+                                        {tool.icon}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="w-[1px] h-5 bg-slate-200" />
+                        </>
+                    )}
+
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center p-[1px] bg-indigo-50 rounded-lg border border-indigo-100 shadow-sm overflow-hidden">
+                        <button
+                            onClick={() => setIsPreviewMode(false)}
+                            className={`w-8 h-7 flex items-center justify-center rounded-md transition-all ${!isPreviewMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-300 hover:text-indigo-500'}`}
+                            title="편집 모드"
                         >
-                            <Plus size={14} strokeWidth={3} />
+                            <Edit3 size={14} />
+                        </button>
+                        <button
+                            onClick={() => setIsPreviewMode(true)}
+                            className={`w-8 h-7 flex items-center justify-center rounded-md transition-all ${isPreviewMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-300 hover:text-indigo-500'}`}
+                            title="보기 모드"
+                        >
+                            <Eye size={14} />
                         </button>
                     </div>
 
@@ -248,18 +250,22 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                 </div>
             </div>
 
-            {/* Main Content Area (Lined Paper) */}
-            <main className="flex-1 relative overflow-y-auto legal-pad-container group">
-                <div className="legal-pad-paper min-h-full">
-                    <div
-                        ref={editorRef}
-                        contentEditable
-                        suppressContentEditableWarning
-                        onInput={handleInput}
-                        onFocus={() => setIsEditing(true)}
-                        className="legal-pad-editor"
-                    />
-                </div>
+            {/* Main Content Area (Lined Paper or Clean Markdown) */}
+            <main className={`flex-1 relative overflow-y-auto group ${isPreviewMode ? 'bg-[#f4f7f6]' : 'legal-pad-container'}`}>
+                {isPreviewMode ? (
+                    <MarkdownPreview content={currentContent} className="shadow-2xl my-10 rounded-xl" />
+                ) : (
+                    <div className="legal-pad-paper min-h-full">
+                        <div
+                            ref={editorRef}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={handleInput}
+                            onFocus={() => setIsEditing(true)}
+                            className="legal-pad-editor"
+                        />
+                    </div>
+                )}
 
                 {/* Floating Next Page Arrow */}
                 {currentPageIndex < totalPages - 1 && (
