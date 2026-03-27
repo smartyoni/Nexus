@@ -17,6 +17,21 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
 }) => {
     const totalPages = data.pages?.length || 1;
 
+    const extractSubItems = (content: string) => {
+        if (!content) return [];
+        return content.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.startsWith('#'))
+            .map(line => {
+                let text = line.substring(1).trim();
+                if (text && !text.endsWith('.')) {
+                    text += '.';
+                }
+                return text;
+            })
+            .filter(text => text.length > 0);
+    };
+
     return (
         <div className="flex flex-col h-full bg-[#fdfdfd] select-none overflow-hidden font-serif">
             {/* Elegant Book Header */}
@@ -43,37 +58,54 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                             const charCount = data.pages?.[i]?.length || 0;
                             
                             return (
-                                <button
-                                    key={i}
-                                    onClick={() => {
-                                        onSwitchPage(i);
-                                        onViewDetail();
-                                    }}
-                                    className="w-full group flex items-baseline gap-2 text-left hover:opacity-70 transition-opacity"
-                                >
-                                    {/* Chapter Number & Title */}
-                                    <div className="flex items-baseline gap-4 flex-none">
-                                        <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
-                                            {String(i + 1).padStart(2, '0')}.
-                                        </span>
-                                        <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}>
-                                            {title}
-                                        </span>
-                                    </div>
+                                <div key={i} className="flex flex-col">
+                                    <button
+                                        onClick={() => {
+                                            onSwitchPage(i);
+                                            onViewDetail();
+                                        }}
+                                        className="w-full group flex items-baseline gap-2 text-left hover:opacity-70 transition-opacity"
+                                    >
+                                        {/* Chapter Number & Title */}
+                                        <div className="flex items-baseline gap-4 flex-none">
+                                            <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
+                                                {String(i + 1).padStart(2, '0')}.
+                                            </span>
+                                            <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}>
+                                                {title}
+                                            </span>
+                                        </div>
 
-                                    {/* Dotted Leader */}
-                                    <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
+                                        {/* Dotted Leader */}
+                                        <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
 
-                                    {/* Page Info / Character Count */}
-                                    <div className="flex items-baseline gap-2 flex-none">
-                                        <span className="text-[11px] font-bold text-slate-400 italic">
-                                            {charCount} chars
-                                        </span>
-                                        <span className={`text-[13px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                            p.{i + 1}
-                                        </span>
-                                    </div>
-                                </button>
+                                        {/* Page Info / Character Count */}
+                                        <div className="flex items-baseline gap-2 flex-none">
+                                            <span className="text-[11px] font-bold text-slate-400 italic">
+                                                {charCount} chars
+                                            </span>
+                                            <span className={`text-[13px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                                p.{i + 1}
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    {/* Sub Items Area */}
+                                    {(() => {
+                                        const subItems = extractSubItems(data.pages?.[i] || '');
+                                        if (subItems.length === 0) return null;
+                                        return (
+                                            <div className="flex flex-col gap-1.5 ml-[42px] mt-2 mb-3">
+                                                {subItems.map((sub, idx) => (
+                                                    <div key={idx} className="text-[12px] text-slate-500 font-serif font-bold italic leading-snug flex items-start gap-2">
+                                                        <span className="text-[10px] pb-1 text-slate-400">•</span>
+                                                        <span>{sub}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             );
                         })}
                     </div>
