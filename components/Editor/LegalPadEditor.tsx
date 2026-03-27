@@ -42,7 +42,9 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [isDeletingPageIndex, setIsDeletingPageIndex] = React.useState<number | null>(null);
     const [showSavedToast, setShowSavedToast] = React.useState(false);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [localDocTitle, setLocalDocTitle] = useState(data.title);
     const editorRef = useRef<HTMLDivElement>(null);
+    const isComposingBody = useRef(false);
     const totalPages = data.pages?.length || 1;
     const currentContent = data.pages?.[currentPageIndex] || '';
     const currentPageTitle = data.pageTitles?.[currentPageIndex] || `대항목 ${currentPageIndex + 1}`;
@@ -52,8 +54,14 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     }, [currentPageIndex, data.pageTitles]);
 
     useEffect(() => {
-        if (editorRef.current && editorRef.current.innerText !== currentContent) {
-            editorRef.current.innerText = currentContent;
+        setLocalDocTitle(data.title);
+    }, [data.id, data.title]);
+
+    useEffect(() => {
+        if (editorRef.current && !isComposingBody.current) {
+            if (editorRef.current.innerText !== currentContent) {
+                editorRef.current.innerText = currentContent;
+            }
         }
     }, [currentContent, currentPageIndex]);
 
@@ -90,8 +98,14 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                     </div>
                     <input 
                         type="text"
-                        value={data.title}
-                        onChange={(e) => onTitleChange?.(e.target.value)}
+                        value={localDocTitle}
+                        onChange={(e) => {
+                            setLocalDocTitle(e.target.value);
+                            // Debounced update to parent for title is usually cleaner, 
+                            // but for now we'll sync on every change LOCALLY and update PARENT 
+                            // to ensure logic elsewhere (like list) updates.
+                            onTitleChange?.(e.target.value);
+                        }}
                         placeholder="제목 없음"
                         className="text-base font-bold text-slate-800 outline-none border-none bg-transparent w-40 sm:w-64"
                     />
@@ -262,6 +276,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             suppressContentEditableWarning
                             onInput={handleInput}
                             onFocus={() => setIsEditing(true)}
+                            onCompositionStart={() => { isComposingBody.current = true; }}
+                            onCompositionEnd={() => { isComposingBody.current = false; handleInput(); }}
                             className="legal-pad-editor"
                         />
                     </div>
