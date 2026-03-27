@@ -33,11 +33,13 @@ const App: React.FC = () => {
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
-    if (isLeftSwipe && docs.viewMode === 'list') {
-      docs.setViewMode('detail');
+    if (isLeftSwipe) {
+      if (docs.viewMode === 'list') docs.setViewMode('toc');
+      else if (docs.viewMode === 'toc') docs.setViewMode('detail');
     }
-    if (isRightSwipe && docs.viewMode === 'detail') {
-      docs.setViewMode('list');
+    if (isRightSwipe) {
+      if (docs.viewMode === 'detail') docs.setViewMode('toc');
+      else if (docs.viewMode === 'toc') docs.setViewMode('list');
     }
     setTouchStart(null);
     setTouchEnd(null);

@@ -144,7 +144,7 @@ export const useDocumentManagement = () => {
     // --- 문서 선택 ---
     const selectDocument = useCallback((id: string) => {
         setActiveDocumentId(id);
-        setViewMode('detail');
+        setViewMode('toc');
         setCurrentPageIndex(0);
     }, []);
 
