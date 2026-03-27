@@ -57,11 +57,8 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     return (
         <div className="flex flex-col h-full bg-[#fdfdfd] select-none overflow-hidden font-serif">
             {/* Elegant Book Header */}
-            <div className="flex-shrink-0 px-8 py-12 text-center border-b border-slate-100 bg-[#f8f9fa]">
+            <div className="flex-shrink-0 px-8 pt-6 pb-10 text-center border-b border-slate-100 bg-[#f8f9fa]">
                 <div className="max-w-xl mx-auto">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-slate-200 mb-6 text-slate-400">
-                        <List size={20} strokeWidth={1.5} />
-                    </div>
                     <h1 className="text-3xl font-light text-slate-800 tracking-tight mb-2 font-serif">
                         {data.title || 'Untitled Document'}
                     </h1>
