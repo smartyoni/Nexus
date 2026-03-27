@@ -207,3 +207,23 @@ input::placeholder {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Markdown Preview Grid Alignment */
+.markdown-preview-root > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 2.2rem !important;
+  min-height: 2.2rem;
+  box-sizing: border-box;
+}
+
+.markdown-preview-root h1,
+.markdown-preview-root h2,
+.markdown-preview-root h3 {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.markdown-preview-root p {
+  display: block;
+}
