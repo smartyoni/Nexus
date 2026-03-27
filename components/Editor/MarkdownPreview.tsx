@@ -77,7 +77,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
     };
 
     return (
-        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '2.2rem', fontSize: '15px' }}>
+        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '2.2rem', fontSize: '13px' }}>
             {content.trim() === '' ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic gap-4">
                     <div className="w-12 h-12 rounded-full border border-dashed border-slate-200 flex items-center justify-center">
