@@ -32,7 +32,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
                 return (
                     <div key={index} id={`toc-${index}`} className="flex gap-3 ml-4 items-center group min-h-[2.2rem]">
                         <span className="text-indigo-400 flex-none w-1 h-1 rounded-full bg-indigo-300 group-hover:bg-indigo-400 transition-colors" />
-                        <p className="text-[13px] text-slate-600 italic">{trimmedLine.substring(2)}</p>
+                        <p className="text-inherit text-slate-600 italic">{trimmedLine.substring(2)}</p>
                     </div>
                 );
             }
@@ -58,7 +58,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
 
             // Regular Paragraph (with basic Bold/Italic support)
             return (
-                <p key={index} className="text-[13px] text-slate-700 tracking-tight font-light min-h-[2.2rem]" 
+                <p key={index} className="text-inherit text-slate-700 tracking-tight font-light min-h-[2.2rem]" 
                    dangerouslySetInnerHTML={{ 
                        __html: parseInlineMarkdown(line) 
                    }} 
@@ -72,12 +72,12 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold **text**
             .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic *text*
-            .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 bg-slate-100 rounded text-rose-500 font-mono text-[13px]">$1</code>') // Code `text`
+            .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 bg-slate-100 rounded text-rose-500 font-mono text-inherit">$1</code>') // Code `text`
             .replace(/~~(.*?)~~/g, '<del>$1</del>'); // Strikethrough ~~text~~
     };
 
     return (
-        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '2.2rem', fontSize: '13px' }}>
+        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '2.2rem' }}>
             {content.trim() === '' ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic gap-4">
                     <div className="w-12 h-12 rounded-full border border-dashed border-slate-200 flex items-center justify-center">

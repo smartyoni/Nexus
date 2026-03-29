@@ -183,7 +183,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             }
                         }}
                         placeholder="제목"
-                        className="text-sm font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
+                        className="text-base font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
                     />
                 </div>
                 <div className="flex-1 flex items-center px-4 group/page">
@@ -208,12 +208,12 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                     onPageTitleChange?.(tempPageTitle);
                                 }
                             }}
-                            className="text-sm font-bold text-indigo-600 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
+                            className="text-base font-bold text-indigo-600 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
                             autoFocus
                         />
                     ) : (
                         <div 
-                            className={`text-sm cursor-text flex-1 truncate select-text ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
+                            className={`text-base cursor-text flex-1 truncate select-text ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
                             onDoubleClick={() => setIsEditingPageTitle(true)}
                         >
                             {tempPageTitle || '대항목'}

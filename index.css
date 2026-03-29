@@ -209,6 +209,22 @@ input::placeholder {
   word-break: break-word;
 }
 
+@media (max-width: 640px) {
+  .legal-pad-editor {
+    font-size: 14px;
+  }
+}
+
+.markdown-preview-root {
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .markdown-preview-root {
+    font-size: 14px;
+  }
+}
+
 /* Markdown Preview Grid Alignment */
 .markdown-preview-root > * {
   margin: 0 !important;
