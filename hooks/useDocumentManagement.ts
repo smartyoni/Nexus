@@ -70,13 +70,33 @@ export const useDocumentManagement = () => {
 
     // --- 문서 삭제 ---
     const deleteDocument = useCallback(async (id: string) => {
+        const doc = allDocuments.find(d => d.id === id);
+        if (doc?.isLocked) {
+            alert('이 문서는 잠겨 있어서 삭제할 수 없습니다.');
+            return;
+        }
+
         await storageService.deleteDocument(id);
         setAllDocuments(prev => prev.filter(d => d.id !== id));
         if (activeDocumentId === id) {
             setActiveDocumentId(null);
             setViewMode('list');
         }
-    }, [activeDocumentId]);
+    }, [activeDocumentId, allDocuments]);
+
+    // --- 문서 잠금 토글 ---
+    const toggleLockDocument = useCallback(async (id: string) => {
+        const doc = allDocuments.find(d => d.id === id);
+        if (!doc) return;
+
+        const updatedDoc = { ...doc, isLocked: !doc.isLocked };
+        
+        // 인메모리 업데이트
+        setAllDocuments(prev => prev.map(d => d.id === id ? updatedDoc : d));
+        
+        // 데이터베이스 저장
+        await storageService.saveDocuments([updatedDoc]);
+    }, [allDocuments]);
 
     // --- 내용 업데이트 (메모리 내) ---
     const updateContent = useCallback((content: string) => {
@@ -228,5 +248,6 @@ export const useDocumentManagement = () => {
         switchPage,
         scrollToTarget,
         reorderDocuments,
+        toggleLockDocument,
     };
 };

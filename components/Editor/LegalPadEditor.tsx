@@ -160,8 +160,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
     return (
         <div className="flex flex-col h-full bg-white select-none">
-            {/* Unified Header (Title & Sub-Title) */}
-            <header className="relative flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-30 h-11">
+            {/* Unified Header (Title & Sub-Title) - FIXED ON MOBILE */}
+            <header className="sticky top-0 flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-50 h-11">
                 <div className="flex-1 flex items-center px-4 border-r border-slate-50 group/title">
                     <input 
                         type="text"
@@ -213,7 +213,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                         />
                     ) : (
                         <div 
-                            className={`text-sm cursor-text flex-1 truncate ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
+                            className={`text-sm cursor-text flex-1 truncate select-text ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
                             onDoubleClick={() => setIsEditingPageTitle(true)}
                         >
                             {tempPageTitle || '대항목'}
@@ -222,8 +222,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                 </div>
             </header>
 
-            {/* Consolidated Segmented Toolbar */}
-            <div className="relative flex-shrink-0 px-2 py-1.5 bg-white border-b border-slate-100 z-[40] overflow-visible">
+            {/* Consolidated Segmented Toolbar - FIXED ON MOBILE */}
+            <div className="sticky top-11 flex-shrink-0 px-2 py-1.5 bg-white border-b border-slate-100 z-[40] overflow-visible shadow-sm">
                 <div className="flex items-center gap-1.5">
                     {/* Pagination Group */}
                     <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm">
@@ -362,7 +362,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
             {/* Main Content Area (Lined Paper) */}
             <main 
-                className="flex-1 relative overflow-y-auto group legal-pad-container"
+                className="flex-1 relative overflow-y-auto group legal-pad-container select-text"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}

@@ -14,6 +14,7 @@ export interface DocumentData {
   pages?: string[]; // 페이지별 내용 (선택적, 없을 경우 content 사용)
   pageTitles?: string[]; // 페이지별 대항목 제목
   order?: number; // 정렬 순서
+  isLocked?: boolean; // 삭제 방지 잠금 상태
 }
 
 export type ViewMode = 'list' | 'detail';

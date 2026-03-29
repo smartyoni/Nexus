@@ -66,6 +66,7 @@ body,
 
 .h-screen {
   height: 100vh;
+  height: 100dvh; /* Dynamic Viewport Height (Modern browsers) */
   height: calc(var(--vh, 1vh) * 100);
 }
 

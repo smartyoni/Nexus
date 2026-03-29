@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { DocumentData } from '../../types';
 import { DeleteConfirmPopover } from '../ui/DeleteConfirmPopover';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Lock, Unlock } from 'lucide-react';
 
 interface DocumentListProps {
     documents: DocumentData[];
     onSelect: (id: string) => void;
     onDelete: (id: string) => void;
+    onToggleLock: (id: string) => void;
     onReorder: (newOrder: DocumentData[]) => void;
 }
 
@@ -14,6 +15,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     documents,
     onSelect,
     onDelete,
+    onToggleLock,
     onReorder
 }) => {
     const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                                 <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
                                                     {String(i + 1).padStart(2, '0')}.
                                                 </span>
-                                                <span className="text-[15px] font-medium tracking-tight text-slate-700 group-hover:text-amber-700 transition-colors">
+                                                <span className="text-[17px] font-medium tracking-tight text-slate-700 group-hover:text-amber-700 transition-colors">
                                                     {doc.title || 'Untitled Archive'}
                                                 </span>
                                             </div>
@@ -112,41 +114,67 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                             {/* Dotted Leader */}
                                             <div className="flex-1 border-b border-dotted border-slate-200 h-0 translate-y-[-4px]" />
 
-                                            {/* Metadata */}
-                                            <div className="flex items-baseline gap-3 flex-none pr-8">
+                                            {/* Metadata: Volume info only */}
+                                            <div className="flex items-baseline gap-3 flex-none pr-32">
                                                 <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
                                                     {pageCount} vol.
-                                                </span>
-                                                <span className="text-[11px] font-bold text-slate-400 italic">
-                                                    {formatDate(doc.updatedAt)}
                                                 </span>
                                             </div>
                                         </button>
 
-                                        {/* Action: Delete (Subtle) */}
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="relative">
+                                        {/* Action: Lock & Delete Segmented Tab */}
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center">
+                                            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden h-8">
+                                                {/* Lock Button */}
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setDeletingDocId(doc.id);
+                                                        onToggleLock(doc.id);
                                                     }}
-                                                    className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                                                    className={`px-3 h-full flex items-center justify-center transition-colors ${
+                                                        doc.isLocked 
+                                                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-200' 
+                                                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                                                    } border-r border-slate-200`}
+                                                    title={doc.isLocked ? "Unlock" : "Lock"}
                                                 >
-                                                    <Trash2 size={14} />
+                                                    {doc.isLocked ? <Lock size={14} /> : <Unlock size={14} />}
                                                 </button>
-                                                
-                                                {deletingDocId === doc.id && (
-                                                    <DeleteConfirmPopover
-                                                        onConfirm={() => {
-                                                            onDelete(doc.id);
-                                                            setDeletingDocId(null);
+
+                                                {/* Delete Button */}
+                                                <div className="relative h-full">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (doc.isLocked) {
+                                                                alert('Locked documents cannot be deleted.');
+                                                                return;
+                                                            }
+                                                            setDeletingDocId(doc.id);
                                                         }}
-                                                        onCancel={() => setDeletingDocId(null)}
-                                                        message="Delete?"
-                                                        className="right-0 top-full mt-1"
-                                                    />
-                                                )}
+                                                        disabled={doc.isLocked}
+                                                        className={`px-3 h-full flex items-center justify-center transition-colors ${
+                                                            doc.isLocked 
+                                                                ? 'text-slate-200 cursor-not-allowed' 
+                                                                : 'text-slate-400 hover:bg-rose-50 hover:text-rose-500'
+                                                        }`}
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                    
+                                                    {deletingDocId === doc.id && (
+                                                        <DeleteConfirmPopover
+                                                            onConfirm={() => {
+                                                                onDelete(doc.id);
+                                                                setDeletingDocId(null);
+                                                            }}
+                                                            onCancel={() => setDeletingDocId(null)}
+                                                            message="Delete?"
+                                                            className="right-0 top-full mt-2"
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

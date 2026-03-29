@@ -45,6 +45,18 @@ const App: React.FC = () => {
     setTouchEnd(null);
   };
 
+  // 모바일 뷰포트 (vh) 보정
+  useEffect(() => {
+    const updateVh = () => {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    updateVh();
+    window.addEventListener('resize', updateVh);
+    return () => window.removeEventListener('resize', updateVh);
+  }, []);
+
   return (
     <div 
       className="flex flex-col h-screen overflow-hidden bg-slate-50 font-sans text-slate-900"
@@ -66,6 +78,7 @@ const App: React.FC = () => {
               docs.selectDocument(id);
             }}
             onDelete={docs.deleteDocument}
+            onToggleLock={docs.toggleLockDocument}
             onReorder={docs.reorderDocuments}
           />
         )}
