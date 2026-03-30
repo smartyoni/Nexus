@@ -1,7 +1,7 @@
 {
   "name": "template-master-sidebar",
   "private": true,
-  "version": "1.2.5",
+  "version": "1.3.2",
   "type": "module",
   "homepage": "https://smartyoni.github.io/Nexus",
   "scripts": {

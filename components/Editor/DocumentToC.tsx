@@ -7,6 +7,7 @@ interface DocumentToCProps {
     currentPageIndex: number;
     onSwitchPage: (index: number) => void;
     onViewDetail: () => void;
+    onAddPage: () => void;
     onNavigate?: (pageIndex: number, lineIndex: number) => void;
 }
 
@@ -15,6 +16,7 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     currentPageIndex,
     onSwitchPage,
     onViewDetail,
+    onAddPage,
     onNavigate
 }) => {
     const [expandedPages, setExpandedPages] = useState<Set<number>>(new Set());
@@ -55,13 +57,22 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#fdfdfd] select-none overflow-hidden font-serif">
+        <div className="flex flex-col h-full bg-[#fafafa] select-none overflow-hidden font-serif">
             {/* Elegant Book Header */}
-            <div className="flex-shrink-0 px-8 pt-6 pb-10 text-center border-b border-slate-100 bg-[#f8f9fa]">
-                <div className="max-w-xl mx-auto">
-                    <h1 className="text-3xl font-light text-slate-800 tracking-tight mb-2 font-serif">
-                        {data.title || 'Untitled Document'}
-                    </h1>
+            <div className="flex-shrink-0 px-8 pt-6 pb-10 text-center border-b border-slate-100 bg-white">
+                <div className="max-w-xl mx-auto relative group">
+                    <div className="flex items-center justify-center gap-4 mb-2">
+                        <h1 className="text-3xl font-light text-slate-800 tracking-tight font-serif">
+                            {data.title || 'Untitled Document'}
+                        </h1>
+                        <button
+                            onClick={onAddPage}
+                            className="p-1.5 rounded-full text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-90"
+                            title="Add New Page"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
                     <div className="w-12 h-[1px] bg-slate-200 mx-auto my-4" />
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Table of Contents</p>
                 </div>
@@ -166,7 +177,7 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
             </div>
 
             {/* Footer Navigation */}
-            <div className="flex-shrink-0 px-8 py-6 bg-[#f8f9fa] border-t border-slate-100 flex items-center justify-center">
+            <div className="flex-shrink-0 px-8 py-6 bg-white border-t border-slate-100 flex items-center justify-center">
                 <button 
                     onClick={onViewDetail}
                     className="flex items-center gap-2 group text-[11px] font-bold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-widest"

@@ -123,6 +123,7 @@ const App: React.FC = () => {
               currentPageIndex={docs.currentPageIndex}
               onSwitchPage={docs.switchPage}
               onViewDetail={() => docs.setViewMode('detail')}
+              onAddPage={docs.addPage}
               onNavigate={docs.scrollToTarget}
             />
           ) : (

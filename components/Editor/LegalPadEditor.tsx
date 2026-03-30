@@ -159,7 +159,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-white select-none">
+        <div className="flex flex-col h-full bg-[#fafafa] select-none">
             {/* Unified Header (Title & Sub-Title) - FIXED ON MOBILE */}
             <header className="sticky top-0 flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-50 h-11">
                 <div className="flex-1 flex items-center px-4 border-r border-slate-50 group/title">
@@ -362,12 +362,12 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
             {/* Main Content Area (Lined Paper) */}
             <main 
-                className="flex-1 relative overflow-y-auto group legal-pad-container select-text"
+                className="flex-1 relative overflow-y-auto group book-theme-container select-text"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                <div className="legal-pad-paper min-h-full">
+                <div className="book-theme-paper min-h-full">
                     {isPreviewMode ? (
                         <MarkdownPreview content={currentContent} />
                     ) : (
@@ -379,7 +379,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             onFocus={() => setIsEditing(true)}
                             onCompositionStart={() => { isComposingBody.current = true; }}
                             onCompositionEnd={() => { isComposingBody.current = false; handleInput(); }}
-                            className="legal-pad-editor"
+                            className="book-theme-editor"
                         />
                     )}
                 </div>

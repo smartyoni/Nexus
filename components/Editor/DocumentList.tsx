@@ -63,9 +63,9 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#fdfdfd] select-none overflow-hidden font-serif">
+        <div className="flex flex-col h-full bg-[#fafafa] select-none overflow-hidden font-serif">
             {/* Elegant Library Header */}
-            <div className="flex-shrink-0 px-8 pt-5 pb-8 text-center border-b border-slate-100 bg-[#f8f9fa]">
+            <div className="flex-shrink-0 px-8 pt-5 pb-8 text-center border-b border-slate-100 bg-white">
                 <div className="max-w-xl mx-auto">
                     <h1 className="text-3xl font-light text-slate-800 tracking-tight mb-2 font-serif">
                         Document Collection

@@ -30,7 +30,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
             // List Item (- or * or •)
             if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ') || trimmedLine.startsWith('• ')) {
                 return (
-                    <div key={index} id={`toc-${index}`} className="flex gap-3 ml-4 items-center group min-h-[2.2rem]">
+                    <div key={index} id={`toc-${index}`} className="flex gap-3 ml-4 items-center group py-1.5">
                         <span className="text-indigo-400 flex-none w-1 h-1 rounded-full bg-indigo-300 group-hover:bg-indigo-400 transition-colors" />
                         <p className="text-inherit text-slate-600 italic">{trimmedLine.substring(2)}</p>
                     </div>
@@ -40,7 +40,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
             // Blockquote (>)
             if (trimmedLine.startsWith('> ')) {
                 return (
-                    <blockquote key={index} className="border-l-4 border-indigo-200 pl-4 italic text-slate-500 bg-slate-50/30 rounded-r-lg min-h-[2.2rem]">
+                    <blockquote key={index} className="border-l-4 border-indigo-200 pl-4 py-2 my-4 italic text-slate-500 bg-slate-50/30 rounded-r-lg">
                         {trimmedLine.substring(2)}
                     </blockquote>
                 );
@@ -48,19 +48,19 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
 
             // Horizontal Rule (---)
             if (trimmedLine === '---') {
-                return <hr key={index} className="border-slate-100 h-[2.2rem] flex items-center" />;
+                return <hr key={index} className="border-slate-100 my-8" />;
             }
 
             // Empty Line
             if (trimmedLine === '') {
-                return <div key={index} className="min-h-[2.2rem]" />;
+                return <div key={index} className="h-[1.7em]" />; // Matches line-height
             }
 
-            // Regular Paragraph (with basic Bold/Italic support)
+            // Regular Paragraph
             return (
-                <p key={index} className="text-inherit text-slate-700 tracking-tight font-light min-h-[2.2rem]" 
+                <p key={index} className="text-inherit" 
                    dangerouslySetInnerHTML={{ 
-                       __html: parseInlineMarkdown(line) 
+                       __html: parseInlineMarkdown(line) || '&nbsp;' 
                    }} 
                 />
             );
@@ -77,7 +77,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ content, class
     };
 
     return (
-        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '2.2rem' }}>
+        <div className={`markdown-preview-root transition-all duration-300 ${className}`} style={{ lineHeight: '1.7' }}>
             {content.trim() === '' ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic gap-4">
                     <div className="w-12 h-12 rounded-full border border-dashed border-slate-200 flex items-center justify-center">

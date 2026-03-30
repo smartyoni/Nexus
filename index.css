@@ -175,74 +175,59 @@ input::placeholder {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Legal Pad Aesthetics */
-.legal-pad-container {
-  background-image: 
-    linear-gradient(90deg, transparent 4px, #ffadaa 4px, #ffadaa 5px, transparent 5px, transparent 8px, #ffadaa 8px, #ffadaa 9px, transparent 9px),
-    linear-gradient(#e2e8f0 0.1rem, transparent 0.1rem);
-  background-size: 100% 2.2rem;
-  line-height: 2.2rem !important;
+/* Modern Document (Book) Aesthetics */
+.book-theme-container {
+  background-color: #fafafa;
   min-height: 100%;
   position: relative;
   background-attachment: local;
-  background-color: #f0fdf4;
 }
 
-.legal-pad-paper {
+.book-theme-paper {
   min-height: 100%;
-  padding-left: 15px;
-  padding-top: 0.5rem;
-  padding-right: 20px;
-  padding-bottom: 10rem;
+  padding: 3rem 8% 10rem 8%; /* Generous margins like a book */
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.legal-pad-editor {
-  line-height: 2.2rem !important;
+@media (max-width: 768px) {
+  .book-theme-paper {
+    padding: 2rem 1.5rem 8rem 1.5rem;
+  }
+}
+
+.book-theme-editor {
+  line-height: 1.7 !important;
   background: transparent !important;
   outline: none;
   border: none;
   width: 100%;
-  min-height: 20rem;
-  font-size: 13px;
+  min-height: 30rem;
+  font-size: 15px;
   color: #334155;
   white-space: pre-wrap;
   word-break: break-word;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; /* Consistently serif to match ToC */
 }
 
 @media (max-width: 640px) {
-  .legal-pad-editor {
-    font-size: 14px;
+  .book-theme-editor {
+    font-size: 15px;
+    line-height: 1.6 !important;
   }
 }
 
 .markdown-preview-root {
-  font-size: 13px;
-}
-
-@media (max-width: 640px) {
-  .markdown-preview-root {
-    font-size: 14px;
-  }
-}
-
-/* Markdown Preview Grid Alignment */
-.markdown-preview-root > * {
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 2.2rem !important;
-  min-height: 2.2rem;
-  box-sizing: border-box;
-}
-
-.markdown-preview-root h1,
-.markdown-preview-root h2,
-.markdown-preview-root h3 {
-  display: flex !important;
-  align-items: center !important;
+  font-size: 15px; /* Unified with editor */
+  line-height: 1.7;
+  color: #334155;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 .markdown-preview-root p {
-  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1.7;
 }
 
 /* ToC Navigation Highlight */
