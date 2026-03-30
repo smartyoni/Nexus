@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
-import { ChevronLeft, ChevronRight, Pin, Plus, Eye, Edit3, Bold, Italic, Type, List as ListIcon, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pin, Plus, Eye, Edit3, Bold, Italic, Type, List as ListIcon, Quote, ArrowUp, ArrowDown } from 'lucide-react';
 import { MarkdownPreview } from './MarkdownPreview';
 import { DeleteConfirmPopover } from '../ui/DeleteConfirmPopover';
 
@@ -158,8 +158,40 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         setTouchEnd(null);
     };
 
+    const handleGoToTop = () => {
+        if (isPreviewMode) {
+            mainAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (editorRef.current) {
+            editorRef.current.focus();
+            const range = document.createRange();
+            const selection = window.getSelection();
+            if (selection) {
+                range.setStart(editorRef.current, 0);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    };
+
+    const handleGoToBottom = () => {
+        if (isPreviewMode) {
+            mainAreaRef.current?.scrollTo({ top: mainAreaRef.current.scrollHeight, behavior: 'smooth' });
+        } else if (editorRef.current) {
+            editorRef.current.focus();
+            const range = document.createRange();
+            const selection = window.getSelection();
+            if (selection) {
+                range.selectNodeContents(editorRef.current);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    };
+
     return (
-        <div className="flex flex-col h-full bg-[#fafafa] select-none">
+        <div className="flex flex-col h-full bg-[#fafafa] select-none relative">
             {/* Unified Header (Title & Sub-Title) - FIXED ON MOBILE */}
             <header className="sticky top-0 flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-50 h-11">
                 <div className="flex-1 flex items-center px-4 border-r border-slate-100 group/title gap-2">
@@ -373,11 +405,13 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
             {/* Main Content Area (Lined Paper) */}
             <main 
+                ref={mainAreaRef}
                 className="flex-1 relative overflow-y-auto group book-theme-container select-text"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
+
                 <div className="book-theme-paper min-h-full">
                     {isPreviewMode ? (
                         <MarkdownPreview content={currentContent} />
@@ -413,6 +447,24 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                     </div>
                 )}
             </main>
+
+            {/* Floating Navigation Buttons (Fixed relative to editor container) */}
+            <div className="absolute right-4 bottom-8 z-[100] flex flex-col gap-3">
+                <button 
+                    onClick={handleGoToTop}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl flex items-center justify-center text-indigo-600 hover:scale-110 active:scale-95 transition-all opacity-90 hover:opacity-100"
+                    title="문서 가장 위로"
+                >
+                    <ArrowUp size={22} />
+                </button>
+                <button 
+                    onClick={handleGoToBottom}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl flex items-center justify-center text-indigo-600 hover:scale-110 active:scale-95 transition-all opacity-90 hover:opacity-100"
+                    title="문서 가장 아래로"
+                >
+                    <ArrowDown size={22} />
+                </button>
+            </div>
         </div>
     );
 };
