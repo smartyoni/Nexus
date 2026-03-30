@@ -124,6 +124,7 @@ const App: React.FC = () => {
               onSwitchPage={docs.switchPage}
               onViewDetail={() => docs.setViewMode('detail')}
               onAddPage={docs.addPage}
+              onReorderPages={docs.reorderPages}
               onNavigate={docs.scrollToTarget}
             />
           ) : (

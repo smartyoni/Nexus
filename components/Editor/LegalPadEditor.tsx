@@ -40,7 +40,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 }) => {
     const [isEditingPageTitle, setIsEditingPageTitle] = React.useState(false);
     const [tempPageTitle, setTempPageTitle] = React.useState('');
-    const [isDeletingDoc, setIsDeletingDoc] = React.useState(false);
+    const [isDeletingCurrentPage, setIsDeletingCurrentPage] = React.useState(false);
     const [isDeletingPageIndex, setIsDeletingPageIndex] = React.useState<number | null>(null);
     const [showSavedToast, setShowSavedToast] = React.useState(false);
     const [isPreviewMode, setIsPreviewMode] = useState(true);
@@ -297,21 +297,23 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                 {/* Delete in View Mode */}
                                 <div className="relative">
                                     <button 
-                                        onClick={() => setIsDeletingDoc(true)}
-                                        className={`p-1.5 rounded-lg transition-all ${
-                                            isDeletingDoc ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                                        onClick={() => setIsDeletingCurrentPage(true)}
+                                        disabled={totalPages <= 1}
+                                        className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold ${
+                                            isDeletingCurrentPage ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-20'
                                         }`}
                                     >
-                                        <Icons.Trash size={16} />
+                                        <Icons.Trash size={14} />
+                                        페이지삭제
                                     </button>
-                                    {isDeletingDoc && (
+                                    {isDeletingCurrentPage && (
                                         <DeleteConfirmPopover
                                             onConfirm={() => {
-                                                onDeleteDocument?.(data.id);
-                                                setIsDeletingDoc(false);
+                                                onRemovePage(currentPageIndex);
+                                                setIsDeletingCurrentPage(false);
                                             }}
-                                            onCancel={() => setIsDeletingDoc(false)}
-                                            message="이 문서를 완전히 삭제하시겠습니까?"
+                                            onCancel={() => setIsDeletingCurrentPage(false)}
+                                            message="현재 페이지를 삭제하시겠습니까?"
                                             className="right-0 top-full mt-2"
                                         />
                                     )}
@@ -335,21 +337,23 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                 {/* Delete in Edit Mode */}
                                 <div className="relative">
                                     <button 
-                                        onClick={() => setIsDeletingDoc(true)}
-                                        className={`p-1.5 rounded-lg transition-all ${
-                                            isDeletingDoc ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                                        onClick={() => setIsDeletingCurrentPage(true)}
+                                        disabled={totalPages <= 1}
+                                        className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold ${
+                                            isDeletingCurrentPage ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-20'
                                         }`}
                                     >
-                                        <Icons.Trash size={16} />
+                                        <Icons.Trash size={14} />
+                                        페이지삭제
                                     </button>
-                                    {isDeletingDoc && (
+                                    {isDeletingCurrentPage && (
                                         <DeleteConfirmPopover
                                             onConfirm={() => {
-                                                onDeleteDocument?.(data.id);
-                                                setIsDeletingDoc(false);
+                                                onRemovePage(currentPageIndex);
+                                                setIsDeletingCurrentPage(false);
                                             }}
-                                            onCancel={() => setIsDeletingDoc(false)}
-                                            message="이 문서를 완전히 삭제하시겠습니까?"
+                                            onCancel={() => setIsDeletingCurrentPage(false)}
+                                            message="현재 페이지를 삭제하시겠습니까?"
                                             className="right-0 top-full mt-2"
                                         />
                                     )}

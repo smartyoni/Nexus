@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['icons/icon.svg'],
         manifest: {
-          name: 'Nexus | Premium Note',
-          short_name: 'Nexus',
+          name: '인사이트부동산 노트앱',
+          short_name: '인사이트부동산',
           description: 'A premium minimalist text memo manager for focus',
           theme_color: '#f8fafc',
           background_color: '#f8fafc',

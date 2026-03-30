@@ -219,6 +219,22 @@ export const useDocumentManagement = () => {
         await storageService.saveDocuments(updatedDocs);
     }, []);
 
+    const reorderPages = useCallback(async (newPages: string[], newPageTitles: string[]) => {
+        if (!activeDocument) return;
+        const updatedDoc = {
+            ...activeDocument,
+            pages: newPages,
+            pageTitles: newPageTitles,
+            updatedAt: Date.now()
+        };
+        
+        // Update in-memory state
+        setAllDocuments(prev => prev.map(d => d.id === activeDocument.id ? updatedDoc : d));
+        
+        // Persist to storage
+        await storageService.saveDocuments([updatedDoc]);
+    }, [activeDocument]);
+
     return {
         // 상태
         allDocuments,
@@ -248,6 +264,7 @@ export const useDocumentManagement = () => {
         switchPage,
         scrollToTarget,
         reorderDocuments,
+        reorderPages,
         toggleLockDocument,
     };
 };
