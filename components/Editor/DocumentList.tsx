@@ -9,6 +9,7 @@ interface DocumentListProps {
     onDelete: (id: string) => void;
     onToggleLock: (id: string) => void;
     onReorder: (newOrder: DocumentData[]) => void;
+    onAddDocument: () => void;
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({
@@ -16,7 +17,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     onSelect,
     onDelete,
     onToggleLock,
-    onReorder
+    onReorder,
+    onAddDocument
 }) => {
     const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -65,19 +67,25 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     return (
         <div className="flex flex-col h-full bg-[#fafafa] select-none overflow-hidden font-serif">
             {/* Elegant Library Header */}
-            <div className="flex-shrink-0 px-8 pt-5 pb-8 text-center border-b border-slate-100 bg-white">
-                <div className="max-w-xl mx-auto">
-                    <h1 className="text-3xl font-light text-slate-800 tracking-tight mb-2 font-serif">
-                        Document Collection
+            <div className="flex-shrink-0 px-8 pt-5 pb-5 text-center border-b border-slate-100 bg-white">
+                <div className="max-w-xl mx-auto flex items-center justify-center gap-4">
+                    <h1 className="text-3xl font-light text-slate-800 tracking-tight font-serif">
+                        문서목록
                     </h1>
-                    <div className="w-12 h-[1px] bg-slate-200 mx-auto my-4" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Stored Chronicles</p>
+                    <button
+                        onClick={onAddDocument}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all active:scale-95"
+                        title="새 문서 작성"
+                    >
+                        <span className="text-sm">+</span>
+                        <span>문서추가</span>
+                    </button>
                 </div>
             </div>
 
             {/* Classic Book-style List Area */}
             <div className="flex-1 overflow-y-auto bg-white scrollbar-hide">
-                <div className="max-w-2xl mx-auto px-8 py-12">
+                <div className="max-w-2xl mx-auto px-8 py-8">
                     {documents.length === 0 ? (
                         <div className="text-center py-20 text-slate-300 italic">
                             Your library is currently empty.
@@ -123,8 +131,14 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                         </button>
 
                                         {/* Action: Lock & Delete Segmented Tab */}
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden h-8 shadow-sm">
+                                        <div 
+                                            className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center transition-all duration-200 z-20 ${
+                                                deletingDocId === doc.id 
+                                                    ? 'opacity-100 translate-x-0 pointer-events-auto' 
+                                                    : 'opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto pointer-events-none'
+                                            }`}
+                                        >
+                                            <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-visible h-8 shadow-md">
                                                 {/* Lock Button */}
                                                 <button
                                                     onClick={(e) => {

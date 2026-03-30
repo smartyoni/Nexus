@@ -80,6 +80,7 @@ const App: React.FC = () => {
             onDelete={docs.deleteDocument}
             onToggleLock={docs.toggleLockDocument}
             onReorder={docs.reorderDocuments}
+            onAddDocument={docs.createNewDocument}
           />
         )}
 
@@ -125,6 +126,7 @@ const App: React.FC = () => {
               onViewDetail={() => docs.setViewMode('detail')}
               onAddPage={docs.addPage}
               onReorderPages={docs.reorderPages}
+              onPageTitleChange={docs.updatePageTitle}
               onNavigate={docs.scrollToTarget}
             />
           ) : (

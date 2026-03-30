@@ -43,7 +43,7 @@ export const DeleteConfirmPopover: React.FC<DeleteConfirmPopoverProps> = ({
     return (
         <div 
             ref={popoverRef}
-            className={`absolute top-full right-0 mt-2 z-50 min-w-[200px] bg-white rounded-xl shadow-2xl border border-slate-200 p-4 animate-slide-up ${className}`}
+            className={`absolute top-full right-0 mt-2 z-[60] min-w-[200px] bg-white rounded-xl shadow-2xl border border-slate-200 p-4 animate-slide-up ${className}`}
             onClick={(e) => e.stopPropagation()}
         >
             <p className="text-sm font-bold text-slate-700 mb-3">{message}</p>

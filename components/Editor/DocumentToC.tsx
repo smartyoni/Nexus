@@ -9,6 +9,7 @@ interface DocumentToCProps {
     onViewDetail: () => void;
     onAddPage: () => void;
     onReorderPages: (newPages: string[], newPageTitles: string[]) => void;
+    onPageTitleChange: (newTitle: string, index?: number) => void;
     onNavigate?: (pageIndex: number, lineIndex: number) => void;
 }
 
@@ -19,10 +20,13 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     onViewDetail,
     onAddPage,
     onReorderPages,
+    onPageTitleChange,
     onNavigate
 }) => {
     const [expandedPages, setExpandedPages] = useState<Set<number>>(new Set());
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [editingPageIndex, setEditingPageIndex] = useState<number | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
     const totalPages = data.pages?.length || 1;
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -67,6 +71,28 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
         onReorderPages(newPages, titlesToSync);
     };
 
+    const handleStartEditing = (index: number, currentTitle: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent page switch/navigation
+        setEditingPageIndex(index);
+        setEditingTitle(currentTitle);
+    };
+
+    const handleTitleSubmit = () => {
+        if (editingPageIndex !== null) {
+            onPageTitleChange(editingTitle.trim() || `Chapter ${editingPageIndex + 1}`, editingPageIndex);
+            setEditingPageIndex(null);
+        }
+    };
+
+    const handleTitleCancel = () => {
+        setEditingPageIndex(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') handleTitleSubmit();
+        if (e.key === 'Escape') handleTitleCancel();
+    };
+
     const togglePage = (index: number, e: React.MouseEvent) => {
         e.stopPropagation();
         setExpandedPages(prev => {
@@ -104,29 +130,27 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
     return (
         <div className="flex flex-col h-full bg-[#fafafa] select-none overflow-hidden font-serif">
             {/* Elegant Book Header */}
-            <div className="flex-shrink-0 px-8 pt-6 pb-10 text-center border-b border-slate-100 bg-white">
+            <div className="flex-shrink-0 px-8 pt-6 pb-6 text-center border-b border-slate-100 bg-white">
                 <div className="max-w-xl mx-auto relative group">
-                    <div className="flex items-center justify-center gap-4 mb-2">
+                    <div className="flex items-center justify-center gap-4">
                         <h1 className="text-3xl font-light text-slate-800 tracking-tight font-serif">
                             {data.title || 'Untitled Document'}
                         </h1>
                         <button
                             onClick={onAddPage}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-100 transition-all active:scale-95"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95"
                             title="Add New Page"
                         >
-                            <Plus size={14} strokeWidth={3} />
+                            <span className="text-sm">+</span>
                             <span>페이지추가</span>
                         </button>
                     </div>
-                    <div className="w-12 h-[1px] bg-slate-200 mx-auto my-4" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Table of Contents</p>
                 </div>
             </div>
 
             {/* Classic Book-style List Area */}
             <div className="flex-1 overflow-y-auto bg-white">
-                <div className="max-w-2xl mx-auto px-8 py-16">
+                <div className="max-w-2xl mx-auto px-8 py-10">
                     <div className="space-y-6">
                         {Array.from({ length: totalPages }).map((_, i) => {
                             const title = data.pageTitles?.[i] || `Chapter ${i + 1}`;
@@ -147,6 +171,7 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                     <div className="w-full group flex items-baseline gap-2 text-left transition-opacity cursor-grab active:cursor-grabbing">
                                         <button
                                             onClick={() => {
+                                                if (editingPageIndex === i) return;
                                                 onSwitchPage(i);
                                                 onViewDetail();
                                             }}
@@ -154,12 +179,31 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                         >
                                             {/* Chapter Number & Title */}
                                             <div className="flex items-baseline gap-4 flex-none">
-                                                <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
+                                                <span 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStartEditing(i, title, e);
+                                                    }}
+                                                    className="text-[11px] font-bold text-slate-400 w-6 italic font-serif hover:text-indigo-600 transition-colors cursor-pointer"
+                                                    title="Click to edit title"
+                                                >
                                                     {String(i + 1).padStart(2, '0')}.
                                                 </span>
-                                                <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'} group-hover/row:text-amber-700 transition-colors`}>
-                                                    {title}
-                                                </span>
+                                                {editingPageIndex === i ? (
+                                                    <input
+                                                        autoFocus
+                                                        value={editingTitle}
+                                                        onChange={(e) => setEditingTitle(e.target.value)}
+                                                        onBlur={handleTitleSubmit}
+                                                        onKeyDown={handleKeyDown}
+                                                        className={`text-[15px] font-medium tracking-tight bg-white border-b-2 border-indigo-500 outline-none w-full max-w-[200px] ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                ) : (
+                                                    <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-700'} group-hover/row:text-amber-700 transition-colors`}>
+                                                        {title}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* Dotted Leader */}

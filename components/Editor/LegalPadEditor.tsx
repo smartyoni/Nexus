@@ -18,7 +18,7 @@ interface LegalPadEditorProps {
     onSave: () => void;
     isSaving: boolean;
     onTitleChange?: (title: string) => void;
-    onPageTitleChange?: (title: string) => void;
+    onPageTitleChange?: (title: string, index?: number) => void;
     onDeleteDocument?: (id: string) => void;
 }
 
@@ -162,7 +162,8 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         <div className="flex flex-col h-full bg-[#fafafa] select-none">
             {/* Unified Header (Title & Sub-Title) - FIXED ON MOBILE */}
             <header className="sticky top-0 flex-shrink-0 flex items-stretch border-b border-slate-100 bg-white z-50 h-11">
-                <div className="flex-1 flex items-center px-4 border-r border-slate-50 group/title">
+                <div className="flex-1 flex items-center px-4 border-r border-slate-100 group/title gap-2">
+                    <span className="text-[15px] font-bold text-rose-600 font-serif flex-none">문서제목:</span>
                     <input 
                         type="text"
                         value={localDocTitle}
@@ -182,16 +183,17 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                                 onTitleChange?.(e.target.value);
                             }
                         }}
-                        placeholder="제목"
-                        className="text-base font-bold text-slate-700 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
+                        placeholder="제목을 입력하세요"
+                        className="text-[15px] font-bold text-black outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 font-serif"
                     />
                 </div>
-                <div className="flex-1 flex items-center px-4 group/page">
+                <div className="flex-1 flex items-center px-4 group/page gap-2">
+                    <span className="text-[15px] font-bold text-emerald-600 font-serif flex-none">챕터명:</span>
                     {isEditingPageTitle ? (
                         <input
                             type="text"
                             value={tempPageTitle}
-                            placeholder="대항목"
+                            placeholder="챕터명을 입력하세요"
                             onFocus={() => { isPageTitleFocused.current = true; }}
                             onCompositionStart={() => { isComposingPageTitle.current = true; }}
                             onCompositionEnd={() => { isComposingPageTitle.current = false; }}
@@ -199,24 +201,29 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                             onBlur={() => {
                                 isPageTitleFocused.current = false;
                                 setIsEditingPageTitle(false);
-                                onPageTitleChange?.(tempPageTitle);
+                                onPageTitleChange?.(tempPageTitle.trim() || `Chapter ${currentPageIndex + 1}`);
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     isPageTitleFocused.current = false;
                                     setIsEditingPageTitle(false);
-                                    onPageTitleChange?.(tempPageTitle);
+                                    onPageTitleChange?.(tempPageTitle.trim() || `Chapter ${currentPageIndex + 1}`);
+                                } else if (e.key === 'Escape') {
+                                    isPageTitleFocused.current = false;
+                                    setIsEditingPageTitle(false);
+                                    setTempPageTitle(data.pageTitles?.[currentPageIndex] || '');
                                 }
                             }}
-                            className="text-base font-bold text-indigo-600 outline-none border-none bg-transparent flex-1 placeholder:text-slate-300 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
+                            className="text-[15px] font-bold text-black outline-none border-b-2 border-slate-900 bg-transparent flex-1 placeholder:text-slate-300 font-serif"
                             autoFocus
                         />
                     ) : (
                         <div 
-                            className={`text-base cursor-text flex-1 truncate select-text ${tempPageTitle ? 'font-medium text-slate-500' : 'font-black text-slate-300 uppercase tracking-widest'}`}
+                            className={`text-[15px] cursor-pointer flex-1 truncate select-text transition-colors hover:text-indigo-600 font-serif ${tempPageTitle ? 'font-bold text-black' : 'font-black text-slate-300 uppercase tracking-widest'}`}
                             onDoubleClick={() => setIsEditingPageTitle(true)}
+                            title="Double click to edit chapter title"
                         >
-                            {tempPageTitle || '대항목'}
+                            {tempPageTitle || '챕터명을 입력하세요'}
                         </div>
                     )}
                 </div>

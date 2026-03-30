@@ -115,14 +115,19 @@ export const useDocumentManagement = () => {
     }, [activeDocument, currentPageIndex]);
 
     // --- 페이지 제목 업데이트 ---
-    const updatePageTitle = useCallback((title: string) => {
+    const updatePageTitle = useCallback(async (title: string, index?: number) => {
         if (!activeDocument) return;
+        const targetIndex = index !== undefined ? index : currentPageIndex;
         const newTitles = [...(activeDocument.pageTitles || [])];
-        if (newTitles.length === 0 && activeDocument.pages) {
-            // 초기화가 안되어있으면 빈 배열로 채움
-            activeDocument.pages.forEach(() => newTitles.push(''));
+        
+        // Ensure array is large enough
+        if (activeDocument.pages) {
+            while (newTitles.length < activeDocument.pages.length) {
+                newTitles.push('');
+            }
         }
-        newTitles[currentPageIndex] = title;
+        
+        newTitles[targetIndex] = title;
         
         const updatedDoc = {
             ...activeDocument,
@@ -130,7 +135,11 @@ export const useDocumentManagement = () => {
             updatedAt: Date.now()
         };
         
+        // Update state
         setAllDocuments(prev => prev.map(d => d.id === activeDocument.id ? updatedDoc : d));
+        
+        // Persist
+        await storageService.saveDocuments([updatedDoc]);
     }, [activeDocument, currentPageIndex]);
 
     const addPage = useCallback(() => {

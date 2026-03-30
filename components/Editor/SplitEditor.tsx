@@ -14,7 +14,7 @@ interface SplitEditorProps {
     onAddPage: () => void;
     onRemovePage: (index: number) => void;
     onSwitchPage: (index: number) => void;
-    onPageTitleChange?: (title: string) => void;
+    onPageTitleChange?: (title: string, index?: number) => void;
     onDeleteDocument?: (id: string) => void;
 }
 

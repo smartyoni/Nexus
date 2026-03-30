@@ -51,15 +51,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
                 >
                     상세내용
                 </button>
- 
-                {/* 4. 새문서작성 (문서추가) */}
-                <button
-                    onClick={onAddDocument}
-                    className="px-4 py-1.5 flex items-center justify-center bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 active:scale-95 transition-all text-[12px] font-black whitespace-nowrap gap-1.5"
-                    title="새 문서 작성"
-                >
-                    <span className="text-sm">+</span> 문서추가
-                </button>
             </div>
         </nav>
     );
