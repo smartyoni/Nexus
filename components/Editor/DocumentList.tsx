@@ -10,6 +10,7 @@ interface DocumentListProps {
     onToggleLock: (id: string) => void;
     onReorder: (newOrder: DocumentData[]) => void;
     onAddDocument: () => void;
+    onUpdateTitle: (id: string, title: string) => void;
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({
@@ -18,10 +19,31 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     onDelete,
     onToggleLock,
     onReorder,
-    onAddDocument
+    onAddDocument,
+    onUpdateTitle
 }) => {
     const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [editingDocId, setEditingDocId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+
+    const handleStartEditing = (id: string, currentTitle: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingDocId(id);
+        setEditingTitle(currentTitle);
+    };
+
+    const handleTitleSubmit = () => {
+        if (editingDocId) {
+            onUpdateTitle(editingDocId, editingTitle.trim() || 'Untitled Archive');
+            setEditingDocId(null);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') handleTitleSubmit();
+        if (e.key === 'Escape') setEditingDocId(null);
+    };
 
     // Native DND Handlers
     const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -111,12 +133,28 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                         >
                                             {/* Index & Title */}
                                             <div className="flex items-baseline gap-4 flex-none">
-                                                <span className="text-[11px] font-bold text-slate-400 w-6 italic font-serif">
+                                                <span 
+                                                    onClick={(e) => handleStartEditing(doc.id, doc.title || '', e)}
+                                                    className="text-[11px] font-bold text-slate-400 w-6 italic font-serif hover:text-indigo-600 transition-colors cursor-pointer"
+                                                    title="클릭하여 제목 수정"
+                                                >
                                                     {String(i + 1).padStart(2, '0')}.
                                                 </span>
-                                                <span className="text-[17px] font-medium tracking-tight text-slate-700 group-hover:text-amber-700 transition-colors">
-                                                    {doc.title || 'Untitled Archive'}
-                                                </span>
+                                                {editingDocId === doc.id ? (
+                                                    <input
+                                                        autoFocus
+                                                        value={editingTitle}
+                                                        onChange={(e) => setEditingTitle(e.target.value)}
+                                                        onBlur={handleTitleSubmit}
+                                                        onKeyDown={handleKeyDown}
+                                                        className="text-[17px] font-medium tracking-tight bg-white border-b-2 border-indigo-500 outline-none w-full max-w-[240px] text-slate-700"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                ) : (
+                                                    <span className="text-[17px] font-medium tracking-tight text-slate-700 group-hover:text-amber-700 transition-colors">
+                                                        {doc.title || 'Untitled Archive'}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* Dotted Leader */}

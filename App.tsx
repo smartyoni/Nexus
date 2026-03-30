@@ -81,6 +81,7 @@ const App: React.FC = () => {
             onToggleLock={docs.toggleLockDocument}
             onReorder={docs.reorderDocuments}
             onAddDocument={docs.createNewDocument}
+            onUpdateTitle={docs.updateDocumentTitle}
           />
         )}
 

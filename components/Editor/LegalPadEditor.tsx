@@ -264,33 +264,33 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             {/* Consolidated Segmented Toolbar - FIXED ON MOBILE */}
             <div className="sticky top-11 flex-shrink-0 px-2 py-1.5 bg-white border-b border-slate-100 z-[40] overflow-visible shadow-sm">
                 <div className="flex items-center gap-1.5">
-                    {/* Pagination Group */}
-                    <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm">
+                    {/* Pagination Group - Expanded & Distinct */}
+                    <div className="flex items-center p-1 bg-indigo-50/80 rounded-lg border border-indigo-200/60 shadow-inner">
                         <button 
                             onClick={() => onSwitchPage(Math.max(0, currentPageIndex - 1))}
                             disabled={currentPageIndex === 0}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all font-bold"
+                            className="w-10 h-7 flex items-center justify-center rounded-md text-indigo-400 hover:bg-white hover:text-indigo-600 hover:shadow-sm disabled:opacity-20 transition-all font-bold"
                         >
-                            <ChevronLeft size={14} />
+                            <ChevronLeft size={16} />
                         </button>
-                        <div className="px-1 text-[9px] font-black text-slate-500 min-w-[2.5rem] text-center tracking-tighter">
-                            {currentPageIndex + 1}/{totalPages}
+                        <div className="px-2 text-[10px] font-black text-indigo-900 min-w-[3.2rem] text-center tracking-tighter font-serif">
+                            {currentPageIndex + 1} / {totalPages}
                         </div>
                         <button 
                             onClick={() => onSwitchPage(Math.min(totalPages - 1, currentPageIndex + 1))}
                             disabled={currentPageIndex === totalPages - 1}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-20 transition-all font-bold"
+                            className="w-10 h-7 flex items-center justify-center rounded-md text-indigo-400 hover:bg-white hover:text-indigo-600 hover:shadow-sm disabled:opacity-20 transition-all font-bold"
                         >
-                            <ChevronRight size={14} />
+                            <ChevronRight size={16} />
                         </button>
 
-                        <div className="w-[1px] h-3 bg-slate-200 mx-0.5" />
+                        <div className="w-[1px] h-4 bg-indigo-200/60 mx-1" />
                         <button 
                             onClick={onAddPage}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-indigo-500 hover:bg-white hover:shadow-sm transition-all"
+                            className="w-9 h-7 flex items-center justify-center rounded-md text-indigo-600 bg-white shadow-sm hover:bg-indigo-600 hover:text-white transition-all"
                             title="항목 추가"
                         >
-                            <Plus size={14} strokeWidth={3} />
+                            <Plus size={14} strokeWidth={4} />
                         </button>
                     </div>
 

@@ -244,6 +244,23 @@ export const useDocumentManagement = () => {
         await storageService.saveDocuments([updatedDoc]);
     }, [activeDocument]);
 
+    const updateDocumentTitle = useCallback(async (id: string, title: string) => {
+        const doc = allDocuments.find(d => d.id === id);
+        if (!doc) return;
+
+        const updatedDoc = {
+            ...doc,
+            title,
+            updatedAt: Date.now()
+        };
+
+        // Update state
+        setAllDocuments(prev => prev.map(d => d.id === id ? updatedDoc : d));
+
+        // Persist
+        await storageService.saveDocuments([updatedDoc]);
+    }, [allDocuments]);
+
     return {
         // 상태
         allDocuments,
@@ -275,5 +292,6 @@ export const useDocumentManagement = () => {
         reorderDocuments,
         reorderPages,
         toggleLockDocument,
+        updateDocumentTitle,
     };
 };
