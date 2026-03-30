@@ -123,8 +123,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                         </button>
 
                                         {/* Action: Lock & Delete Segmented Tab */}
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center">
-                                            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden h-8">
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden h-8 shadow-sm">
                                                 {/* Lock Button */}
                                                 <button
                                                     onClick={(e) => {
