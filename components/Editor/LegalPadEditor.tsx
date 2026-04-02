@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { DocumentData } from '../../types';
 import { Icons } from '../ui/Icon';
-import { ChevronLeft, ChevronRight, Pin, Plus, Eye, Edit3, Bold, Italic, Type, List as ListIcon, Quote, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Edit3, ArrowUp, ArrowDown } from 'lucide-react';
 import { MarkdownPreview } from './MarkdownPreview';
+import { MilkdownEditor } from './MilkdownEditor';
 import { DeleteConfirmPopover } from '../ui/DeleteConfirmPopover';
 
 interface LegalPadEditorProps {
@@ -47,9 +48,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     const [localDocTitle, setLocalDocTitle] = useState(data.title);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
-    const editorRef = useRef<HTMLDivElement>(null);
     const mainAreaRef = useRef<HTMLElement>(null);
-    const isComposingBody = useRef(false);
     const isComposingTitle = useRef(false);
     const isTitleFocused = useRef(false);
     const isPageTitleFocused = useRef(false);
@@ -71,13 +70,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         }
     }, [data.id, data.title]);
 
-    useEffect(() => {
-        if (editorRef.current && !isComposingBody.current) {
-            if (editorRef.current.innerText !== currentContent) {
-                editorRef.current.innerText = currentContent;
-            }
-        }
-    }, [currentContent, currentPageIndex, isPreviewMode]);
+
 
     // ToC Navigation Support
     useEffect(() => {
@@ -102,22 +95,7 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
         }
     }, [scrollTarget, currentPageIndex]);
 
-    const handleInput = () => {
-        if (editorRef.current) {
-            onContentChange(editorRef.current.innerText);
-        }
-    };
 
-    const insertMarkdown = (syntax: string, type: 'wrap' | 'prefix' = 'prefix') => {
-        if (editorRef.current) {
-            if (type === 'prefix') {
-                document.execCommand('insertText', false, syntax + ' ');
-            } else {
-                document.execCommand('insertText', false, syntax + '텍스트' + syntax);
-            }
-            handleInput();
-        }
-    };
 
     const handleLocalSave = () => {
         onSave();
@@ -159,35 +137,11 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
     };
 
     const handleGoToTop = () => {
-        if (isPreviewMode) {
-            mainAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-        } else if (editorRef.current) {
-            editorRef.current.focus();
-            const range = document.createRange();
-            const selection = window.getSelection();
-            if (selection) {
-                range.setStart(editorRef.current, 0);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
+        mainAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleGoToBottom = () => {
-        if (isPreviewMode) {
-            mainAreaRef.current?.scrollTo({ top: mainAreaRef.current.scrollHeight, behavior: 'smooth' });
-        } else if (editorRef.current) {
-            editorRef.current.focus();
-            const range = document.createRange();
-            const selection = window.getSelection();
-            if (selection) {
-                range.selectNodeContents(editorRef.current);
-                range.collapse(false);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
+        mainAreaRef.current?.scrollTo({ top: mainAreaRef.current?.scrollHeight ?? 0, behavior: 'smooth' });
     };
 
     return (
@@ -296,32 +250,6 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
 
                     <div className="w-[1px] h-5 bg-slate-200" />
 
-                    {/* Markdown Tools Group */}
-                    {!isPreviewMode && (
-                        <>
-                            <div className="flex items-center p-[1px] bg-slate-100 rounded-lg border border-slate-200/60 shadow-sm overflow-hidden">
-                                {[
-                                    { icon: <Type size={13} />, syntax: '#', label: 'H1' },
-                                    { icon: <Type size={11} />, syntax: '##', label: 'H2' },
-                                    { icon: <Bold size={13} />, syntax: '**', type: 'wrap', label: 'B' },
-                                    { icon: <Italic size={13} />, syntax: '*', type: 'wrap', label: 'I' },
-                                    { icon: <ListIcon size={13} />, syntax: '-', label: 'Li' },
-                                    { icon: <Quote size={13} />, syntax: '>', label: 'Qt' }
-                                ].map((tool, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => insertMarkdown(tool.syntax, tool.type as 'wrap' | 'prefix')}
-                                        className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-white hover:text-indigo-600 transition-all active:scale-90"
-                                        title={tool.label}
-                                    >
-                                        {tool.icon}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="w-[1px] h-5 bg-slate-200" />
-                        </>
-                    )}
-
 
                     <div className="ml-auto flex items-center gap-1.5">
                         {isPreviewMode ? (
@@ -416,16 +344,13 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
                     {isPreviewMode ? (
                         <MarkdownPreview content={currentContent} />
                     ) : (
-                        <div
-                            ref={editorRef}
-                            contentEditable
-                            suppressContentEditableWarning
-                            onInput={handleInput}
-                            onFocus={() => setIsEditing(true)}
-                            onCompositionStart={() => { isComposingBody.current = true; }}
-                            onCompositionEnd={() => { isComposingBody.current = false; handleInput(); }}
-                            className="book-theme-editor"
-                        />
+                        <div className="book-theme-editor">
+                            <MilkdownEditor 
+                                key={`${data.id}-${currentPageIndex}`}
+                                content={currentContent}
+                                onChange={onContentChange}
+                            />
+                        </div>
                     )}
                 </div>
 
