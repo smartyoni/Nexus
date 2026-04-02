@@ -273,7 +273,7 @@ input::placeholder {
   border: none !important;
   line-height: 1.7 !important;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif !important;
-  font-size: 15px !important;
+  font-size: 13px !important;
   color: #334155 !important;
   box-shadow: none !important;
   min-height: 30rem;
@@ -287,7 +287,7 @@ input::placeholder {
 
 /* Headings */
 .milkdown-crepe-wrapper .ProseMirror h1 {
-  font-size: 1.8rem !important;
+  font-size: 1.6rem !important;
   font-weight: 800 !important;
   color: #0f172a !important;
   border-bottom: 2px solid #f1f5f9;
@@ -297,7 +297,7 @@ input::placeholder {
 }
 
 .milkdown-crepe-wrapper .ProseMirror h2 {
-  font-size: 1.4rem !important;
+  font-size: 1.2rem !important;
   font-weight: 700 !important;
   color: #1e293b !important;
   margin: 1.75rem 0 1rem;
@@ -305,7 +305,7 @@ input::placeholder {
 }
 
 .milkdown-crepe-wrapper .ProseMirror h3 {
-  font-size: 1.2rem !important;
+  font-size: 1.05rem !important;
   font-weight: 600 !important;
   color: #334155 !important;
   margin: 1.5rem 0 0.75rem;
@@ -444,7 +444,7 @@ input::placeholder {
 
 @media (max-width: 640px) {
   .milkdown-crepe-wrapper .ProseMirror {
-    font-size: 15px !important;
+    font-size: 13px !important;
     line-height: 1.6 !important;
   }
 }
