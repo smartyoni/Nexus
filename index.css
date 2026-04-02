@@ -287,28 +287,28 @@ input::placeholder {
 
 /* Headings */
 .milkdown-crepe-wrapper .ProseMirror h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.5rem;
-  margin: 1.5rem 0 1rem;
+  font-size: 1.8rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 0.75rem;
+  margin: 2rem 0 1.25rem;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 .milkdown-crepe-wrapper .ProseMirror h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #334155;
-  margin: 1.25rem 0 0.75rem;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin: 1.75rem 0 1rem;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 .milkdown-crepe-wrapper .ProseMirror h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #475569;
-  margin: 1rem 0 0.5rem;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  margin: 1.5rem 0 0.75rem;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 

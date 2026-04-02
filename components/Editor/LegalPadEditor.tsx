@@ -334,10 +334,16 @@ export const LegalPadEditor: React.FC<LegalPadEditorProps> = ({
             {/* Main Content Area (Lined Paper) */}
             <main 
                 ref={mainAreaRef}
-                className="flex-1 relative overflow-y-auto group book-theme-container select-text"
+                className="flex-1 relative overflow-y-auto group book-theme-container select-text cursor-text"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onDoubleClick={(e) => {
+                    if (isPreviewMode) {
+                        e.preventDefault(); // Stop native text selection
+                        setIsPreviewMode(false);
+                    }
+                }}
             >
 
                 <div className="book-theme-paper min-h-full">

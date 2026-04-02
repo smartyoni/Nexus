@@ -109,13 +109,20 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
             .map((line, index) => {
                 const trimmed = line.trim();
                 let level = 0;
-                if (trimmed.startsWith('## ')) level = 2;
-                else if (trimmed.startsWith('# ')) level = 1;
                 
-                if (level > 0) {
-                    let text = trimmed.substring(level).trim();
-                    // Remove any remaining leading #s for safety
-                    text = text.replace(/^#+\s*/, '');
+                // Header detection (H1-H3)
+                const headerMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+                if (headerMatch) {
+                    level = headerMatch[1].length;
+                    let text = headerMatch[2].trim();
+                    
+                    // Clean markdown formatting (**bold**, _italic_, `code`, ~~strike~~)
+                    text = text
+                        .replace(/(\*\*|__)(.*?)\1/g, '$2')
+                        .replace(/(\*|_)(.*?)\1/g, '$2')
+                        .replace(/(`)(.*?)\1/g, '$2')
+                        .replace(/(~~)(.*?)\1/g, '$2')
+                        .trim();
                     
                     if (text && !text.endsWith('.')) {
                         text += '.';
@@ -241,17 +248,23 @@ export const DocumentToC: React.FC<DocumentToCProps> = ({
                                                 <button 
                                                     key={idx} 
                                                     onClick={() => onNavigate?.(i, sub.index)}
-                                                    className={`group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-1 px-1.5 transition-colors ${
-                                                        sub.level === 2 ? 'ml-5' : ''
+                                                    className={`group/sub flex items-start gap-2.5 text-left w-full hover:bg-slate-50 rounded-md py-1.5 px-2 transition-all ${
+                                                        sub.level === 1 ? 'ml-0' : 
+                                                        sub.level === 2 ? 'ml-4' : 'ml-8'
                                                     }`}
                                                 >
-                                                    <span className={`mt-1 flex-none ${sub.level === 2 ? 'text-[8px] text-slate-300' : 'text-[10px] text-indigo-300'}`}>
-                                                        {sub.level === 2 ? '◦' : '•'}
+                                                    <span className={`mt-1 flex-none ${
+                                                        sub.level === 1 ? 'text-[10px] text-indigo-400' : 
+                                                        sub.level === 2 ? 'text-[8px] text-slate-300' : 'text-[6px] text-slate-200'
+                                                    }`}>
+                                                        {sub.level === 1 ? '•' : sub.level === 2 ? '◦' : '▪'}
                                                     </span>
                                                     <span className={`leading-relaxed tracking-tight transition-colors ${
-                                                        sub.level === 2 
-                                                            ? 'text-[11px] text-slate-500 font-medium group-hover/sub:text-indigo-500' 
-                                                            : 'text-[12px] text-slate-600 font-bold group-hover/sub:text-indigo-600'
+                                                        sub.level === 1 
+                                                            ? 'text-[13px] text-slate-700 font-bold group-hover/sub:text-indigo-600' 
+                                                            : sub.level === 2
+                                                                ? 'text-[12px] text-slate-600 font-semibold group-hover/sub:text-indigo-500'
+                                                                : 'text-[11px] text-slate-500 font-medium group-hover/sub:text-indigo-400'
                                                     }`}>
                                                         {sub.text}
                                                     </span>
